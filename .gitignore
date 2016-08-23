@@ -1,0 +1,51 @@
+*.py[cod]
+
+# virtualenv and other misc bits
+*.egg-info
+/dist
+/build
+/bin
+/lib
+/scripts
+/Scripts
+/Lib
+/pip-selfcheck.json
+/tmp
+.Python
+/include
+/Include
+/local
+*/local/*
+
+# Installer logs
+pip-log.txt
+
+# Unit test / coverage reports
+.cache
+.coverage
+.coverage.*
+nosetests.xml
+htmlcov
+
+# Translations
+*.mo
+
+# IDEs
+.project
+.pydevproject
+.idea
+org.eclipse.core.resources.prefs
+
+# Sphinx
+docs/_build
+
+.DS_Store
+*~
+.*.sw[po]
+.build
+.ve
+*.bak
+/.cache/
+
+/share/
+/local/

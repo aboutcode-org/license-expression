@@ -1,0 +1,11 @@
+about_resource: setuptools-25.2.0-py2.py3-none-any.whl
+name: setuptools
+version: 25.2.0
+
+download_url: setuptools-25.2.0-py2.py3-none-any.whl
+
+home_url: https://pypi.python.org/pypi/setuptools
+owner: Python Packaging Authority
+
+dje_license: psf
+license_text_file: PSF.LICENSE

@@ -1,0 +1,18 @@
+language: cpp
+
+os: 
+  - osx
+  - linux 
+
+env:
+  - TEST_SUITE: bin/py.test -vvs
+
+
+install:
+    - ./configure
+
+script:
+    - $TEST_SUITE
+
+notifications:
+  irc: "chat.freenode.net#aboutcode"
