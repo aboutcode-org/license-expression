@@ -10,12 +10,12 @@ from setuptools import find_packages
 from setuptools import setup
 
 
-desc = ('license-expression is small utility library to parse, compare and '
+desc = ('license-expression is small utility library to parse, compare '
         'simplify and normalize license expressions.')
 
 setup(
     name='license-expression',
-    version='0.1',
+    version='0.2',
     license='apache-2.0',
     description=desc,
     long_description=desc,
