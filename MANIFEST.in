@@ -1,6 +1,5 @@
 graft src
 graft etc
-graft thirdparty
 graft tests
 
 prune src/license_expression.egg-info
