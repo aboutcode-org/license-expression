@@ -3,27 +3,30 @@
 
 from __future__ import absolute_import
 from __future__ import print_function
-from __future__ import unicode_literals
 
-
+from glob import glob
+from os.path import basename
+from os.path import splitext
 from setuptools import find_packages
 from setuptools import setup
 
 
 desc = ('license-expression is small utility library to parse, compare '
-        'simplify and normalize license expressions using bollean logic.' 
+        'simplify and normalize license expressions using bollean logic.'
         'It uses boolean.py for parsing and boolean logic.')
 
 setup(
     name='license-expression',
-    version='0.3',
+    version='0.4',
     license='apache-2.0',
     description=desc,
     long_description=desc,
     author='nexB Inc.',
-    author_email='info@nexb.',
+    author_email='info@nexb.com',
     url='https://github.com/nexB/license-expression',
-    packages=find_packages(),
+    packages=find_packages('src'),
+    package_dir={'': 'src'},
+    py_modules=[splitext(basename(path))[0] for path in glob('src/*.py')],
     include_package_data=True,
     zip_safe=False,
     classifiers=[
