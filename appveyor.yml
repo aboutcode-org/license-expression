@@ -16,7 +16,7 @@ build: off
 
 test_script:
     - 'bin\activate'
-    - 'bin\python -c "import sys;print sys.getdefaultencoding()"'
+    - 'bin\python -c "from __future__ import print_function;import sys;print(sys.getdefaultencoding())"'
     - 'bin\py.test -vvs'
 
 on_success:
