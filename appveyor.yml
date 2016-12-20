@@ -6,9 +6,9 @@ install:
 build: off
 
 test_script:
-    - bin\activate
-    - bin\python -c "import sys;print sys.getdefaultencoding()"
-    - "bin\py.test -vvs"
+    - 'bin\activate'
+    - 'bin\python -c "import sys;print sys.getdefaultencoding()"'
+    - 'bin\py.test -vvs'
 
 on_success:
     - "python etc/scripts/irc-notify.py aboutcode [{project_name}:{branch}] {short_commit}: \"{message}\" ({author}) {color_green}Succeeded,Details: {build_url},Commit: {commit_url}"
