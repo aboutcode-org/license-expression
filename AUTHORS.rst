@@ -1,13 +1,5 @@
-The following organizations or individuals have contributed to ScanCode:
+The following organizations or individuals have contributed to this code:
 
-- Chin-Yeung Li @chinyeungli
-- Jillian Daguil @jdaguil
-- Li Ha @linexb
 - nexB Inc. @nexB
 - Philippe Ombredanne @pombredanne
-- Sebastian Roth @ened
-- Steven Esser @majurg
-- Sebastian Schuberth @sschuberth
-- Rakesh Balusa @balusarakesh
-- Francois Granade @farialima
-- Savino Sguera @savinos
+- Thomas Druez @tdruez
