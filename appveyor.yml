@@ -1,6 +1,6 @@
 version: '{build}'
 
-enironment:
+environment:
     matrix:
         - PYTHON_EXE: "C:\\Python27\\python.exe"
         - PYTHON_EXE: "C:\\Python27-x64\\python.exe"
