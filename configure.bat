@@ -10,6 +10,8 @@ set TPP_DIR_BASE=thirdparty/base
 set TPP_DIR_DEV=thirdparty/dev
 set TPP_DIR_PROD=thirdparty/prod
 
+set DEFAULT_PYTHON=python
+
 @rem # default configurations
 set CONF_DEFAULT="etc/conf/dev"
 @rem #################################
@@ -39,8 +41,14 @@ if "%CFG_CMD_LINE_ARGS%"=="  --init" (
     goto configure
 )
 
+if "%PYTHON_EXE%"==" " (
+    set PYTHON_EXE="%DEFAULT_PYTHON%"
+    goto configure
+)
+
+
 :configure
-call python etc/configure.py %CFG_CMD_LINE_ARGS%
+call "%PYTHON_EXE%" etc/configure.py %CFG_CMD_LINE_ARGS%
 goto EOS
 
 :EOS
