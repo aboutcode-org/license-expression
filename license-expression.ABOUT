@@ -1,6 +1,5 @@
 about_resource: .
 name: license-expression
-download_url: https://pypi.python.org/packages/dc/07/6c3ed91d7c02ba9a8584fbac997378b329a69a9b06dc90fa18242b8ef020/boolean.py-3.0.dev5-py2.py3-none-any.whl
 
 copyright: Copyright (c) 2016 nexB Inc. and others.
 
