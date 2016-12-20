@@ -695,25 +695,96 @@ class Licensing(boolean.BooleanAlgebra):
         Return the `expression` LicenseExpression with LicenseSymbols resolved based
         on this Licensing `licenses_reference`.
 
-        An expression can be validated and license keys are resolved::
-            >>> license_refs = [
-            ...    LicenseRef('gpl-2.0', 'GPL-2.0', ['The GNU GPL 20'], False),
-            ...    LicenseRef('lgpl-2.1', 'LGPL-2.1', ['LGPL v2.1'], False),
-            ...    LicenseRef('mit', 'MIT', ['MIT license'], False)
-            ... ]
-            >>> l = Licensing(license_refs)
-            >>> expr = l.parse("The GNU GPL 20 or LGPL-2.1 and mit")
-            >>> str(expr)
-            'The GNU GPL 20 OR (LGPL-2.1 AND mit)'
-            >>> expr = l.resolve(expr)
-            >>> str(expr)
-            'GPL-2.0 OR (LGPL-2.1 AND MIT)'
-            >>> expr = l.parse("The GNU GPL 20 or LGPL-2.1 and mit2")
-            >>> expr = l.resolve(expr)
-            >>> l.resolution_errors(expr)
-            [u"Unkown license: u'mit2'"]
-            >>> str(expr)
-            'GPL-2.0 OR (LGPL-2.1 AND mit2)'
+        An expression can be validated and license keys resolved::
+
+        >>> license_refs = [
+        ...    LicenseRef('gpl-2.0', 'GPL-2.0', ['The GNU GPL 20'], False),
+        ...    LicenseRef('lgpl-2.1', 'LGPL-2.1', ['LGPL v2.1'], False),
+        ...    LicenseRef('mit', 'MIT', ['MIT license'], False)
+        ... ]
+        >>> l = Licensing(license_refs)
+        >>> expr = l.parse("The GNU GPL 20 or LGPL-2.1 and mit")
+        >>> str(expr)
+        'The GNU GPL 20 OR (LGPL-2.1 AND mit)'
+        >>> expr = l.resolve(expr)
+        >>> str(expr)
+        'GPL-2.0 OR (LGPL-2.1 AND MIT)'
+        >>> expr = l.parse("The GNU GPL 20 or LGPL-2.1 and mit2")
+        >>> expr = l.resolve(expr)
+        >>> l.resolution_errors(expr)
+        [u"Unkown license: u'mit2'"]
+        >>> str(expr)
+        'GPL-2.0 OR (LGPL-2.1 AND mit2)'
+
+        >>> license_refs = [
+        ...    LicenseRef('gpl-2.0', 'GPL-2.0', ['The GNU GPL 20'], False),
+        ...    LicenseRef('lgpl-2.1', 'LGPL-2.1', ['LGPL v2.1'], False),
+        ...    LicenseRef('lgpl-2.1-plus', 'LGPL-2.1+', ['LGPL v2.1 or later', 'LGPL-2.1 or later'], False),
+        ...    LicenseRef('mit', 'MIT', ['MIT license'], False),
+        ...    LicenseRef('classpath-2.0', 'Classpath-2.0', ['Classpath-2.0 Exception'], True)
+        ... ]
+        >>> l = Licensing(license_refs)
+        >>> expr = l.parse("The GNU GPL 20 or LGPL-2.1 and mit")
+        >>> str(expr)
+        'The GNU GPL 20 OR (LGPL-2.1 AND mit)'
+        >>> expr = l.resolve(expr)
+        >>> str(expr)
+        'GPL-2.0 OR (LGPL-2.1 AND MIT)'
+
+        A license or later or with exception is treated as a single license::
+
+        >>> expr2 = l.parse("LGPL-2.1 or later and mit2")
+        >>> l.license_symbols(expr2)
+        [LicenseSymbol('LGPL-2.1 or later'), LicenseSymbol('mit2')]
+        >>> str(expr2)
+        'LGPL-2.1 or later AND mit2'
+        >>> repr(expr2)
+        "AND(LicenseSymbol('LGPL-2.1 or later'), LicenseSymbol('mit2'))"
+        >>> expr2 = l.resolve(expr2)
+        >>> l.license_keys(expr2)
+        [u'lgpl-2.1-plus', u'mit2']
+
+        >>> expr2 = l.parse("The GNU GPL 20 with Classpath-2.0 Exception or LGPL-2.1 or later and mit2")
+        >>> expr2 = l.resolve(expr2)
+        >>> l.license_keys(expr2)
+        [u'gpl-2.0', u'classpath-2.0', u'lgpl-2.1-plus', u'mit2']
+        >>> l.unresolved_keys(expr2)
+        [u'mit2']
+        >>> l.resolution_errors(expr2)
+        [u"Unkown license: u'mit2'"]
+        >>> str(expr2)
+        'GPL-2.0 WITH Classpath-2.0 OR (LGPL-2.1+ AND mit2)'
+
+        >>> expr2 = l.parse("LGPL-2.1 or later version and mit2")
+        >>> l.license_symbols(expr2)
+        [LicenseSymbol('LGPL-2.1 or later version'), LicenseSymbol('mit2')]
+        >>> str(expr2)
+        'LGPL-2.1 or later version AND mit2'
+
+        By adding a new alias for mit, there are no errors::
+        >>> license_refs = [
+        ...    LicenseRef('gpl-2.0', 'GPL-2.0', ['The GNU GPL 20'], False),
+        ...    LicenseRef('gpl-2.0-plus', 'GPL-2.0+', ['The GNU GPL 20 or later'], False),
+        ...    LicenseRef('lgpl-2.1', 'LGPL-2.1', ['LGPL v2.1'], False),
+        ...    LicenseRef('lgpl-2.1-plus', 'LGPL-2.1+', ['LGPL v2.1 or later', 'LGPL-2.1 or later'], False),
+        ...    LicenseRef('mit', 'MIT', ['MIT license', 'mit2'], False),
+        ...    LicenseRef('classpath-2.0', 'Classpath-2.0', ['Classpath-2.0 Exception'], True)
+        ... ]
+        >>> l = Licensing(license_refs)
+        >>> expr = l.parse("The GNU GPL 20 with Classpath-2.0 Exception or LGPL-2.1 or later and mit2", resolve=True)
+        >>> l.resolution_errors(expr)
+        []
+        >>> str(expr)
+        'GPL-2.0 WITH Classpath-2.0 OR (LGPL-2.1+ AND MIT)'
+
+        >>> expr = l.parse("The GNU GPL 20 or later with Classpath-2.0 Exception or LGPL-2.1 or later and mit2")
+        >>> l.license_symbols(expr)
+        [LicenseSymbol('The GNU GPL 20 or later WITH Classpath-2.0 Exception'), LicenseSymbol('LGPL-2.1 or later'), LicenseSymbol('mit2')]
+        >>> expr = l.resolve(expr)
+        >>> l.resolution_errors(expr)
+        []
+        >>> str(expr)
+        'GPL-2.0+ WITH Classpath-2.0 OR (LGPL-2.1+ AND MIT)'
         """
         expression = self.build(expression)
         if not isinstance(expression, LicenseExpression):
@@ -875,6 +946,12 @@ class Licensing(boolean.BooleanAlgebra):
                 if i == token_ngrams_len:
                     yield tt2 , tok2, p2
                     yield tt3 , tok3, p3
+
+        # if the last ngram is in the form "later" "and/or" "XXX", do not munge
+        # "and/or" "XXX" that were skipped otherwise
+        if tt1 == boolean.TOKEN_SYMBOL and tok1.startswith('later ') or tok1 == 'later':
+            yield tt2 , tok2, p2
+            yield tt3 , tok3, p3
 
     def _merge_contiguous(self, tokens):
         """
