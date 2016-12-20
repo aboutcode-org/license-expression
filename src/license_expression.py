@@ -587,7 +587,7 @@ class Licensing(boolean.BooleanAlgebra):
             try:
                 # this will raise a ParseError on errors
                 expression = super(Licensing, self).parse(expression, simplify)
-            except TypeError, e:
+            except TypeError as e:
                 raise ExpressionError('Invalid expression syntax.' + repr(e))
 
         if not isinstance(expression, LicenseExpression):
