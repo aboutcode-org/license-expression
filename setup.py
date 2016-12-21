@@ -17,7 +17,7 @@ desc = ('license-expression is small utility library to parse, compare, '
 
 setup(
     name='license-expression',
-    version='0.6',
+    version='0.7',
     license='apache-2.0',
     description=desc,
     long_description=desc,
@@ -38,6 +38,8 @@ setup(
         'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.4',
+        'Programming Language :: Python :: 3.5',
         'Topic :: Utilities',
     ],
     keywords=[
