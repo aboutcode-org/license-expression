@@ -1,6 +1,6 @@
-about_resource: py-1.4.26-py2.py3-none-any.whl
-version: 1.4.26
-download_url: https://pypi.python.org/packages/source/p/py/py-1.4.26.tar.gz
+about_resource: py-1.4.32-py2.py3-none-any.whl
+version: 1.4.32
+download_url: https://pypi.python.org/packages/dd/28/4abc547194d8e6ff93d3ef186cb809a413d719cdc21e524af08fe986f7c2/pytest-3.0.5-py2.py3-none-any.whl#md5=790888ee21cfd19c104155b0ae9b84e5
 
 name: py
 description: library with cross-python path, ini-parsing, io, code, log facilities
@@ -9,4 +9,4 @@ owner: holger krekel, Ronny Pfannschmidt, Benjamin Peterson and others
 contatct: pytest-dev@python.org
 dje_license: mit
 license_text_file: py.LICENSE
-copyright: Holger Krekel and others, 2004-2014
+copyright: Copyright (c) 2004-2016 Holger Krekel and others

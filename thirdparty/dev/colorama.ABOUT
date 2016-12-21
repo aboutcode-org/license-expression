@@ -1,6 +1,6 @@
-about_resource:colorama-0.3.3-py2-none-any.whl
-download_url: https://pypi.python.org/packages/source/c/colorama/colorama-0.3.3.tar.gz
-version: 0.3.3
+about_resource: colorama-0.3.7-py2.py3-none-any.whl
+download_url: https://pypi.python.org/packages/b7/8e/ddb32ddaabd431813e180ca224e844bab8ad42fbb47ee07553f0ec44cd86/colorama-0.3.7-py2.py3-none-any.whl#md5=7d474974709d63d1f249ec61f8e62663
+version: 0.3.7
 
 name: colorama
 description: Cross-platform colored terminal text.

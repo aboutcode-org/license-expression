@@ -11,13 +11,13 @@ from setuptools import find_packages
 from setuptools import setup
 
 
-desc = ('license-expression is small utility library to parse, compare '
-        'simplify and normalize license expressions using bollean logic.'
-        'It uses boolean.py for parsing and boolean logic.')
+desc = ('license-expression is small utility library to parse, compare, '
+        'simplify and normalize license expressions (such as SPDX license '
+        'expressions) using boolean logic.')
 
 setup(
     name='license-expression',
-    version='0.4',
+    version='0.5',
     license='apache-2.0',
     description=desc,
     long_description=desc,
@@ -37,10 +37,13 @@ setup(
         'Programming Language :: Python',
         'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3',
         'Topic :: Utilities',
     ],
     keywords=[
-        'license', 'spdx', 'license expression', 'open source', 'boolean'
+        'license', 'spdx', 'license expression', 'open source', 'boolean',
+        'parse expression', 'normalize expression', 'compare expression',
+        'licence'
     ],
     install_requires=[
         'boolean.py',

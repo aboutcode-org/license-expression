@@ -4,15 +4,16 @@ os:
   - osx
   - linux 
 
-env:
-  - TEST_SUITE: "bin/py.test -vvs"
-
+python:
+  - "2.7"
+  - "3.4"
+  - "3.5"
 
 install:
-    - ./configure
+    - PYTHON_EXE=python$TRAVIS_PYTHON_VERSION ./configure
 
 script:
-    - $TEST_SUITE
+    - "bin/py.test -vvs"
 
 notifications:
     irc:
