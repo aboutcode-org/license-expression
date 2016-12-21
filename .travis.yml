@@ -9,9 +9,8 @@ python:
   - "3.4"
   - "3.5"
 
-
 install:
-    - ./configure
+    - PYTHON_EXE=python$TRAVIS_PYTHON_VERSION configure
 
 script:
     - "bin/py.test -vvs"
