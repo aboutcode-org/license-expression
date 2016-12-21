@@ -19,6 +19,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 from unittest import TestCase
+import sys
 
 import license_expression
 from license_expression import ExpressionError
@@ -27,6 +28,10 @@ from license_expression import LicenseExpression
 from license_expression import ParseError
 from license_expression import PARSE_INVALID_EXPRESSION
 from license_expression import PARSE_INVALID_NESTING
+
+
+py2 = sys.version_info[0] == 2
+py3 = sys.version_info[0] == 3
 
 
 class LicenseExpressionTestCase(TestCase):
@@ -102,10 +107,17 @@ class LicenseExpressionValidatorTestCase(TestCase):
         assert {'l-a': 'l-a', 'l-a +': 'l-a+', 'l-a+': 'l-a+', 'l-b': 'l-b', 'l-c': 'l-c'} == aliases
         assert set(['l-a+']) == exceptions
 
-        expected = [
-            "Invalid duplicated license key: u'l-a+'.",
-            "Invalid duplicated license name: u'l-a+'.",
-        ]
+        if py2:
+            expected = [
+                "Invalid duplicated license key: u'l-a+'.",
+                "Invalid duplicated license name: u'l-a+'.",
+            ]
+        if py3:
+            expected = [
+                "Invalid duplicated license key: 'l-a+'.",
+                "Invalid duplicated license name: 'l-a+'.",
+            ]
+
         assert expected == errors
 
     def test_parse_and_resolve_license_expression(self):
@@ -230,12 +242,22 @@ class LicensingTestCase(TestCase):
         lx = license_expression
         licensing = lx.Licensing()
 
+        if py2:
+            extra_bytes = bytes(chr(0) + chr(12) + chr(255))
+        if py3:
+            extra_bytes = bytes(chr(0) + chr(12) + chr(255), encoding='utf-8')
+
         try:
-            licensing.parse('mit (and LGPL 2.1)'.encode('utf-8') + chr(0) + chr(12) + chr(255))
+            licensing.parse('mit (and LGPL 2.1)'.encode('utf-8') + extra_bytes)
+
             self.fail('Exception not raised')
         except ParseError as pe:
             self.assertEqual(license_expression.PARSE_UNKNOWN_TOKEN, pe.error_code)
-            self.assertEqual("Unknown token for token: '\\x00' at position: 18.", str(pe))
+            if py2:
+                expected = "Unknown token for token: '\\x00' at position: 18."
+            if py3:
+                expected = '''Unknown token for token: "'" at position: 1.'''
+            self.assertEqual(expected, str(pe))
 
     def test_parse_errors_does_not_raise_error_on_plain_non_unicode_raw_string(self):
         # plain non-unicode string does not raise error

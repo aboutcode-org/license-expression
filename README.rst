@@ -7,8 +7,8 @@ license expressions (e.g. SPDX license expressions) using boolean logic such as:
 `GPL-2.0 or later WITH Classpath Exception AND MIT`.
 
 
-See also: 
-https://spdx.org/sites/cpstandard/files/pages/files/spdxversion2.1.pdf#page=95&zoom=auto for details.
+See also for details:
+https://spdx.org/sites/cpstandard/files/pages/files/spdxversion2.1.pdf#page=95&zoom=auto
 
 license: apache-2.0
 
@@ -132,8 +132,8 @@ The cases of a license with an exception or  "or later version" are handled corr
     >>> l.license_symbols(expr)
     [LicenseSymbol('The GNU GPL 20 or later WITH Classpath-2.0 Exception'), LicenseSymbol('LGPL-2.1 or later'), LicenseSymbol('mit2')]
     >>> expr = l.resolve(expr)
-    >>> l.unresolved_keys(expr)
-    [u'mit2']
+    >>> l.unresolved_keys(expr) == ['mit2']
+    True
     >>> str(expr)
     'GPL-2.0+ WITH Classpath-2.0 OR (LGPL-2.1+ AND mit2)'
         
@@ -158,6 +158,6 @@ Development
 ===========
 
 * Checkout a clone from https://github.com/nexB/license-expression.git
-* Then run `./configure` (or `configure.bat`) and `source bin/activate`. This will
+* Then run `./configure` (or `configure.bat`) and then `source bin/activate`. This will
   install all vendored dependencies in a local virtualenv, including development deps.
 * To run the tests, run `py.test -vvs`
