@@ -115,6 +115,7 @@ class LicenseRef(collections.namedtuple('LicenseRef', ref_attributes)):
             name = key
         if not aliases:
             aliases = []
+        aliases = [a for a in aliases if a and isinstance(a, basestring) and a.strip()]
         return super(LicenseRef, cls).__new__(LicenseRef, key, name, aliases, is_exception)
 
 
@@ -336,7 +337,7 @@ class LicenseSymbol(boolean.Symbol):
         licensel = self.license.lower()
         resolved_lic = aliases.get(licensel)
         if not resolved_lic:
-            self.resolution_errors.append('Unkown license: %r' % self.license)
+            self.resolution_errors.append('Unknown license: %s' % self.license)
             self.unresolved.append(self.license)
             return self.resolution_errors
 
@@ -349,7 +350,7 @@ class LicenseSymbol(boolean.Symbol):
         lic_name = keys.get(resolved_lic)
         if not lic_name:
             self.resolution_errors.append(
-                'Inconsistent license references. Name value missing for license: %r.' % self.license)
+                'Inconsistent license references. Name value missing for license: %s.' % self.license)
             self.unresolved.append(self.license)
             return self.resolution_errors
 
@@ -365,7 +366,7 @@ class LicenseSymbol(boolean.Symbol):
         exceptionl = self.exception.lower()
         resolved_excep = aliases.get(exceptionl)
         if not resolved_excep:
-            self.resolution_errors.append('Unkown expection: %r' % self.exception)
+            self.resolution_errors.append('Unknown expection: %r' % self.exception)
             self.unresolved.append(self.exception)
             return self.resolution_errors
 
@@ -715,7 +716,7 @@ class Licensing(boolean.BooleanAlgebra):
         >>> expr = l.parse("The GNU GPL 20 or LGPL-2.1 and mit2")
         >>> expr = l.resolve(expr)
         >>> errors = l.resolution_errors(expr)
-        >>> assert errors == ["Unkown license: u'mit2'"] if py2 else ["Unkown license: 'mit2'"]
+        >>> assert errors == [u'Unknown license: mit2'] if py2 else ['Unknown license: mit2']
         >>> str(expr)
         'GPL-2.0 OR (LGPL-2.1 AND mit2)'
 
@@ -753,7 +754,7 @@ class Licensing(boolean.BooleanAlgebra):
         >>> assert keys == ['gpl-2.0', 'classpath-2.0', 'lgpl-2.1-plus', 'mit2']
         >>> assert ['mit2'] == l.unresolved_keys(expr2)
         >>> errors = l.resolution_errors(expr2)
-        >>> assert errors == ["Unkown license: u'mit2'"] if py2 else ["Unkown license: 'mit2'"]
+        >>> assert errors == [u'Unknown license: mit2'] if py2 else ['Unknown license: mit2']
         >>> str(expr2)
         'GPL-2.0 WITH Classpath-2.0 OR (LGPL-2.1+ AND mit2)'
 
@@ -851,7 +852,7 @@ class Licensing(boolean.BooleanAlgebra):
             >>> expr = l.parse("The GNU GPL 20 or LGPL-2.1 and mit2")
             >>> expr = l.resolve(expr)
             >>> errors = l.resolution_errors(expr)
-            >>> assert errors == ["Unkown license: u'mit2'"] if py2 else ["Unkown license: 'mit2'"]
+            >>> assert errors == [u'Unknown license: mit2'] if py2 else ['Unknown license: mit2']
         """
         expression = self.build(expression)
         if not isinstance(expression, LicenseExpression):
