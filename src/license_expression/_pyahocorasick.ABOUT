@@ -1,4 +1,4 @@
-about_resource: .
+about_resource: _pyahocorasick.py
 download_url: https://github.com/WojciechMula/pyahocorasick/tree/ec2fb9cb393f571fd4316ea98ed7b65992f16127/py
 name: pyahocorasick-python
 version: ec2fb9
