@@ -1,3 +1,5 @@
+# This deliverately is not "python" as a work-around to support
+# multi-os builds with custom Python versions in Travis CI.
 language: cpp
 
 os: 
