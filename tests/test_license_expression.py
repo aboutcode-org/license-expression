@@ -59,19 +59,28 @@ class LicenseSymbolTest(TestCase):
         assert sym1 == sym2
         assert sym1 is not sym2
 
-        sym2 = ExceptionSymbol('mit', 'MIT', ['MIT license'], known=True)
-        assert 'mit' == sym2.key
-        assert 'MIT' == sym2.name
-        assert ('MIT license',) == sym2.aliases
-        assert sym2.known
-        assert sym1 != sym2
+        sym3 = ExceptionSymbol('mit', 'MIT', ['MIT license'], known=True)
+        assert 'mit' == sym3.key
+        assert 'MIT' == sym3.name
+        assert ('MIT license',) == sym3.aliases
+        assert sym3.known
+        assert sym1 != sym3
 
-        sym2 = LicenseSymbol('mit', 'MIT', ['MIT license'], known=False)
-        assert 'mit' == sym2.key
-        assert 'MIT' == sym2.name
-        assert ('MIT license',) == sym2.aliases
-        assert not sym2.known
-        assert sym1 != sym2
+        sym4 = LicenseSymbol('mit', 'MIT', ['MIT license'], known=False)
+        assert 'mit' == sym4.key
+        assert 'MIT' == sym4.name
+        assert ('MIT license',) == sym4.aliases
+        assert not sym4.known
+        # symbol euqality is based ONLY on the key
+        assert sym1 == sym4
+
+        sym5 = LicenseWithExceptionSymbol(sym1, sym3)
+        assert sym1 == sym5.license_symbol
+        assert sym3 == sym5.exception_symbol
+
+        sym6 = LicenseWithExceptionSymbol(sym4, sym3)
+        # symbol euqality is based ONLY on the key
+        assert sym5 == sym6
 
 
 class LicensingTokenizeTest(TestCase):

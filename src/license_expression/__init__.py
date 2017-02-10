@@ -331,19 +331,10 @@ class LicenseSymbol(BaseSymbol):
         return template.format(**self.__dict__)
 
     def __hash__(self, *args, **kwargs):
-        return hash((self.key, self.name, self.aliases, self.known))
+        return hash(self.key)
 
     def __eq__(self, other):
-        if self is other:
-            return True
-        if isinstance(other, self.__class__):
-            return (
-                self.key == other.key
-                and self.name == other.name
-                and self.aliases == self.aliases
-                and self.known == other.known
-            )
-        return False
+        return self is other  or (isinstance(other, self.__class__) and self.key == other.key)
 
     __nonzero__ = __bool__ = lambda s: True
 
@@ -406,12 +397,10 @@ class LicenseWithExceptionSymbol(BaseSymbol):
         return hash((self.license_symbol, self.exception_symbol,))
 
     def __eq__(self, other):
-        if self is other:
-            return True
-        if isinstance(other, self.__class__):
-            return (self.license_symbol == other.license_symbol
-                    and self.exception_symbol == other.exception_symbol)
-        return False
+        return self is other  or (
+                isinstance(other, self.__class__) 
+            and self.license_symbol == other.license_symbol
+            and self.exception_symbol == other.exception_symbol)
 
     __nonzero__ = __bool__ = lambda s: True
 
