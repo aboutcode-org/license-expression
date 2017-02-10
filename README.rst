@@ -59,48 +59,48 @@ Usage examples
 
 Parse an expression, then simplify and compare::
 
-    >>> from license_expression import Licensing
-    >>> l = Licensing()
-    >>> expr = l.parse(" GPL-2.0 or LGPL 2.1 and mit ")
-    >>> str(expr)
-    'GPL-2.0 OR (LGPL 2.1 AND mit)'
-    >>> l.license_symbols(expr)
-    [LicenseSymbol('GPL-2.0'), LicenseSymbol('LGPL 2.1'), LicenseSymbol('mit')]
-    >>> str(expr)
-    'GPL-2.0 OR (LGPL 2.1 AND mit)'
-    >>> print(expr.pretty())
+    >>> from __future__ import unicode_literals
+    >>> from license_expression import *
+    >>> licensing = Licensing()
+    >>> expression = licensing.parse(' GPL-2.0 or LGPL 2.1 and mit ')
+    >>> assert str(expression) == 'gpl-2.0 OR (lgpl 2.1 AND mit)'
+    >>> symbols = licensing.license_symbols(expression)
+    >>> expected = [LicenseSymbol('GPL-2.0', known=False), LicenseSymbol('LGPL 2.1', known=False), LicenseSymbol('mit', known=False)]
+    >>> assert symbols == expected
+    >>> assert expression.render('{name}') == 'GPL-2.0 OR (LGPL 2.1 AND mit)'
+    >>> print(expression.pretty())
     OR(
-      LicenseSymbol('GPL-2.0'),
+      LicenseSymbol('gpl-2.0', known=False),
       AND(
-        LicenseSymbol('LGPL 2.1'),
-        LicenseSymbol('mit')
+        LicenseSymbol('lgpl 2.1', known=False),
+        LicenseSymbol('mit', known=False)
       )
     )
-    >>> expr2 = l.parse(" GPL-2.0 or (mit and LGPL 2.1) ")
+    >>> expr2 = l.parse(' GPL-2.0 or (mit and LGPL 2.1) ')
     >>> expr2.simplify() == expr.simplify()
     True
-    >>> expr3 = l.parse("mit and LGPL 2.1")
+    >>> expr3 = l.parse('mit and LGPL 2.1')
     >>> expr3 in expr2
     True
 
 An expression can be simplified::
 
-    >>> expr2 = l.parse(" GPL-2.0 or (mit and LGPL 2.1) or bsd Or GPL-2.0  or (mit and LGPL 2.1)")
-    >>> str(expr2.simplify())
-    'GPL-2.0 OR bsd OR (LGPL 2.1 AND mit)'
+    >>> expr2 = l.parse(unicode(" GPL-2.0 or (mit and LGPL 2.1) or bsd Or GPL-2.0  or (mit and LGPL 2.1)"))
+    >>> assert str(expr2.simplify()) == 'GPL-2.0 OR bsd OR (LGPL 2.1 AND mit)'
+    
 
 Two expressions can be compared for equivalence and containment::
 
-    >>> expr1 = l.parse(" GPL-2.0 or (LGPL 2.1 and mit) ")
-    >>> expr2 = l.parse(" (mit and LGPL 2.1)  or GPL-2.0 ")
+    >>> expr1 = l.parse(unicode(" GPL-2.0 or (LGPL 2.1 and mit) "))
+    >>> expr2 = l.parse(unicode(" (mit and LGPL 2.1)  or GPL-2.0 "))
     >>> l.is_equivalent(expr1, expr2)
     True
     >>> expr1.simplify() == expr2.simplify()
     True
-    >>> expr3 = l.parse(" GPL-2.0 or mit or LGPL 2.1")
+    >>> expr3 = l.parse(unicode(" GPL-2.0 or mit or LGPL 2.1"))
     >>> l.is_equivalent(expr2, expr3)
     False
-    >>> expr4 = l.parse("mit and LGPL 2.1")
+    >>> expr4 = l.parse(unicode("mit and LGPL 2.1"))
     >>> expr4.simplify() in expr2.simplify()
     True
     >>> l.contains(expr2, expr4)
@@ -119,12 +119,10 @@ An expression can be validated and normalized using a list of reference license 
     ...    LicenseRef('classpath-2.0', 'Classpath-2.0', ['Classpath-2.0 Exception'], True)
     ... ]
     >>> l = Licensing(license_refs)
-    >>> expr = l.parse("The GNU GPL 20 or LGPL-2.1 and mit")
-    >>> str(expr)
-    'The GNU GPL 20 OR (LGPL-2.1 AND mit)'
+    >>> expr = l.parse(unicode("The GNU GPL 20 or LGPL-2.1 and mit"))
+    >>> assert str(expr) == 'The GNU GPL 20 OR (LGPL-2.1 AND mit)'
     >>> expr = l.resolve(expr)
-    >>> str(expr)
-    'GPL-2.0 OR (LGPL-2.1 AND MIT)'
+    >>> assert str(expr) == 'GPL-2.0 OR (LGPL-2.1 AND MIT)'
 
 The cases of a license with an exception or  "or later version" are handled correctly::
 
