@@ -88,22 +88,22 @@ For example::
 
 And expression can be simplified::
 
-    >>> expr2 = l.parse(unicode(" GPL-2.0 or (mit and LGPL 2.1) or bsd Or GPL-2.0  or (mit and LGPL 2.1)"))
+    >>> expr2 = l.parse(' GPL-2.0 or (mit and LGPL 2.1) or bsd Or GPL-2.0  or (mit and LGPL 2.1)')
     >>> assert str(expr2.simplify()) == 'bsd OR gpl-2.0 OR (lgpl 2.1 AND mit)'
     
 
 Two expressions can be compared for equivalence and containment::
 
-    >>> expr1 = l.parse(unicode(" GPL-2.0 or (LGPL 2.1 and mit) "))
-    >>> expr2 = l.parse(unicode(" (mit and LGPL 2.1)  or GPL-2.0 "))
+    >>> expr1 = l.parse(' GPL-2.0 or (LGPL 2.1 and mit) ')
+    >>> expr2 = l.parse(' (mit and LGPL 2.1)  or GPL-2.0 ')
     >>> l.is_equivalent(expr1, expr2)
     True
     >>> expr1.simplify() == expr2.simplify()
     True
-    >>> expr3 = l.parse(unicode(" GPL-2.0 or mit or LGPL 2.1"))
+    >>> expr3 = l.parse(' GPL-2.0 or mit or LGPL 2.1')
     >>> l.is_equivalent(expr2, expr3)
     False
-    >>> expr4 = l.parse(unicode("mit and LGPL 2.1"))
+    >>> expr4 = l.parse('mit and LGPL 2.1')
     >>> expr4.simplify() in expr2.simplify()
     True
     >>> l.contains(expr2, expr4)

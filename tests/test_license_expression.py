@@ -472,7 +472,7 @@ class LicensingParseTest(TestCase):
             expected = {'error_code': PARSE_INVALID_EXPRESSION, 'position': 0, 'token_string':  'with', 'token_type': TOKEN_WITH}
             assert expected == _parse_error_as_dict(pe)
 
-    def test_parse_errors_catch_invalid_non_unicode_byte_strings(self):
+    def test_parse_errors_catch_invalid_non_unicode_byte_strings_on_python3(self):
         py2 = sys.version_info[0] == 2
         py3 = sys.version_info[0] == 3
 
@@ -480,14 +480,22 @@ class LicensingParseTest(TestCase):
 
         if py2:
             extra_bytes = bytes(chr(0) + chr(12) + chr(255))
+            try:
+                licensing.parse('mit (and LGPL 2.1)'.encode('utf-8') + extra_bytes)
+                self.fail('Exception not raised')
+            except ExpressionError as pe:
+                assert str(pe).startswith('expression must be one of')
+        
         if py3:
             extra_bytes = bytes(chr(0) + chr(12) + chr(255), encoding='utf-8')
+            try:
+                licensing.parse('mit (and LGPL 2.1)'.encode('utf-8') + extra_bytes)
+                self.fail('Exception not raised')
+            except ParseError as pe:
+                expected =  {'error_code': PARSE_INVALID_NESTING, 'position': 6, 'token_string': '(', 'token_type': TOKEN_LPAR}
+                assert expected == _parse_error_as_dict(pe)
 
-        try:
-            licensing.parse('mit (and LGPL 2.1)'.encode('utf-8') + extra_bytes)
-            self.fail('Exception not raised')
-        except ExpressionError as pe:
-            assert str(pe).startswith('expression must be one of')
+
 
     def test_parse_errors_does_not_raise_error_on_plain_non_unicode_raw_string(self):
         # plain non-unicode string does not raise error
