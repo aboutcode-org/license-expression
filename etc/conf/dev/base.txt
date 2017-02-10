@@ -1,4 +1,4 @@
 # Testing
-pytest
-colorama
 py
+colorama
+pytest
