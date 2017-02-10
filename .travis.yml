@@ -11,7 +11,7 @@ env:
         - PYTHON_EXE="`which python3.5`"
 
 install:
-    - ./configure
+    - PYTHON_EXE=$PYTHON_EXE ./configure
 
 script:
     - "bin/py.test -vvs"
