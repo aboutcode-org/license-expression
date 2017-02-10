@@ -1,6 +1,6 @@
-about_resource: boolean.py-3.2-py2.py3-none-any.whl
-version: 3.2
-download_url: https://pypi.python.org/packages/cc/b9/c62b31ee204649abdeeda1bb1a5d30afb05c8f5336ccf3200d470d032352/boolean.py-3.2-py2.py3-none-any.whl#md5=1970826601ecd777600ec32f46875d4a
+about_resource: boolean.py-3.3-py2.py3-none-any.whl
+version: 3.3
+download_url: https://pypi.python.org/packages/da/3a/11e627fde632b659aa8aa366d3781a3a575c29e99923fa1ba51f6908933a/boolean.py-3.3-py2.py3-none-any.whl#md5=6822e8dd59ddc637c147a1f59112f361
 
 name: boolean.py
 
