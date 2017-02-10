@@ -159,18 +159,6 @@ class Trie(object):
 
         return iter(items)
 
-    def __len__(self):
-        stack = deque()
-        stack.append(self.root)
-        n = 0
-        while stack:
-            node = stack.pop()
-            if node.output is not nil:
-                n += 1
-            for child in node.children.values():
-                stack.append(child)
-        return n
-
     def exists(self, key):
         """
         Return True if the key is present in this trie.
@@ -606,6 +594,18 @@ def add_unmatched(string, results):
     ... ]
     >>> expected == list(add_unmatched(string, results))
     True
+
+    >>> string ='abc2'
+    >>> results = [
+    ...   Result(0, 2, 'abc'),
+    ... ]
+    >>> expected = [
+    ...   Result(0, 2, 'abc'),
+    ...   Result(3, 3, '2', None),
+    ... ]
+    >>> expected == list(add_unmatched(string, results))
+    True
+
     """
     string_pos = 0
     for result in Result.sort(results):
@@ -617,7 +617,7 @@ def add_unmatched(string, results):
         string_pos = result.end + 1
 
     len_string = len(string)
-    if string_pos + 1 < len_string:
+    if string_pos < len_string:
         start = string_pos
         end = len_string - 1
         yield Result(start, end, string[start:end + 1])

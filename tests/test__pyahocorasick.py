@@ -26,24 +26,17 @@ from license_expression._pyahocorasick import Result
 
 
 class TestTrie(unittest.TestCase):
-    def testEmptyTrieShouldNotContainsAnyWords(self):
-        t = Trie()
-        self.assertEqual(len(t), 0)
-
     def testAddedWordShouldBeCountedAndAvailableForRetrieval(self):
         t = Trie()
         t.add('python', 'value')
-        self.assertEqual(len(t), 1)
-        assert  Output('python', 'value') == t.get('python')
+        assert Output('python', 'value') == t.get('python')
 
     def testAddingExistingWordShouldReplaceAssociatedValue(self):
         t = Trie()
         t.add('python', 'value')
-        self.assertEqual(len(t), 1)
         assert Output('python', 'value') == t.get('python')
 
         t.add('python', 'other')
-        self.assertEqual(len(t), 1)
         assert Output('python', 'other') == t.get('python')
 
     def testGetUnknowWordWithoutDefaultValueShouldRaiseException(self):
@@ -95,7 +88,6 @@ class TestTrie(unittest.TestCase):
         t.add('php', 5)
 
         result = list(t.items())
-        self.assertEquals(len(result), 5)
         self.assertIn(('python', 1), result)
         self.assertIn(('ada', 2), result)
         self.assertIn(('perl', 3), result)
@@ -113,7 +105,6 @@ class TestTrie(unittest.TestCase):
         t.add('php', 5)
 
         result = list(t.keys())
-        self.assertEquals(len(result), 5)
         self.assertIn('python', result)
         self.assertIn('ada', result)
         self.assertIn('perl', result)
@@ -131,7 +122,6 @@ class TestTrie(unittest.TestCase):
         t.add('php', 5)
 
         result = list(t.values())
-        self.assertEquals(len(result), 5)
         self.assertIn(1, result)
         self.assertIn(2, result)
         self.assertIn(3, result)
