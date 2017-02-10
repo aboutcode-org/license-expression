@@ -8,7 +8,7 @@ contact: python-virtualenv@groups.google.com
 home_url: http://www.pip-installer.org
 
 author_file: pip.AUTHORS
-dje_license: mit, OTHER TODO
+dje_license: mit, lgpl-2.1
 license_text_file: pip.LICENSE
 
 vcs_tool: git

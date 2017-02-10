@@ -6,13 +6,14 @@ os:
   - osx
   - linux 
 
-python:
-  - "2.7"
-  - "3.4"
-  - "3.5"
+env:
+    matrix:
+        - PYTHON_EXE="`which python2`"
+        - PYTHON_EXE="`which python3.4`"
+        - PYTHON_EXE="`which python3.5`"
 
 install:
-    - PYTHON_EXE=python$TRAVIS_PYTHON_VERSION ./configure
+    - PYTHON_EXE=$PYTHON_EXE ./configure
 
 script:
     - "bin/py.test -vvs"

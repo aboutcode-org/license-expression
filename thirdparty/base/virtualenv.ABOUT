@@ -1,6 +1,6 @@
-about_resource: virtualenv.py
+about_resource: virtualenv-12.0.5-py2.py3-none-any.whl
 version: 12.0.5
-download_url: https://raw.githubusercontent.com/pypa/virtualenv/12.0.5/virtualenv.py
+download_url: https://pypi.python.org/packages/py2.py3/v/virtualenv/virtualenv-12.0.5-py2.py3-none-any.whl#md5=01551e6cd34a9e5fde66c937c56d0193
 
 vcs_tool: git
 vcs_repository: https://github.com/pypa/virtualenv.git

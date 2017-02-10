@@ -9,4 +9,4 @@ owner: Holger Krekel, Benjamin Peterson, Ronny Pfannschmidt, Floris Bruynooghe a
 contact: holger at merlinux.eu
 dje_license: mit
 license_text_file: pytest.LICENSE
-copyright: Copyright (c) 2004-2016 Holger Krekel and others
+copyright: Copyright Holger Krekel and others, 2004-2014

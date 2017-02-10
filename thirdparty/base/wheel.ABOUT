@@ -1,13 +1,12 @@
 about_resource: wheel-0.29.0-py2.py3-none-any.whl
 version: 0.29.0
-download_url: https://pypi.python.org/packages/py2.py3/w/wheel/wheel-0.29.0-py2.py3-none-any.whl
+download_url: https://pypi.python.org/packages/py2.py3/w/wheel/wheel-0.29.0-py2.py3-none-any.whl#md5=d7db45db5c131af262b8ffccde46a88a
 
 name: wheel
 home_url: https://bitbucket.org/pypa/wheel
 vcs_tool: hg
 vcs_repository: https://bitbucket.org/pypa/wheel
 
-copyright: copyright (c) 2012-2014 Daniel Holth <dholth@fastmail.fm> and
- contributors.
+copyright: copyright (c) 2012-2014 Daniel Holth <dholth@fastmail.fm> and contributors.
 dje_license: mit
 license_text_file: wheel.LICENSE

@@ -57,101 +57,57 @@ The main entry point is the Licensing object.
 Usage examples
 ==============
 
-Parse an expression, then simplify and compare::
+For example::
 
-    >>> from license_expression import Licensing
+    >>> from license_expression import Licensing, LicenseSymbol, ExceptionSymbol
     >>> l = Licensing()
     >>> expr = l.parse(" GPL-2.0 or LGPL 2.1 and mit ")
-    >>> str(expr)
-    'GPL-2.0 OR (LGPL 2.1 AND mit)'
-    >>> l.license_symbols(expr)
-    [LicenseSymbol('GPL-2.0'), LicenseSymbol('LGPL 2.1'), LicenseSymbol('mit')]
-    >>> str(expr)
-    'GPL-2.0 OR (LGPL 2.1 AND mit)'
-    >>> print(expr.pretty())
-    OR(
-      LicenseSymbol('GPL-2.0'),
-      AND(
-        LicenseSymbol('LGPL 2.1'),
-        LicenseSymbol('mit')
-      )
-    )
-    >>> expr2 = l.parse(" GPL-2.0 or (mit and LGPL 2.1) ")
-    >>> expr2.simplify() == expr.simplify()
-    True
-    >>> expr3 = l.parse("mit and LGPL 2.1")
-    >>> expr3 in expr2
-    True
+    >>> expected = 'GPL-2.0 OR (LGPL 2.1 AND mit)'
+    >>> assert expected == expr.render('{name}')
 
-An expression can be simplified::
+    >>> expected = [
+    ...   LicenseSymbol('GPL-2.0', known=False),
+    ...   LicenseSymbol('LGPL 2.1', known=False),
+    ...   LicenseSymbol('mit', known=False)
+    ... ]
+    >>> assert expected == l.license_symbols(expr)
 
-    >>> expr2 = l.parse(" GPL-2.0 or (mit and LGPL 2.1) or bsd Or GPL-2.0  or (mit and LGPL 2.1)")
-    >>> str(expr2.simplify())
-    'GPL-2.0 OR bsd OR (LGPL 2.1 AND mit)'
+    >>> symbols = ['GPL-2.0+', 'Classpath', 'BSD']
+    >>> l = Licensing(symbols)
+    >>> expr = l.parse("GPL-2.0+ with Classpath or (bsd)")
+    >>> expected = 'gpl-2.0+ WITH classpath OR bsd'
+    >>> assert expected == expr.render('{key}')
+
+    >>> expected = [
+    ...   LicenseSymbol('GPL-2.0+', known=True),
+    ...   ExceptionSymbol('Classpath', known=True),
+    ...   LicenseSymbol('BSD', known=True)
+    ... ]
+    >>> assert expected == l.license_symbols(expr)
+
+
+And expression can be simplified::
+
+    >>> expr2 = l.parse(' GPL-2.0 or (mit and LGPL 2.1) or bsd Or GPL-2.0  or (mit and LGPL 2.1)')
+    >>> assert str(expr2.simplify()) == 'bsd OR gpl-2.0 OR (lgpl 2.1 AND mit)'
+    
 
 Two expressions can be compared for equivalence and containment::
 
-    >>> expr1 = l.parse(" GPL-2.0 or (LGPL 2.1 and mit) ")
-    >>> expr2 = l.parse(" (mit and LGPL 2.1)  or GPL-2.0 ")
+    >>> expr1 = l.parse(' GPL-2.0 or (LGPL 2.1 and mit) ')
+    >>> expr2 = l.parse(' (mit and LGPL 2.1)  or GPL-2.0 ')
     >>> l.is_equivalent(expr1, expr2)
     True
     >>> expr1.simplify() == expr2.simplify()
     True
-    >>> expr3 = l.parse(" GPL-2.0 or mit or LGPL 2.1")
+    >>> expr3 = l.parse(' GPL-2.0 or mit or LGPL 2.1')
     >>> l.is_equivalent(expr2, expr3)
     False
-    >>> expr4 = l.parse("mit and LGPL 2.1")
+    >>> expr4 = l.parse('mit and LGPL 2.1')
     >>> expr4.simplify() in expr2.simplify()
     True
     >>> l.contains(expr2, expr4)
     True
-
-An expression can be validated and normalized using a list of reference license keys
-(or ids), names and aliases::
-
-    >>> from license_expression import LicenseRef, Licensing
-    >>> license_refs = [
-    ...    LicenseRef('gpl-2.0', 'GPL-2.0', ['The GNU GPL 20'], False),
-    ...    LicenseRef('gpl-2.0+', 'GPL-2.0+', ['The GNU GPL 20 or later'], False),
-    ...    LicenseRef('lgpl-2.1', 'LGPL-2.1', ['LGPL v2.1'], False),
-    ...    LicenseRef('lgpl-2.1-plus', 'LGPL-2.1+', ['LGPL v2.1 or later', 'LGPL-2.1 or later'], False),
-    ...    LicenseRef('mit', 'MIT', ['MIT license'], False),
-    ...    LicenseRef('classpath-2.0', 'Classpath-2.0', ['Classpath-2.0 Exception'], True)
-    ... ]
-    >>> l = Licensing(license_refs)
-    >>> expr = l.parse("The GNU GPL 20 or LGPL-2.1 and mit")
-    >>> str(expr)
-    'The GNU GPL 20 OR (LGPL-2.1 AND mit)'
-    >>> expr = l.resolve(expr)
-    >>> str(expr)
-    'GPL-2.0 OR (LGPL-2.1 AND MIT)'
-
-The cases of a license with an exception or  "or later version" are handled correctly::
-
-    >>> expr = l.parse("The GNU GPL 20 or later with Classpath-2.0 Exception or LGPL-2.1 or later and mit2")
-    >>> l.license_symbols(expr)
-    [LicenseSymbol('The GNU GPL 20 or later WITH Classpath-2.0 Exception'), LicenseSymbol('LGPL-2.1 or later'), LicenseSymbol('mit2')]
-    >>> expr = l.resolve(expr)
-    >>> l.unresolved_keys(expr) == ['mit2']
-    True
-    >>> str(expr)
-    'GPL-2.0+ WITH Classpath-2.0 OR (LGPL-2.1+ AND mit2)'
-        
-Here if we add `mit2` as an alias, the expression resolves alright::
-
-    >>> license_refs = [
-    ...    LicenseRef('gpl-2.0', 'GPL-2.0', ['The GNU GPL 20'], False),
-    ...    LicenseRef('lgpl-2.1', 'LGPL-2.1', ['LGPL v2.1'], False),
-    ...    LicenseRef('lgpl-2.1-plus', 'LGPL-2.1+', ['LGPL v2.1 or later', 'LGPL-2.1 or later'], False),
-    ...    LicenseRef('mit', 'MIT', ['MIT license', 'mit2'], False),
-    ...    LicenseRef('classpath-2.0', 'Classpath-2.0', ['Classpath-2.0 Exception'], True)
-    ... ]
-    >>> l = Licensing(license_refs)
-    >>> expr = l.parse("The GNU GPL 20 with Classpath-2.0 Exception or LGPL-2.1 or later and mit2", resolve=True)
-    >>> l.resolution_errors(expr)
-    []
-    >>> str(expr)
-    'GPL-2.0 WITH Classpath-2.0 OR (LGPL-2.1+ AND MIT)'
 
     
 Development
