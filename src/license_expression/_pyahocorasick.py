@@ -25,7 +25,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 def logger_debug(*args):
-    return logger.debug(' '.join(isinstance(a, basestring) and a or repr(a) for a in args))
+    return logger.debug(' '.join(isinstance(a, str) and a or repr(a) for a in args))
 
 # uncomment for local debug logging
 # import sys
