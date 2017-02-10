@@ -20,10 +20,7 @@ from __future__ import print_function
 
 from collections import deque
 from collections import OrderedDict
-
-
 import logging
-from __builtin__ import isinstance
 
 logger = logging.getLogger(__name__)
 
