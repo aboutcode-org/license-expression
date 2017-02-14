@@ -659,7 +659,19 @@ class LicenseSymbolLike(LicenseSymbol):
                 'Not a symbol-like object: %(symbol_like)r' % locals())
 
         self.wrapped = symbol_like
+
+        # can we delegate rendering to a render method of the wrapped object?
+        self._render = None
+        renderer = getattr(symbol_like, 'render')
+        if callable(renderer):
+            self._render = renderer
+            
         super(LicenseSymbol, self).__init__(self.key)
+
+    def render(self, template='{key}'):
+        if self._render:
+            return self.render(template)
+        return super(LicenseSymbolLike, self).render(template)
 
     @property
     def key(self):
