@@ -59,11 +59,11 @@ Usage examples
 
 For example::
 
-    >>> from license_expression import Licensing, LicenseSymbol, ExceptionSymbol
+    >>> from license_expression import Licensing, LicenseSymbol
     >>> l = Licensing()
     >>> expr = l.parse(" GPL-2.0 or LGPL 2.1 and mit ")
     >>> expected = 'GPL-2.0 OR (LGPL 2.1 AND mit)'
-    >>> assert expected == expr.render('{name}')
+    >>> assert expected == expr.render('{original_key}')
 
     >>> expected = [
     ...   LicenseSymbol('GPL-2.0', known=False),
@@ -80,7 +80,7 @@ For example::
 
     >>> expected = [
     ...   LicenseSymbol('GPL-2.0+', known=True),
-    ...   ExceptionSymbol('Classpath', known=True),
+    ...   LicenseSymbol('Classpath', is_exception=True, known=True),
     ...   LicenseSymbol('BSD', known=True)
     ... ]
     >>> assert expected == l.license_symbols(expr)
