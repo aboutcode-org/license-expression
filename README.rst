@@ -64,7 +64,7 @@ For example::
     >>> expression = ' GPL-2.0 or LGPL 2.1 and mit '
     >>> parsed = licensing.parse(expression)
     >>> expected = 'GPL-2.0 OR (LGPL 2.1 AND mit)'
-    >>> assert expected == parsed.render('{original_key}')
+    >>> assert expected == parsed.render('{symbol.original_key}')
 
     >>> expected = [
     ...   LicenseSymbol('GPL-2.0'),
@@ -79,7 +79,7 @@ For example::
     >>> expression = 'GPL-2.0+ with Classpath or (bsd)'
     >>> parsed = licensing.parse(expression)
     >>> expected = 'gpl-2.0+ WITH classpath OR bsd'
-    >>> assert expected == parsed.render('{key}')
+    >>> assert expected == parsed.render('{symbol.key}')
 
     >>> expected = [
     ...   LicenseSymbol('GPL-2.0+'),

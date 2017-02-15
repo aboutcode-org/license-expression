@@ -121,7 +121,7 @@ class Licensing(boolean.BooleanAlgebra):
     >>> l = Licensing()
     >>> expr = l.parse(" GPL-2.0 or LGPL 2.1 and mit ")
     >>> expected = 'GPL-2.0 OR (LGPL 2.1 AND mit)'
-    >>> assert expected == expr.render('{original_key}')
+    >>> assert expected == expr.render('{symbol.original_key}')
 
     >>> expected = [
     ...   LicenseSymbol('GPL-2.0'),
@@ -135,7 +135,7 @@ class Licensing(boolean.BooleanAlgebra):
     >>> expression = 'GPL-2.0+ with Classpath or (bsd)'
     >>> parsed = l.parse(expression)
     >>> expected = 'gpl-2.0+ WITH classpath OR bsd'
-    >>> assert expected == parsed.render('{key}')
+    >>> assert expected == parsed.render('{symbol.key}')
 
     >>> expected = [
     ...   LicenseSymbol('GPL-2.0+'),
@@ -172,44 +172,41 @@ class Licensing(boolean.BooleanAlgebra):
         # mapping of known symbol used for parsing and resolution as (key, symbol)
         self.known_symbols = {symbol.key: symbol for symbol in symbols}
 
-        # Aho-Corasick automaton-based Scanners used for expression tokenizing: This
-        # is a resolving scanner that recognizes symbols and is available when
-        # parsing with `resolve=True` IF and only if symbols were provided. If not,
-        # the basic scanner is used instead.
-        self.resolving_scanner = None
+        # Aho-Corasick automaton-based Scanner used for expression tokenizing
+        self.scanner = None
 
-        # This is a non-resolving scanner used when parsing with `resolve=False` or
-        # all the times if symbols were NOT provided
-        self.basic_scanner = None
-
-    def is_equivalent(self, expression1, expression2):
+    def is_equivalent(self, expression1, expression2, **kwargs):
         """
         Return True if both `expressions` LicenseExpression are equivalent.
+        If a string is provided, it will be parsed and simplified.
+        Extra kwargs are passed down to the parse() function.
         """
-        ex1 = self._parse_and_simplify(expression1)
-        ex2 = self._parse_and_simplify(expression2)
+        ex1 = self._parse_and_simplify(expression1, **kwargs)
+        ex2 = self._parse_and_simplify(expression2, **kwargs)
         return ex1 == ex2
 
-    def contains(self, expression1, expression2):
+    def contains(self, expression1, expression2, **kwargs):
         """
-        Return True if expression1 contains expression2.
+        Return True if `expression1` contains `expression2`.
         Expressions are either a string or a LicenseExpression object.
         If a string is provided, it will be parsed and simplified.
+
+        Extra kwargs are passed down to the parse() function.
         """
-        ex1 = self._parse_and_simplify(expression1)
-        ex2 = self._parse_and_simplify(expression2)
+        ex1 = self._parse_and_simplify(expression1, **kwargs)
+        ex2 = self._parse_and_simplify(expression2, **kwargs)
         return ex2 in ex1
 
-    def _parse_and_simplify(self, expression):
-        expression = self.parse(expression)
+    def _parse_and_simplify(self, expression, **kwargs):
+        expression = self.parse(expression, **kwargs)
         if expression is None:
             return None
 
         if not isinstance(expression, LicenseExpression):
             raise TypeError('expressions must be LicenseExpression objects: %(expression1)r, %(expression2)r' % locals())
         return expression.simplify()
-        
-    def license_symbols(self, expression, unique=True, decompose=True):
+
+    def license_symbols(self, expression, unique=True, decompose=True, **kwargs):
         """
         Return a list of LicenseSymbol objects used in an expression in
         the same order as they first appear in the expression tree.
@@ -223,6 +220,8 @@ class Licensing(boolean.BooleanAlgebra):
         not returned directly but their underlying license and exception symbols are
         retruned instead.
 
+        Extra kwargs are passed down to the parse() function.
+
         For example:
         >>> l = Licensing()
         >>> expected = [
@@ -232,7 +231,7 @@ class Licensing(boolean.BooleanAlgebra):
         >>> result = l.license_symbols(l.parse('GPL-2.0 or LGPL-2.1+'))
         >>> assert expected == result
         """
-        expression = self.parse(expression)
+        expression = self.parse(expression, **kwargs)
         if expression is None:
             return []
         symbols = (s for s in expression.get_literals() if isinstance(s, BaseSymbol))
@@ -242,32 +241,41 @@ class Licensing(boolean.BooleanAlgebra):
             symbols = ordered_unique(symbols)
         return list(symbols)
 
-    def primary_license_symbol(self, expression, decompose=True):
+    def primary_license_symbol(self, expression, decompose=True, **kwargs):
         """
-        Return the left-most license symbol of an expression or None.
+        Return the left-most license symbol of an `expression` or None.
+        `expression` is either a string or a LicenseExpression object.
 
         If `decompose` is True, only the left-hand license symbol of a decomposed
         LicenseWithExceptionSymbol symbol will be returned if this is the left most
         member. Otherwise a composite LicenseWithExceptionSymbol is returned in this
         case.
+
+        Extra kwargs are passed down to the parse() function.
         """
-        symbols = self.license_symbols(expression, decompose=decompose)
+        symbols = self.license_symbols(expression, decompose=decompose, **kwargs)
         if symbols:
             return symbols[0]
 
-    def primary_license_key(self, expression):
+    def primary_license_key(self, expression, **kwargs):
         """
-        Return the left-most license key of an expression or None. The underlying
+        Return the left-most license key of an `expression` or None. The underlying
         symbols are decomposed.
-        """
-        prim = self.primary_license_symbol(expression, decompose=True)
+        `expression` is either a string or a LicenseExpression object.
+
+        Extra kwargs are passed down to the parse() function.
+       """
+        prim = self.primary_license_symbol(expression, decompose=True, **kwargs)
         if prim:
             return prim.key
 
-    def license_keys(self, expression, unique=True):
+    def license_keys(self, expression, unique=True, **kwargs):
         """
         Return a list of licenses keys used in an expression in the same order as
         they first appear in the expression.
+        `expression` is either a string or a LicenseExpression object.
+
+        Extra kwargs are passed down to the parse() function.
 
         For example:
         >>> l = Licensing()
@@ -275,7 +283,7 @@ class Licensing(boolean.BooleanAlgebra):
         >>> expected = ['gpl-2.0', 'mit', 'later', 'blabla', 'lgpl 2.1']
         >>> assert expected == l.license_keys(l.parse(expr))
         """
-        symbols = self.license_symbols(expression, unique=False, decompose=True)
+        symbols = self.license_symbols(expression, unique=False, decompose=True, **kwargs)
         return self._keys(symbols, unique)
 
     def _keys(self, symbols, unique=True):
@@ -286,53 +294,61 @@ class Licensing(boolean.BooleanAlgebra):
             keys = ordered_unique(keys)
         return keys
 
-    def unknown_license_symbols(self, expression, unique=True):
+    def unknown_license_symbols(self, expression, unique=True, **kwargs):
         """
-        Return a list of unknown licenses symbols used in an expression in the same
-        order as they first appear in the expression.
+        Return a list of unknown licenses symbols used in an `expression` in the same
+        order as they first appear in the `expression`.
+        `expression` is either a string or a LicenseExpression object.
+
+        Extra kwargs are passed down to the parse() function.
         """
-        return [ls for ls in self.license_symbols(expression, unique=unique, decompose=True)
+        return [ls for ls in self.license_symbols(expression, unique=unique, decompose=True, **kwargs)
                 if not ls.key in self.known_symbols]
 
-    def unknown_license_keys(self, expression, unique=True):
+    def unknown_license_keys(self, expression, unique=True, **kwargs):
         """
-        Return a list of unknown licenses keys used in an expression in the same
-        order as they first appear in the expression.
+        Return a list of unknown licenses keys used in an `expression` in the same
+        order as they first appear in the `expression`.
 
         `expression` is either a string or a LicenseExpression object.
         If a string is provided, it will be parsed.
 
         If `unique` is True only return unique keys.
+
+        Extra kwargs are passed down to the parse() function.
         """
-        symbols = self.unknown_license_symbols(expression, unique=False)
+        symbols = self.unknown_license_symbols(expression, unique=False, **kwargs)
         return self._keys(symbols, unique)
 
-    def parse(self, expression, resolve=True, strict=False):
+    def parse(self, expression, validate=False, strict=False, **kwargs):
         """
         Return a new license LicenseExpression object by parsing a license expression
         string. Check that the expression syntax is valid and raise an Exception,
         ExpressionError or ParseError on errors. Return None for empty expressions.
+        `expression` is either a string or a LicenseExpression object. If this is a
+        LicenseExpression it is retruned as-si.
 
-        If `resolve` is True and `symbols` were provided at Licensing creation time,
-        each license and exception is recognized from these known licensing symbols.
-        If `resolve` is False or `symbols` were not provided at Licensing creation
-        time, then symbols are not resolved to known symbols and anything between two
-        keywords is considered as a symbol.
+        Symbols are always recognized from known symbols if `symbols` were provided
+        Licensing creation time: each license and exception is recognized from known
+        license keys (and from aliases for a symbol if available).
 
-        Call the `unknown_license_keys` or `unknown_license_symbols` methods to get
-        unknown license keys or symbols found in a parsed LicenseExpression.
+        If `validate` is True and a symbol is unknown, an ExpressionError error
+        is raised with a message listing the unknown license keys.
 
-        If `strict` is True, additional exceptions will be raised:
-         - if a symbol is not resolved.
-         - in a expression such as "XXX with ZZZ" if the XXX symbol has
-           `is_expection` set to True or the YYY symbol has `is_expection` set to
-           False.
+        If `validate` is False, no error is triggered.
+
+        You can call the `unknown_license_keys` or `unknown_license_symbols` methods
+        to get unknown license keys or symbols found in a parsed LicenseExpression.
+
+        If `strict` is True, additional exceptions will be raised if in a expression
+        such as "XXX with ZZZ" if the XXX symbol has `is_expection` set to True or
+        the YYY symbol has `is_expection` set to False.
 
         For example:
         >>> expression = 'EPL 1.0 and Apache 1.1 OR GPL 2.0 with Classpath exception'
         >>> parsed = Licensing().parse(expression)
         >>> expected = '(EPL 1.0 AND Apache 1.1) OR GPL 2.0 WITH Classpath exception'
-        >>> assert expected == parsed.render(template='{original_key}')
+        >>> assert expected == parsed.render(template='{symbol.original_key}')
         """
         if expression is None:
             return
@@ -355,7 +371,7 @@ class Licensing(boolean.BooleanAlgebra):
             return
         try:
             # this will raise a ParseError on errors
-            tokens = list(self.tokenize(expression, resolve, strict))
+            tokens = list(self.tokenize(expression, strict=strict))
             expression = super(Licensing, self).parse(tokens)
         except TypeError as e:
             import traceback
@@ -365,9 +381,15 @@ class Licensing(boolean.BooleanAlgebra):
         if not isinstance(expression, LicenseExpression):
             raise ExpressionError('expression must be a LicenseExpression once parsed.')
 
+        if validate:
+            unknown_keys = self.unknown_license_keys(expression, unique=True)
+            if unknown_keys:
+                msg = 'Unknown license key(s): {}'.format(', '.join(unknown_keys))
+                raise ExpressionError(msg)
+
         return expression
 
-    def tokenize(self, expression, resolve=True, strict=False):
+    def tokenize(self, expression, strict=False):
         """
         Return an iterable of 3-tuple describing each token given an expression
         unicode string. See boolean.BooleanAlgreba.tokenize() for API details.
@@ -379,30 +401,22 @@ class Licensing(boolean.BooleanAlgebra):
           original token string in the `expr` string. It can be an int for a
           character offset, or a tuple of starting (row/line, column).
 
-        If `resolve` is True and `symbols` were provided at Licensing creation time,
-        each license and exception is recognized from these known licensing symbols.
-        If `resolve` is False or `symbols` were not provided at Licensing creation
-        time, then symbols are not resolved to known symbols and anything between two
-        keywords is considered as a symbol.
-
-        If `strict` is True, additional exceptions will be raised:
-         - if a symbol is not resolved.
-         - in a expression such as "XXX with ZZZ" if the XXX symbol has
-           `is_expection` set to True or the YYY symbol has `is_expection` set to
-           False.
+        If `strict` is True, additional exceptions will be raised in a expression
+        such as "XXX with ZZZ" if the XXX symbol has is_expection` set to True or the
+        YYY symbol has `is_expection` set to False.
         """
-        if resolve:
-            scanner = self.get_resolving_scanner()
-        else:
-            scanner = self.get_basic_scanner()
+        scanner = self.get_scanner()
 
         # scan with an automaton, recognize whole symbols+keywords or only keywords
         results = scanner.scan(expression)
         results = strip_and_skip_spaces(results)
         result_groups = group_results_for_with_subexpression(results)
-        result_groups = list(result_groups)
         for group in result_groups:
-            if len(group) == 1:
+            len_group = len(group)
+            if not len_group:
+                # This should never happen
+                continue
+            if len_group == 1:
                 # a single token
                 result = group[0]
                 pos = result.start
@@ -424,7 +438,7 @@ class Licensing(boolean.BooleanAlgebra):
                                              error_code=PARSE_INVALID_EXPRESSION)
 
                     elif isinstance(val, LicenseSymbol):
-                        if strict and not val.is_exception:
+                        if strict and val.is_exception:
                             raise ParseError(token_type=TOKEN_SYMBOL,
                                              token_string=result.string,
                                              position=result.start,
@@ -436,14 +450,16 @@ class Licensing(boolean.BooleanAlgebra):
                         # this should not be possible by design
                         raise Exception('Licensing.tokenize is internally confused...')
                 else:
-                    # unknown symbol
                     token = LicenseSymbol(result.string)
 
             else:
-                if len(group) != 3:
-                    raise Exception(repr(group))
+                if len_group != 3:
+                    # this should never happen
+                    string = ' '.join([res.string for res in group])
+                    start = group[0].start
+                    raise ParseError(
+                        TOKEN_SYMBOL, string, start, PARSE_INVALID_EXPRESSION)
 
-                assert len(group) == 3
                 # this is a A with B seq of three results
                 lic_res, _WITH , exc_res = group
                 pos = lic_res.start
@@ -451,68 +467,62 @@ class Licensing(boolean.BooleanAlgebra):
 
                 # licenses
                 lic_out = lic_res.output
-                lic_sym = lic_out and lic_out.value or LicenseSymbol(lic_res.string, is_exception=False)
+                lic_sym = lic_out and lic_out.value
+
+                # this should not happen
+                if lic_sym and not isinstance(lic_sym, LicenseSymbol):
+                    raise ParseError(TOKEN_SYMBOL, lic_res.string, lic_res.start, 
+                                     PARSE_INVALID_SYMBOL)
+
+                if not lic_sym:
+                    lic_sym = LicenseSymbol(lic_res.string, is_exception=False)
+
                 if not isinstance(lic_sym, LicenseSymbol):
-                    raise ParseError(
-                        TOKEN_SYMBOL, lic_res.string, lic_res.start, PARSE_INVALID_SYMBOL)
+                    raise ParseError(TOKEN_SYMBOL, lic_res.string, lic_res.start, 
+                                     PARSE_INVALID_SYMBOL)
 
                 if strict and lic_sym.is_exception:
-                    raise ParseError(
-                        TOKEN_SYMBOL, lic_res.string, lic_res.start, PARSE_INVALID_EXCEPTION)
+                    raise ParseError(TOKEN_SYMBOL, lic_res.string, lic_res.start, 
+                                     PARSE_INVALID_EXCEPTION)
 
                 # exception
                 exc_out = exc_res.output
-                exc_sym = exc_out and exc_out.value or LicenseSymbol(exc_res.string, is_exception=True)
+                exc_sym = exc_out and exc_out.value
+
+                # this should not happen
+                if exc_sym and not isinstance(exc_sym, LicenseSymbol):
+                    raise ParseError(TOKEN_SYMBOL, lic_sym.string, lic_sym.start, 
+                                     PARSE_INVALID_SYMBOL)
+
+                if not exc_sym:
+                    exc_sym = LicenseSymbol(exc_res.string, is_exception=True)
+
                 if not isinstance(exc_sym, LicenseSymbol):
-                    raise ParseError(
-                        TOKEN_SYMBOL, exc_res.string, exc_res.start, PARSE_INVALID_SYMBOL)
+                    raise ParseError(TOKEN_SYMBOL, exc_res.string, exc_res.start, 
+                                     PARSE_INVALID_SYMBOL)
 
                 if strict and not exc_sym.is_exception:
-                    raise ParseError(
-                        TOKEN_SYMBOL, exc_res.string, exc_res.start, PARSE_INVALID_SYMBOL_AS_EXCEPTION)
+                    raise ParseError(TOKEN_SYMBOL, exc_res.string, exc_res.start, 
+                                     PARSE_INVALID_SYMBOL_AS_EXCEPTION)
 
                 token = LicenseWithExceptionSymbol(lic_sym, exc_sym, strict)
 
             yield token, token_string, pos
 
-    def get_basic_scanner(self):
+    def get_scanner(self):
         """
-        Return a basic scanner either cached or created as needed. This scanner does
-        not recognize known symbols when tokenizing expressions. Only keywords are
-        recognized and a license symbol is anything in between two keywords.
+        Return a scanner either cached or created as needed. If symbols were provided
+        when this Licensing object was created, the scanner will recognize known
+        symbols when tokenizing expressions. Otherwise, only keywords are recognized
+        and a license symbol is anything in between keywords.
         """
-        if self.basic_scanner is not None:
-            return self.basic_scanner
+        if self.scanner is not None:
+            return self.scanner
 
-        self.basic_scanner = scanner = Scanner(ignore_case=True)
+        self.scanner = scanner = Scanner(ignore_case=True)
+
         for keyword in _KEYWORDS:
             scanner.add(keyword.value, keyword)
-        scanner.make_automaton()
-        return scanner
-
-    def get_resolving_scanner(self):
-        """
-        Return a resolving scanner either cached or created as needed. If symbols
-        were provided when this Licensing was created, the resolving_scanner will
-        recognize known symbols when tokenizing expressions. Otherwise, only keywords
-        are recognized and license symbols is anything in between keywords.
-        """
-        if self.resolving_scanner is not None:
-            return self.resolving_scanner
-
-        # only use a basic keyword-only scanner if we have known_symbols
-        if not self.known_symbols:
-            self.resolving_scanner = self.get_basic_scanner()
-            return self.resolving_scanner
-
-        self.resolving_scanner = scanner = Scanner(ignore_case=True)
-        for keyword in _KEYWORDS:
-            scanner.add(keyword.value, keyword)
-
-        # only build a basic keyword-only resolving_scanner if we have known_symbols
-        if not self.known_symbols:
-            scanner.make_automaton()
-            return scanner
 
         # self.known_symbols has been created at Licensing initialization time and is
         # already validated and trusted here
@@ -536,7 +546,7 @@ class Renderable(object):
     """
     An interface for renderable objects.
     """
-    def render(self, template='{key}', *args, **kwargs):
+    def render(self, template='{symbol.key}', *args, **kwargs):
         """
         Return a formatted string rendering for this expression using the `template`
         format string to render each symbol. The variables available are `key` and
@@ -546,7 +556,7 @@ class Renderable(object):
 
         For symbols that hold multiple licenses (e.g. a WITH statement) the template
         is applied to each symbol individually.
-        
+
         Note that when render() is called the *args and **kwargs are propagated
         recursively to any Renderable object render() method.
         """
@@ -616,8 +626,8 @@ class LicenseSymbol(BaseSymbol):
         """
         yield self
 
-    def render(self, template='{key}', *args, **kwargs):
-        return template.format(**self.__dict__)
+    def render(self, template='{symbol.key}', *args, **kwargs):
+        return template.format(symbol=self)
 
     def __hash__(self, *args, **kwargs):
         return hash(self.key)
@@ -644,7 +654,7 @@ class LicenseSymbol(BaseSymbol):
         """
         Return True if `symbol` is a symbol-like object with its essential attributes.
         """
-        return hasattr(symbol, 'key') and hasattr(symbol, 'is_exception') and hasattr(symbol, '__dict__')
+        return hasattr(symbol, 'key') and hasattr(symbol, 'is_exception')
 
 
 #FIXME: we need to implement comparison!!!!
@@ -667,12 +677,12 @@ class LicenseSymbolLike(LicenseSymbol):
         renderer = getattr(symbol_like, 'render', None)
         if callable(renderer):
             self._render = renderer
-            
+
         super(LicenseSymbol, self).__init__(self.key)
 
-    def render(self, template='{key}', *args, **kwargs):
+    def render(self, template='{symbol.key}', *args, **kwargs):
         if self._render:
-            return self.render(template, *args, **kwargs)
+            return self._render(template, *args, **kwargs)
         return super(LicenseSymbolLike, self).render(template, *args, **kwargs)
 
     # the following are the essential and optional attributes of a symbol-like
@@ -733,7 +743,7 @@ class LicenseWithExceptionSymbol(BaseSymbol):
         yield self.license_symbol
         yield self.exception_symbol
 
-    def render(self, template='{key}', *args, **kwargs):
+    def render(self, template='{symbol.key}', *args, **kwargs):
         lic = self.license_symbol.render(template, *args, **kwargs)
         exc = self.exception_symbol.render(template, *args, **kwargs)
         return '%(lic)s WITH %(exc)s' % locals()
@@ -763,7 +773,7 @@ class LicenseWithExceptionSymbol(BaseSymbol):
 class RenderableFunction(Renderable):
     # derived from the __str__ code in boolean.py
 
-    def render(self, template='{key}', *args, **kwargs):
+    def render(self, template='{symbol.key}', *args, **kwargs):
         """
         Render an expression as a string, recursively applying the string `template`
         to every symbols and operators.
