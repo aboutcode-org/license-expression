@@ -538,7 +538,7 @@ class Renderable(object):
     """
     An interface for renderable objects.
     """
-    def render(self, template='{key}'):
+    def render(self, template='{key}', *args, **kwargs):
         """
         Return a formatted string rendering for this expression using the `template`
         format string to render each symbol. The variables available are `key` and
@@ -548,6 +548,9 @@ class Renderable(object):
 
         For symbols that hold multiple licenses (e.g. a WITH statement) the template
         is applied to each symbol individually.
+        
+        Note that when render() is called the *args and **kwargs are propagated
+        recursively to any Renderable object render() method.
         """
         return NotImplementedError
 
@@ -615,7 +618,7 @@ class LicenseSymbol(BaseSymbol):
         """
         yield self
 
-    def render(self, template='{key}'):
+    def render(self, template='{key}', *args, **kwargs):
         return template.format(**self.__dict__)
 
     def __hash__(self, *args, **kwargs):
@@ -661,6 +664,7 @@ class LicenseSymbolLike(LicenseSymbol):
         self.wrapped = symbol_like
 
         # can we delegate rendering to a render method of the wrapped object?
+        # we can if we have a .render() callable on the wrapped object.
         self._render = None
         renderer = getattr(symbol_like, 'render')
         if callable(renderer):
@@ -668,10 +672,13 @@ class LicenseSymbolLike(LicenseSymbol):
             
         super(LicenseSymbol, self).__init__(self.key)
 
-    def render(self, template='{key}'):
+    def render(self, template='{key}', *args, **kwargs):
         if self._render:
             return self.render(template)
         return super(LicenseSymbolLike, self).render(template)
+
+    # the following are the essential and optional attributes of a symbol-like
+    # wrapped object. We delegate via properties to self.wrapped.
 
     @property
     def key(self):
@@ -728,9 +735,9 @@ class LicenseWithExceptionSymbol(BaseSymbol):
         yield self.license_symbol
         yield self.exception_symbol
 
-    def render(self, template='{key}'):
-        lic = self.license_symbol.render(template)
-        exc = self.exception_symbol.render(template)
+    def render(self, template='{key}', *args, **kwargs):
+        lic = self.license_symbol.render(template, *args, **kwargs)
+        exc = self.exception_symbol.render(template, *args, **kwargs)
         return '%(lic)s WITH %(exc)s' % locals()
 
     def __hash__(self, *args, **kwargs):
@@ -758,7 +765,7 @@ class LicenseWithExceptionSymbol(BaseSymbol):
 class RenderableFunction(Renderable):
     # derived from the __str__ code in boolean.py
 
-    def render(self, template='{key}'):
+    def render(self, template='{key}', *args, **kwargs):
         """
         Render an expression as a string, recursively applying the string `template`
         to every symbols and operators.
@@ -768,12 +775,7 @@ class RenderableFunction(Renderable):
             # a bare symbol
             sym = expression_args[0]
             if isinstance(sym, Renderable):
-                sym = sym.render(template)
-
-            elif LicenseSymbol.symbol_like(sym) and hasattr(sym, '__dict__'):
-                # this is not a renderable symbol so it must be some symbol-like type
-                # it must be an object with a __dict__
-                sym = template.format(**sym.__dict__)
+                sym = sym.render(template, *args, **kwargs)
 
             else:
                 print('WARNING: symbol is not renderable: using plain string representation.')
@@ -792,12 +794,7 @@ class RenderableFunction(Renderable):
         for arg in expression_args:
             if isinstance(arg, Renderable):
                 # recurse
-                rendered = arg.render(template)
-
-            elif LicenseSymbol.symbol_like(arg) and hasattr(arg, '__dict__'):
-                # this is not a renderable symbol so it must be some symbol-like type
-                # it must be an object with a __dict__
-                rendered = template.format(**arg.__dict__)
+                rendered = arg.render(template, *args, **kwargs)
 
             else:
                 print('WARNING: object in expression is not renderable: falling back to plain string representation: %(arg)r.')
