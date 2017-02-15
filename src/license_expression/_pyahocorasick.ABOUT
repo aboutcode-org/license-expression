@@ -6,7 +6,7 @@ version: ec2fb9
 home_url: https://github.com/WojciechMula/pyahocorasick
 dje_license: public-domain
 
-copyright: origianlly authored by Wojciech Muła, modified by the license_expression authors.
+copyright: originally authored by Wojciech Mula, modified by the license_expression authors.
 
 notes: this is a vendored subset of the full pyahocorasick containing only the pure
  python part with an implementation modified to return non-overlapping matches and
@@ -16,7 +16,7 @@ notes: this is a vendored subset of the full pyahocorasick containing only the p
  Python library.
 
 owner: nexB Inc.
-author: Wojciech Muła http://0x80.pl/
+author: Wojciech Mula http://0x80.pl/
 
 vcs_tool: git
 vcs_repository: https://github.com/WojciechMula/pyahocorasick.git
