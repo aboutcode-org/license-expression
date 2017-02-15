@@ -666,7 +666,7 @@ class LicenseSymbolLike(LicenseSymbol):
         # can we delegate rendering to a render method of the wrapped object?
         # we can if we have a .render() callable on the wrapped object.
         self._render = None
-        renderer = getattr(symbol_like, 'render')
+        renderer = getattr(symbol_like, 'render', None)
         if callable(renderer):
             self._render = renderer
             
