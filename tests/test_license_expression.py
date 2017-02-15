@@ -419,16 +419,18 @@ class LicensingParseTest(TestCase):
 
     def test_parse_can_parse(self):
         licensing = Licensing()
-        expr = licensing.parse(' GPL-2.0 or LGPL 2.1 and mit ')
+        expr = ' GPL-2.0 or LGPL 2.1 and mit '
+        parsed = licensing.parse(expr)
         gpl2 = LicenseSymbol('GPL-2.0')
         lgpl = LicenseSymbol('LGPL 2.1')
         mit = LicenseSymbol('mit')
         expected = [gpl2, lgpl, mit]
+        self.assertEqual(expected, licensing.license_symbols(parsed))
         self.assertEqual(expected, licensing.license_symbols(expr))
-        self.assertEqual('gpl-2.0 OR (lgpl 2.1 AND mit)', str(expr))
+        self.assertEqual('gpl-2.0 OR (lgpl 2.1 AND mit)', str(parsed))
 
         expected = licensing.OR(gpl2, licensing.AND(lgpl, mit))
-        assert expected == expr
+        assert expected == parsed
 
     def test_parse_errors_catch_invalid_nesting(self):
         licensing = Licensing()
@@ -488,8 +490,6 @@ class LicensingParseTest(TestCase):
             except ParseError as pe:
                 expected = {'error_code': PARSE_INVALID_NESTING, 'position': 6, 'token_string': '(', 'token_type': TOKEN_LPAR}
                 assert expected == _parse_error_as_dict(pe)
-
-
 
     def test_parse_errors_does_not_raise_error_on_plain_non_unicode_raw_string(self):
         # plain non-unicode string does not raise error
@@ -558,7 +558,8 @@ class LicensingParseTest(TestCase):
 
     def test_parse_expression_with_WITH(self):
         gpl2, gpl2plus, lgpl, mit, licensing = self.get_symbols_and_licensing()
-        tokens = list(licensing.tokenize('The GNU GPL 20 or later or (LGPL-2.1 and mit) or The GNU GPL 20 or mit with 123'))
+        expr = 'The GNU GPL 20 or later or (LGPL-2.1 and mit) or The GNU GPL 20 or mit with 123'
+        tokens = list(licensing.tokenize(expr))
         expected = [
             (gpl2plus, u'The GNU GPL 20 or later', 0),
             (2, u'or', 24),
@@ -574,9 +575,10 @@ class LicensingParseTest(TestCase):
         ]
         assert expected == tokens
 
-        expr = licensing.parse('The GNU GPL 20 or later or (LGPL-2.1 and mit) or The GNU GPL 20 or mit with 123')
+        parsed = licensing.parse(expr)
         expected = 'gpl-2.0+ OR (lgpl-2.1 AND mit) OR gpl-2.0 OR mit WITH 123'
-        assert expected == str(expr)
+        assert expected == str(parsed)
+        assert ['123'] == licensing.unknown_license_keys(parsed)
         assert ['123'] == licensing.unknown_license_keys(expr)
 
     def test_parse_of_side_by_side_symbols_raise_exception(self):
@@ -596,6 +598,13 @@ class LicensingParseTest(TestCase):
         self.assertTrue(is_equiv(lic.parse('mit AND gpl'), lic.parse('gpl AND mit')))
         self.assertTrue(is_equiv(lic.parse('mit AND gpl and apache'), lic.parse('apache and gpl AND mit')))
         self.assertTrue(is_equiv(lic.parse('mit AND (gpl AND apache)'), lic.parse('(mit AND gpl) AND apache')))
+
+        # same but without parsing:
+        self.assertTrue(is_equiv('mit AND gpl', 'mit AND gpl'))
+        self.assertTrue(is_equiv('mit AND gpl', 'gpl AND mit'))
+        self.assertTrue(is_equiv('mit AND gpl and apache', 'apache and gpl AND mit'))
+        self.assertTrue(is_equiv('mit AND (gpl AND apache)', '(mit AND gpl) AND apache'))
+
 
         # Real-case example of generated expression vs. stored expression:
         ex1 = '''Commercial
@@ -641,6 +650,9 @@ class LicensingParseTest(TestCase):
         # logical expression so the order may be different on more complex expressions
         self.assertEqual(['mit', 'gpl'], licensing.license_keys(licensing.parse('mit AND gpl or gpl')))
         self.assertEqual(['l-a +', 'l-b', 'l -c+'], licensing.license_keys(licensing.parse('((l-a + AND l-b) OR (l -c+))')))
+        # same without parsing
+        self.assertEqual(['mit', 'gpl'], licensing.license_keys('mit AND gpl or gpl'))
+        self.assertEqual(['l-a +', 'l-b', 'l -c+'], licensing.license_keys('((l-a + AND l-b) OR (l -c+))'))
 
     def get_symbols_and_licensing(self):
         gpl2 = LicenseSymbol('GPL-2.0', ['The GNU GPL 20'])
@@ -653,16 +665,23 @@ class LicensingParseTest(TestCase):
 
     def test_unknown_keys(self):
         _gpl2, _gpl2plus, _lgpl, _mit, licensing = self.get_symbols_and_licensing()
-        expr = licensing.parse('The GNU GPL 20 or LGPL-2.1 and mit')
+        expr = 'The GNU GPL 20 or LGPL-2.1 and mit'
+        parsed = licensing.parse(expr)
         expected = 'gpl-2.0 OR (lgpl-2.1 AND mit)'
-        assert expected == str(expr)
+        assert expected == str(parsed)
+        assert 'GPL-2.0 OR (LGPL-2.1 AND MIT)' == parsed.render('{original_key}')
+        assert [] == licensing.unknown_license_keys(parsed)
         assert [] == licensing.unknown_license_keys(expr)
 
     def test_unknown_keys_with_trailing_char(self):
         gpl2, _gpl2plus, lgpl, mit, licensing = self.get_symbols_and_licensing()
-        expr = licensing.parse('The GNU GPL 20 or LGPL-2.1 and mitand2')
+        expr = 'The GNU GPL 20 or LGPL-2.1 and mitand2'
+        parsed = licensing.parse(expr)
         expected = [gpl2, lgpl, mit, LicenseSymbol(key='2')]
-        assert expected == licensing.license_symbols(licensing.parse(expr))
+        assert expected == licensing.license_symbols(parsed)
+        assert expected == licensing.license_symbols(licensing.parse(parsed))
+        assert expected == licensing.license_symbols(expr)
+        assert ['2'] == licensing.unknown_license_keys(parsed)
         assert ['2'] == licensing.unknown_license_keys(expr)
 
     def test_end_to_end(self):

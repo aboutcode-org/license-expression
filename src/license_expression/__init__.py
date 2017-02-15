@@ -132,16 +132,18 @@ class Licensing(boolean.BooleanAlgebra):
 
     >>> symbols = ['GPL-2.0+', 'Classpath', 'BSD']
     >>> l = Licensing(symbols)
-    >>> expr = l.parse("GPL-2.0+ with Classpath or (bsd)")
+    >>> expression = 'GPL-2.0+ with Classpath or (bsd)'
+    >>> parsed = l.parse(expression)
     >>> expected = 'gpl-2.0+ WITH classpath OR bsd'
-    >>> assert expected == expr.render('{key}')
+    >>> assert expected == parsed.render('{key}')
 
     >>> expected = [
     ...   LicenseSymbol('GPL-2.0+'),
     ...   LicenseSymbol('Classpath', is_exception=True),
     ...   LicenseSymbol('BSD')
     ... ]
-    >>> assert expected == l.license_symbols(expr)
+    >>> assert expected == l.license_symbols(parsed)
+    >>> assert expected == l.license_symbols(expression)
     """
     def __init__(self, symbols=tuple(), quiet=True):
         """
@@ -191,11 +193,8 @@ class Licensing(boolean.BooleanAlgebra):
         """
         Return True if both `expressions` LicenseExpression are equivalent.
         """
-        if not (isinstance(expression1, LicenseExpression)
-            and isinstance(expression2, LicenseExpression)):
-            raise TypeError('expressions must be LicenseExpression objects: %(expression1)r, %(expression2)r' % locals())
-        ex1 = expression1.simplify()
-        ex2 = expression2.simplify()
+        ex1 = self._parse_and_simplify(expression1)
+        ex2 = self._parse_and_simplify(expression2)
         return ex1 == ex2
 
     def contains(self, expression1, expression2):
@@ -204,13 +203,19 @@ class Licensing(boolean.BooleanAlgebra):
         Expressions are either a string or a LicenseExpression object.
         If a string is provided, it will be parsed and simplified.
         """
-        if not (isinstance(expression1, LicenseExpression)
-            and isinstance(expression2, LicenseExpression)):
-            raise TypeError('expressions must be LicenseExpression objects: %(expression1)r, %(expression2)r' % locals())
-        ex1 = expression1.simplify()
-        ex2 = expression2.simplify()
+        ex1 = self._parse_and_simplify(expression1)
+        ex2 = self._parse_and_simplify(expression2)
         return ex2 in ex1
 
+    def _parse_and_simplify(self, expression):
+        expression = self.parse(expression)
+        if expression is None:
+            return None
+
+        if not isinstance(expression, LicenseExpression):
+            raise TypeError('expressions must be LicenseExpression objects: %(expression1)r, %(expression2)r' % locals())
+        return expression.simplify()
+        
     def license_symbols(self, expression, unique=True, decompose=True):
         """
         Return a list of LicenseSymbol objects used in an expression in
@@ -234,9 +239,9 @@ class Licensing(boolean.BooleanAlgebra):
         >>> result = l.license_symbols(l.parse('GPL-2.0 or LGPL-2.1+'))
         >>> assert expected == result
         """
-        if not isinstance(expression, LicenseExpression):
-            raise TypeError('expression must be LicenseExpression object and not: %(expression)r' % locals())
-
+        expression = self.parse(expression)
+        if expression is None:
+            return []
         symbols = (s for s in expression.get_literals() if isinstance(s, BaseSymbol))
         if decompose:
             symbols = itertools.chain.from_iterable(s.decompose() for s in symbols)

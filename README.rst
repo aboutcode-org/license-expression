@@ -60,53 +60,61 @@ Usage examples
 For example::
 
     >>> from license_expression import Licensing, LicenseSymbol
-    >>> l = Licensing()
-    >>> expr = l.parse(" GPL-2.0 or LGPL 2.1 and mit ")
+    >>> licensing = Licensing()
+    >>> expression = ' GPL-2.0 or LGPL 2.1 and mit '
+    >>> parsed = licensing.parse(expression)
     >>> expected = 'GPL-2.0 OR (LGPL 2.1 AND mit)'
-    >>> assert expected == expr.render('{original_key}')
+    >>> assert expected == parsed.render('{original_key}')
 
     >>> expected = [
-    ...   LicenseSymbol('GPL-2.0', known=False),
-    ...   LicenseSymbol('LGPL 2.1', known=False),
-    ...   LicenseSymbol('mit', known=False)
+    ...   LicenseSymbol('GPL-2.0'),
+    ...   LicenseSymbol('LGPL 2.1'),
+    ...   LicenseSymbol('mit')
     ... ]
-    >>> assert expected == l.license_symbols(expr)
+    >>> assert expected == licensing.license_symbols(expression)
+    >>> assert expected == licensing.license_symbols(parsed)
 
     >>> symbols = ['GPL-2.0+', 'Classpath', 'BSD']
-    >>> l = Licensing(symbols)
-    >>> expr = l.parse("GPL-2.0+ with Classpath or (bsd)")
+    >>> licensing = Licensing(symbols)
+    >>> expression = 'GPL-2.0+ with Classpath or (bsd)'
+    >>> parsed = licensing.parse(expression)
     >>> expected = 'gpl-2.0+ WITH classpath OR bsd'
-    >>> assert expected == expr.render('{key}')
+    >>> assert expected == parsed.render('{key}')
 
     >>> expected = [
-    ...   LicenseSymbol('GPL-2.0+', known=True),
-    ...   LicenseSymbol('Classpath', is_exception=True, known=True),
-    ...   LicenseSymbol('BSD', known=True)
+    ...   LicenseSymbol('GPL-2.0+'),
+    ...   LicenseSymbol('Classpath', is_exception=True),
+    ...   LicenseSymbol('BSD')
     ... ]
-    >>> assert expected == l.license_symbols(expr)
+    >>> assert expected == licensing.license_symbols(parsed)
+    >>> assert expected == licensing.license_symbols(expression)
 
 
 And expression can be simplified::
 
-    >>> expr2 = l.parse(' GPL-2.0 or (mit and LGPL 2.1) or bsd Or GPL-2.0  or (mit and LGPL 2.1)')
-    >>> assert str(expr2.simplify()) == 'bsd OR gpl-2.0 OR (lgpl 2.1 AND mit)'
+    >>> expression2 = ' GPL-2.0 or (mit and LGPL 2.1) or bsd Or GPL-2.0  or (mit and LGPL 2.1)'
+    >>> parsed2 = licensing.parse(expression2)
+    >>> assert str(parsed2.simplify()) == 'bsd OR gpl-2.0 OR (lgpl 2.1 AND mit)'
     
 
 Two expressions can be compared for equivalence and containment::
 
-    >>> expr1 = l.parse(' GPL-2.0 or (LGPL 2.1 and mit) ')
-    >>> expr2 = l.parse(' (mit and LGPL 2.1)  or GPL-2.0 ')
-    >>> l.is_equivalent(expr1, expr2)
+    >>> expr1 = licensing.parse(' GPL-2.0 or (LGPL 2.1 and mit) ')
+    >>> expr2 = licensing.parse(' (mit and LGPL 2.1)  or GPL-2.0 ')
+    >>> licensing.is_equivalent(expr1, expr2)
+    True
+    >>> licensing.is_equivalent(' GPL-2.0 or (LGPL 2.1 and mit) ',
+    ...                         ' (mit and LGPL 2.1)  or GPL-2.0 ')
     True
     >>> expr1.simplify() == expr2.simplify()
     True
-    >>> expr3 = l.parse(' GPL-2.0 or mit or LGPL 2.1')
-    >>> l.is_equivalent(expr2, expr3)
+    >>> expr3 = licensing.parse(' GPL-2.0 or mit or LGPL 2.1')
+    >>> licensing.is_equivalent(expr2, expr3)
     False
-    >>> expr4 = l.parse('mit and LGPL 2.1')
+    >>> expr4 = licensing.parse('mit and LGPL 2.1')
     >>> expr4.simplify() in expr2.simplify()
     True
-    >>> l.contains(expr2, expr4)
+    >>> licensing.contains(expr2, expr4)
     True
 
     
