@@ -148,15 +148,8 @@ class Licensing(boolean.BooleanAlgebra):
     def __init__(self, symbols=tuple(), quiet=True):
         """
         Initialize a Licensing with an optional `symbols` sequence of LicenseSymbol
-        or license key strings. If provided and this list data is invalid, raise a
-        ValueError.
-
-        If `strict` is True, expressions will be validated against this list of
-        symbols for correctness. In particular if you provided only a list of plain
-        strings and not symbols with `is_exception` set to True for license
-        exceptions then this will raise an Exception when an with such symbols
-        expression is parsed. Otherwise, the list is just used as a helper to
-        recognize proper license keys in an expression.
+        or LicenseSymbol-like objects or license key strings. If provided and this
+        list data is invalid, raise a ValueError.
         """
         super(Licensing, self).__init__(Symbol_class=LicenseSymbol, AND_class=AND, OR_class=OR)
 
@@ -679,8 +672,8 @@ class LicenseSymbolLike(LicenseSymbol):
 
     def render(self, template='{key}', *args, **kwargs):
         if self._render:
-            return self.render(template)
-        return super(LicenseSymbolLike, self).render(template)
+            return self.render(template, *args, **kwargs)
+        return super(LicenseSymbolLike, self).render(template, *args, **kwargs)
 
     # the following are the essential and optional attributes of a symbol-like
     # wrapped object. We delegate via properties to self.wrapped.
