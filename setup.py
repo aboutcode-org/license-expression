@@ -17,7 +17,7 @@ desc = ('license-expression is small utility library to parse, compare, '
 
 setup(
     name='license-expression',
-    version='0.14',
+    version='0.15',
     license='apache-2.0',
     description=desc,
     long_description=desc,
