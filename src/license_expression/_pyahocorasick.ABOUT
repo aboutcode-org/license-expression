@@ -3,7 +3,7 @@ download_url: https://github.com/WojciechMula/pyahocorasick/tree/ec2fb9cb393f571
 name: pyahocorasick-python
 version: ec2fb9
 
-homepage_url: https://github.com/WojciechMula/pyahocorasick
+home_url: https://github.com/WojciechMula/pyahocorasick
 dje_license: public-domain
 
 copyright: origianlly authored by Wojciech Muła, modified by the license_expression authors.
@@ -16,8 +16,7 @@ notes: this is a vendored subset of the full pyahocorasick containing only the p
  Python library.
 
 owner: nexB Inc.
-author: Wojciech Muła
-author_url: http://0x80.pl/
+author: Wojciech Muła http://0x80.pl/
 
 vcs_tool: git
 vcs_repository: https://github.com/WojciechMula/pyahocorasick.git
