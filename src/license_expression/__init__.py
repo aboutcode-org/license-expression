@@ -121,7 +121,7 @@ class Licensing(boolean.BooleanAlgebra):
     >>> l = Licensing()
     >>> expr = l.parse(" GPL-2.0 or LGPL 2.1 and mit ")
     >>> expected = 'GPL-2.0 OR (LGPL 2.1 AND mit)'
-    >>> assert expected == expr.render('{symbol.original_key}')
+    >>> assert expected == expr.render('{symbol.key}')
 
     >>> expected = [
     ...   LicenseSymbol('GPL-2.0'),
@@ -134,7 +134,7 @@ class Licensing(boolean.BooleanAlgebra):
     >>> l = Licensing(symbols)
     >>> expression = 'GPL-2.0+ with Classpath or (bsd)'
     >>> parsed = l.parse(expression)
-    >>> expected = 'gpl-2.0+ WITH classpath OR bsd'
+    >>> expected = 'GPL-2.0+ WITH Classpath OR BSD'
     >>> assert expected == parsed.render('{symbol.key}')
 
     >>> expected = [
@@ -280,7 +280,7 @@ class Licensing(boolean.BooleanAlgebra):
         For example:
         >>> l = Licensing()
         >>> expr = ' GPL-2.0 and mit or later with blabla and mit or LGPL 2.1 and mit and mit or later with GPL-2.0'
-        >>> expected = ['gpl-2.0', 'mit', 'later', 'blabla', 'lgpl 2.1']
+        >>> expected = ['GPL-2.0', 'mit', 'later', 'blabla', 'LGPL 2.1']
         >>> assert expected == l.license_keys(l.parse(expr))
         """
         symbols = self.license_symbols(expression, unique=False, decompose=True, **kwargs)
@@ -341,14 +341,14 @@ class Licensing(boolean.BooleanAlgebra):
         to get unknown license keys or symbols found in a parsed LicenseExpression.
 
         If `strict` is True, additional exceptions will be raised if in a expression
-        such as "XXX with ZZZ" if the XXX symbol has `is_expection` set to True or
-        the YYY symbol has `is_expection` set to False.
+        such as "XXX with ZZZ" if the XXX symbol has `is_exception` set to True or
+        the YYY symbol has `is_exception` set to False.
 
         For example:
         >>> expression = 'EPL 1.0 and Apache 1.1 OR GPL 2.0 with Classpath exception'
         >>> parsed = Licensing().parse(expression)
         >>> expected = '(EPL 1.0 AND Apache 1.1) OR GPL 2.0 WITH Classpath exception'
-        >>> assert expected == parsed.render(template='{symbol.original_key}')
+        >>> assert expected == parsed.render(template='{symbol.key}')
         """
         if expression is None:
             return
@@ -402,8 +402,8 @@ class Licensing(boolean.BooleanAlgebra):
           character offset, or a tuple of starting (row/line, column).
 
         If `strict` is True, additional exceptions will be raised in a expression
-        such as "XXX with ZZZ" if the XXX symbol has is_expection` set to True or the
-        YYY symbol has `is_expection` set to False.
+        such as "XXX with ZZZ" if the XXX symbol has is_exception` set to True or the
+        YYY symbol has `is_exception` set to False.
         """
         scanner = self.get_scanner()
 
@@ -471,18 +471,18 @@ class Licensing(boolean.BooleanAlgebra):
 
                 # this should not happen
                 if lic_sym and not isinstance(lic_sym, LicenseSymbol):
-                    raise ParseError(TOKEN_SYMBOL, lic_res.string, lic_res.start, 
+                    raise ParseError(TOKEN_SYMBOL, lic_res.string, lic_res.start,
                                      PARSE_INVALID_SYMBOL)
 
                 if not lic_sym:
                     lic_sym = LicenseSymbol(lic_res.string, is_exception=False)
 
                 if not isinstance(lic_sym, LicenseSymbol):
-                    raise ParseError(TOKEN_SYMBOL, lic_res.string, lic_res.start, 
+                    raise ParseError(TOKEN_SYMBOL, lic_res.string, lic_res.start,
                                      PARSE_INVALID_SYMBOL)
 
                 if strict and lic_sym.is_exception:
-                    raise ParseError(TOKEN_SYMBOL, lic_res.string, lic_res.start, 
+                    raise ParseError(TOKEN_SYMBOL, lic_res.string, lic_res.start,
                                      PARSE_INVALID_EXCEPTION)
 
                 # exception
@@ -491,18 +491,18 @@ class Licensing(boolean.BooleanAlgebra):
 
                 # this should not happen
                 if exc_sym and not isinstance(exc_sym, LicenseSymbol):
-                    raise ParseError(TOKEN_SYMBOL, lic_sym.string, lic_sym.start, 
+                    raise ParseError(TOKEN_SYMBOL, lic_sym.string, lic_sym.start,
                                      PARSE_INVALID_SYMBOL)
 
                 if not exc_sym:
                     exc_sym = LicenseSymbol(exc_res.string, is_exception=True)
 
                 if not isinstance(exc_sym, LicenseSymbol):
-                    raise ParseError(TOKEN_SYMBOL, exc_res.string, exc_res.start, 
+                    raise ParseError(TOKEN_SYMBOL, exc_res.string, exc_res.start,
                                      PARSE_INVALID_SYMBOL)
 
                 if strict and not exc_sym.is_exception:
-                    raise ParseError(TOKEN_SYMBOL, exc_res.string, exc_res.start, 
+                    raise ParseError(TOKEN_SYMBOL, exc_res.string, exc_res.start,
                                      PARSE_INVALID_SYMBOL_AS_EXCEPTION)
 
                 token = LicenseWithExceptionSymbol(lic_sym, exc_sym, strict)
@@ -549,10 +549,9 @@ class Renderable(object):
     def render(self, template='{symbol.key}', *args, **kwargs):
         """
         Return a formatted string rendering for this expression using the `template`
-        format string to render each symbol. The variables available are `key` and
-        `original_key` and any other attribute that was attached to a license symbol
-        instance and a custom template can be provided to handle custom HTML
-        rendering or similar.
+        format string to render each symbol. The variable available are `symbol.key`
+        and any other attribute that was attached to a license symbol instance and a
+        custom template can be provided to handle custom HTML rendering or similar.
 
         For symbols that hold multiple licenses (e.g. a WITH statement) the template
         is applied to each symbol individually.
@@ -575,6 +574,9 @@ class BaseSymbol(Renderable, boolean.Symbol):
         raise NotImplementedError
 
 
+# validate license keys
+is_valid_license_key = re.compile(r'^[-+\w\s\.]+$').match
+
 #FIXME: we need to implement comparison!!!!
 @total_ordering
 class LicenseSymbol(BaseSymbol):
@@ -584,7 +586,7 @@ class LicenseSymbol(BaseSymbol):
     def __init__(self, key, aliases=tuple(), is_exception=False, *args, **kwargs):
         if not key:
             raise ExpressionError(
-                'LicenseSymbol key cannot be empty: %(key)r' % locals())
+                'A license key cannot be empty: %(key)r' % locals())
 
         if not isinstance(key, str):
             if isinstance(key, bytes):
@@ -592,28 +594,30 @@ class LicenseSymbol(BaseSymbol):
                     key = unicode(key)
                 except:
                     raise ExpressionError(
-                        'LicenseSymbol key must be a unicode string: %(key)r' % locals())
+                        'A license key must be a unicode string: %(key)r' % locals())
             else:
                 raise ExpressionError(
-                    'LicenseSymbol key must be a unicode string: %(key)r' % locals())
+                    'A license key must be a unicode string: %(key)r' % locals())
 
         key = key.strip()
 
         if not key:
             raise ExpressionError(
-                'LicenseSymbol key cannot be blank: %(original_key)r' % locals())
+                'A license key cannot be blank: "%(key)s"' % locals())
+
+        # note: key cannot contain spaces
+        if not is_valid_license_key(key):
+            raise ExpressionError(
+                'Invalid license key: the valid characters are: letters and numbers, '
+                'underscore, dot, plus or hyphen signs and spaces: "%(key)s"' % locals())
 
         # normalize for spaces
         key = ' '.join(key.split())
 
-        # kept as a space-normalized version of the original key, but not lowercased
-        self.original_key = key
-
-        # key is always lowercased
-        self.key = key.lower()
+        self.key = key
 
         if aliases and not isinstance(aliases, (list, tuple,)):
-            raise TypeError('aliases must be a sequence.')
+            raise TypeError('License aliases must be a sequence.')
         self.aliases = aliases and tuple(aliases) or tuple()
         self.is_exception = is_exception
 
