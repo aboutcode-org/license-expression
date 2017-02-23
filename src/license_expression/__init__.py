@@ -14,7 +14,6 @@
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
 
-
 """
 This module defines a mini language to parse, validate, simplify, normalize and
 compare license expressions using a boolean logic engine.
@@ -65,6 +64,8 @@ from boolean.boolean import ParseError
 from boolean.boolean import TOKEN_SYMBOL
 
 from license_expression._pyahocorasick import Trie as Scanner
+from license_expression._pyahocorasick import Output
+from license_expression._pyahocorasick import Result
 
 
 # append new error codes to PARSE_ERRORS by monkey patching
@@ -99,6 +100,7 @@ Keyword = collections.namedtuple('Keyword', 'value type')
 
 # id for "with" token which is not a proper boolean symbol but an expression symbol
 TOKEN_WITH = 10
+TOKEN_OR_LATER = 11
 
 # actual keyword types
 _KEYWORDS = [
@@ -107,6 +109,8 @@ _KEYWORDS = [
     Keyword('(', boolean.TOKEN_LPAR),
     Keyword(')', boolean.TOKEN_RPAR),
     Keyword('with', TOKEN_WITH),
+    Keyword('+', TOKEN_OR_LATER),
+    Keyword('or later', TOKEN_OR_LATER),
 ]
 
 KEYWORDS = tuple(kw.value for kw in _KEYWORDS)
@@ -130,15 +134,15 @@ class Licensing(boolean.BooleanAlgebra):
     ... ]
     >>> assert expected == l.license_symbols(expr)
 
-    >>> symbols = ['GPL-2.0+', 'Classpath', 'BSD']
+    >>> symbols = ['GPL-2.0', 'Classpath', 'BSD']
     >>> l = Licensing(symbols)
     >>> expression = 'GPL-2.0+ with Classpath or (bsd)'
     >>> parsed = l.parse(expression)
     >>> expected = 'GPL-2.0+ WITH Classpath OR BSD'
-    >>> assert expected == parsed.render('{symbol.key}')
+    >>> assert expected == parsed.render('{symbol.key}', '{symbol.key}+')
 
     >>> expected = [
-    ...   LicenseSymbol('GPL-2.0+'),
+    ...   LicenseSymbol('GPL-2.0', or_later=True),
     ...   LicenseSymbol('Classpath', is_exception=True),
     ...   LicenseSymbol('BSD')
     ... ]
@@ -226,7 +230,7 @@ class Licensing(boolean.BooleanAlgebra):
         >>> l = Licensing()
         >>> expected = [
         ...   LicenseSymbol('GPL-2.0'),
-        ...   LicenseSymbol('LGPL-2.1+')
+        ...   LicenseSymbol('LGPL-2.1', or_later=True)
         ... ]
         >>> result = l.license_symbols(l.parse('GPL-2.0 or LGPL-2.1+'))
         >>> assert expected == result
@@ -280,7 +284,7 @@ class Licensing(boolean.BooleanAlgebra):
         For example:
         >>> l = Licensing()
         >>> expr = ' GPL-2.0 and mit or later with blabla and mit or LGPL 2.1 and mit and mit or later with GPL-2.0'
-        >>> expected = ['GPL-2.0', 'mit', 'later', 'blabla', 'LGPL 2.1']
+        >>> expected = ['GPL-2.0', 'mit', 'blabla', 'LGPL 2.1']
         >>> assert expected == l.license_keys(l.parse(expr))
         """
         symbols = self.license_symbols(expression, unique=False, decompose=True, **kwargs)
@@ -409,6 +413,7 @@ class Licensing(boolean.BooleanAlgebra):
         # scan with an automaton, recognize whole symbols+keywords or only keywords
         results = scanner.scan(expression)
         results = strip_and_skip_spaces(results)
+        results = merge_or_later_results(results)
         result_groups = group_results_for_with_subexpression(results)
         for group in result_groups:
             len_group = len(group)
@@ -432,6 +437,12 @@ class Licensing(boolean.BooleanAlgebra):
                         # this is an error that we catch and raise here.
                         if token == TOKEN_WITH:
                             raise ParseError(token_type=TOKEN_WITH,
+                                             token_string=result.string,
+                                             position=result.start,
+                                             error_code=PARSE_INVALID_EXPRESSION)
+
+                        if token == TOKEN_OR_LATER:
+                            raise ParseError(token_type=TOKEN_OR_LATER,
                                              token_string=result.string,
                                              position=result.start,
                                              error_code=PARSE_INVALID_EXPRESSION)
@@ -574,7 +585,7 @@ class BaseSymbol(Renderable, boolean.Symbol):
 
 
 # validate license keys
-is_valid_license_key = re.compile(r'^[-+\w\s\.]+$', re.UNICODE).match
+is_valid_license_key = re.compile(r'^[-\w\s\.]+$', re.UNICODE).match
 
 #FIXME: we need to implement comparison!!!!
 @total_ordering
@@ -582,7 +593,7 @@ class LicenseSymbol(BaseSymbol):
     """
     A LicenseSymbol represents a license as used in a license expression.
     """
-    def __init__(self, key, aliases=tuple(), is_exception=False, *args, **kwargs):
+    def __init__(self, key, aliases=tuple(), is_exception=False, or_later=False, *args, **kwargs):
         if not key:
             raise ExpressionError(
                 'A license key cannot be empty: %(key)r' % locals())
@@ -608,12 +619,20 @@ class LicenseSymbol(BaseSymbol):
         if not is_valid_license_key(key):
             raise ExpressionError(
                 'Invalid license key: the valid characters are: letters and numbers, '
-                'underscore, dot, plus or hyphen signs and spaces: %(key)r' % locals())
+                'underscore, dot or hyphen signs and spaces: "%(key)s"' % locals())
 
         # normalize for spaces
         key = ' '.join(key.split())
 
+        if 'or later' in key.lower():
+            raise ExpressionError(
+                'Invalid license key: "or later" words are reserved and cannot be used in '
+                'a key: "%(key)s"' % locals())
+
         self.key = key
+
+        # flag possibly set at parsing time for "or later"
+        self.or_later = or_later
 
         if aliases and not isinstance(aliases, (list, tuple,)):
             raise TypeError('License aliases must be a sequence.')
@@ -629,28 +648,46 @@ class LicenseSymbol(BaseSymbol):
         """
         yield self
 
-    def render(self, template='{symbol.key}', *args, **kwargs):
-        return template.format(symbol=self)
-
     def __hash__(self, *args, **kwargs):
         return hash(self.key)
 
     def __eq__(self, other):
         return (self is other
-            or (isinstance(other, self.__class__) and self.key == other.key)
-            or (self.symbol_like(other) and self.key == other.key))
+            or (isinstance(other, self.__class__)
+                and self.key == other.key
+                and self.or_later == other.or_later)
+            or (self.symbol_like(other)
+                and self.key == other.key
+                and self.or_later == other.or_later)
+        )
 
     __nonzero__ = __bool__ = lambda s: True
 
+    # FIXME: things break for OR later
+    def render(self, template='{symbol.key}', or_later_template='{symbol.key} or later', *args, **kwargs):
+        if self.or_later:
+            template = or_later_template
+        return template.format(symbol=self)
+
+    # FIXME: things break for OR later
     def __str__(self):
-        return self.key
+        s = self.key
+        if self.or_later:
+            s += ' or later'
+        return s
 
     def __repr__(self):
         cls = self.__class__.__name__
         key = self.key
         aliases = self.aliases and (', aliases=%(a)r' % {'a': self.aliases}) or ''
         is_exception = self.is_exception
-        return '%(cls)s(key=%(key)r, is_exception=%(is_exception)r%(aliases)s)' % locals()
+        or_later = self.or_later
+        return '%(cls)s(key=%(key)r, is_exception=%(is_exception)r, or_later=%(or_later)r%(aliases)s)' % locals()
+
+    def __copy__(self):
+        ns = LicenseSymbol(self.key, tuple(self.aliases), self.is_exception)
+        ns.or_later = self.or_later
+        return ns
 
     @classmethod
     def symbol_like(cls, symbol):
@@ -681,12 +718,20 @@ class LicenseSymbolLike(LicenseSymbol):
         if callable(renderer):
             self._render = renderer
 
-        super(LicenseSymbol, self).__init__(self.key)
+        super(LicenseSymbol, self).__init__(self.key, *args, **kwargs)
 
-    def render(self, template='{symbol.key}', *args, **kwargs):
+    def __copy__(self):
+        ns = LicenseSymbolLike(symbol_like=self.wrapped)
+        ns.or_later = self.or_later
+        return ns
+
+    # FIXME: things break for OR later
+    def render(self, template='{symbol.key}', or_later_template='{symbol.key} or later', *args, **kwargs):
         if self._render:
-            return self._render(template, *args, **kwargs)
-        return super(LicenseSymbolLike, self).render(template, *args, **kwargs)
+            # pass down the or_later from parsing
+            kwargs.update(dict(or_later=self.or_later))
+            return self._render(template, or_later_template, *args, **kwargs)
+        return super(LicenseSymbolLike, self).render(template, or_later_template, *args, **kwargs)
 
     # the following are the essential and optional attributes of a symbol-like
     # wrapped object. We delegate via properties to self.wrapped.
@@ -742,13 +787,17 @@ class LicenseWithExceptionSymbol(BaseSymbol):
         self.exception_symbol = exception_symbol
         super(LicenseWithExceptionSymbol, self).__init__(str(self))
 
+    def __copy__(self):
+        return LicenseWithExceptionSymbol(copy(self.license_symbol), copy(self.exception_symbol))
+
     def decompose(self):
         yield self.license_symbol
         yield self.exception_symbol
 
-    def render(self, template='{symbol.key}', *args, **kwargs):
-        lic = self.license_symbol.render(template, *args, **kwargs)
-        exc = self.exception_symbol.render(template, *args, **kwargs)
+    # FIXME: things break for OR later
+    def render(self, template='{symbol.key}', or_later_template='{symbol.key} or later', *args, **kwargs):
+        lic = self.license_symbol.render(template, or_later_template, *args, **kwargs)
+        exc = self.exception_symbol.render(template, or_later_template, *args, **kwargs)
         return '%(lic)s WITH %(exc)s' % locals()
 
     def __hash__(self, *args, **kwargs):
@@ -762,6 +811,7 @@ class LicenseWithExceptionSymbol(BaseSymbol):
 
     __nonzero__ = __bool__ = lambda s: True
 
+    # FIXME: things break for OR later
     def __str__(self):
         lkey = self.license_symbol.key
         ekey = self.exception_symbol.key
@@ -776,7 +826,7 @@ class LicenseWithExceptionSymbol(BaseSymbol):
 class RenderableFunction(Renderable):
     # derived from the __str__ code in boolean.py
 
-    def render(self, template='{symbol.key}', *args, **kwargs):
+    def render(self, template='{symbol.key}', or_later_template='{symbol.key} or later', *args, **kwargs):
         """
         Render an expression as a string, recursively applying the string `template`
         to every symbols and operators.
@@ -786,7 +836,7 @@ class RenderableFunction(Renderable):
             # a bare symbol
             sym = expression_args[0]
             if isinstance(sym, Renderable):
-                sym = sym.render(template, *args, **kwargs)
+                sym = sym.render(template, or_later_template, *args, **kwargs)
 
             else:
                 print('WARNING: symbol is not renderable: using plain string representation.')
@@ -805,7 +855,7 @@ class RenderableFunction(Renderable):
         for arg in expression_args:
             if isinstance(arg, Renderable):
                 # recurse
-                rendered = arg.render(template, *args, **kwargs)
+                rendered = arg.render(template, or_later_template, *args, **kwargs)
 
             else:
                 print('WARNING: object in expression is not renderable: falling back to plain string representation: %(arg)r.')
@@ -861,11 +911,62 @@ def strip_and_skip_spaces(results):
             yield result
 
 
+def merge_results(res1, res2):
+    """
+    Return a new Result merging two results where `res1` must be a symbol and `res2`
+    must be an "or later" or "+" keyword.
+    """
+    reso = res1.output
+    if reso:
+        sym = copy(reso.value)
+    else:
+        sym = LicenseSymbol(res1.string)
+    sym.or_later = True
+
+    start = res1.start
+    end = res2.end
+    string = res1.string + ' ' * (res2.start - res1.end - 1) + res2.string
+    output = Output(key=string, value=sym)
+    return Result(start, end, string, output)
+
+
+def merge_or_later_results(results):
+    """
+    Yield Results given a sequence of Results such that:
+     - all symbol-or-later subsequences of two results are merged and the symbol is updated.
+     - other results are left untouched.
+    """
+    # if n-1 is "sym" and n is "or later": merge as a new result
+    # otherwise: yield as is
+
+    previous = None
+    for res in results:
+        if not previous:
+            if is_symbol(res):
+                previous = res
+            else:
+                yield res
+            continue
+
+        if is_or_later_keyword(res):
+            new_res = merge_results(previous, res)
+            yield new_res
+            previous = None
+            continue
+
+        yield previous
+        previous = res
+
+    # end remainder
+    if previous:
+        yield previous
+
+
 def group_results_for_with_subexpression(results):
     """
-    Yield tuples of (Result) given a sequence of Result such that all symbol-with-
-    symbol subsequences of three results are grouped in a tuple and that other
-    results are the single res in a tuple.
+    Yield tuples of (Result) given a sequence of Result such that:
+     - all symbol-with-symbol subsequences of three results are grouped in a three-tuple
+     - other results are the single result in a tuple.
     """
 
     # if n-1 is sym, n is with and n+1 is sym: yield this as a group for a with exp
@@ -910,6 +1011,12 @@ def group_results_for_with_subexpression(results):
 def is_symbol(result):
     # either the output value is a known sym, or we have no output for unknown sym
     return result.output and isinstance(result.output.value, LicenseSymbol) or not result.output
+
+
+def is_or_later_keyword(result):
+    return (result.output
+            and isinstance(result.output.value, Keyword)
+            and result.output.value.type == TOKEN_OR_LATER)
 
 
 def is_with_keyword(result):
@@ -980,7 +1087,8 @@ def validate_symbols(symbols, validate_keys=False, _keywords=KEYWORDS):
     dupe_exceptions = set()
     dupe_aliases = collections.defaultdict(list)
     invalid_keys_as_kw = set()
-    invalid_alias_as_kw = set()
+    invalid_alias_as_kw = collections.defaultdict(list)
+    illegal_aliases = collections.defaultdict(list)
 
     # warning
     warning_dupe_aliases = set()
@@ -1011,6 +1119,7 @@ def validate_symbols(symbols, validate_keys=False, _keywords=KEYWORDS):
 
         # always normalize aliases for spaces and case
         aliases = set([' '.join(alias.lower().strip().split()) for alias in aliases])
+
         # KEEP UNIQUES, remove empties
         aliases = set(a for a in aliases if a)
 
@@ -1032,7 +1141,11 @@ def validate_symbols(symbols, validate_keys=False, _keywords=KEYWORDS):
 
             # an alias cannot be an expression keyword
             if alias in _keywords:
-                invalid_alias_as_kw.add(alias)
+                invalid_alias_as_kw[key].append(alias)
+
+            # an alias cannot contain + or "or later" keyword
+            if 'or later' in alias or '+' in alias:
+                illegal_aliases[key].append(alias)
 
             seen_aliases[alias] = keyl
 
@@ -1052,17 +1165,24 @@ def validate_symbols(symbols, validate_keys=False, _keywords=KEYWORDS):
 
     for dalias, dkeys in sorted(dupe_aliases.items()):
         dkeys = ', '.join(dkeys)
-        errors.append('Invalid duplicated alias pointing to different keys: '
-                      '%(dalias)s to keys: %(dkeys)s.' % locals())
+        errors.append('Invalid duplicated alias pointing to multiple keys: '
+                      '%(dalias)s point to keys: %(dkeys)s.' % locals())
+
+    for ikey, ialiases in sorted(illegal_aliases.items()):
+        ialiases = ', '.join(ialiases)
+        errors.append('Invalid license aliases: "or later" words and "+" are reserved and '
+                      'cannot be used as aliases. key: "%(ikey)s", aliases: %(ialiases)s.' % locals())
+
+    for ikey, ialiases in sorted(invalid_alias_as_kw.items()):
+        ialiases = ', '.join(ialiases)
+        errors.append('Invalid aliases: an alias cannot be an expression keyword. '
+                      'key: "%(ikey)s", aliases: %(ialiases)s.' % locals())
 
     for dupe in sorted(dupe_exceptions):
         errors.append('Invalid duplicated license exception key: %(dupe)s.' % locals())
 
     for ikw in sorted(invalid_keys_as_kw):
         errors.append('Invalid key: a key cannot be an expression keyword: %(ikw)s.' % locals())
-
-    for ikw in sorted(invalid_alias_as_kw):
-        errors.append('Invalid alias: an alias cannot be an expression keyword: %(ikw)r.' % locals())
 
     warnings = []
     for dupeal in sorted(dupe_aliases):

@@ -74,15 +74,15 @@ For example::
     >>> assert expected == licensing.license_symbols(expression)
     >>> assert expected == licensing.license_symbols(parsed)
 
-    >>> symbols = ['GPL-2.0+', 'Classpath', 'BSD']
+    >>> symbols = ['GPL-2.0', 'Classpath', 'BSD']
     >>> licensing = Licensing(symbols)
     >>> expression = 'GPL-2.0+ with Classpath or (bsd)'
     >>> parsed = licensing.parse(expression)
     >>> expected = 'GPL-2.0+ WITH Classpath OR BSD'
-    >>> assert expected == parsed.render('{symbol.key}')
+    >>> assert expected == parsed.render('{symbol.key}', '{symbol.key}+')
 
     >>> expected = [
-    ...   LicenseSymbol('GPL-2.0+'),
+    ...   LicenseSymbol('GPL-2.0', or_later=True    ),
     ...   LicenseSymbol('Classpath', is_exception=True),
     ...   LicenseSymbol('BSD')
     ... ]
