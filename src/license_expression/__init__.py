@@ -374,8 +374,7 @@ class Licensing(boolean.BooleanAlgebra):
             tokens = list(self.tokenize(expression, strict=strict))
             expression = super(Licensing, self).parse(tokens)
         except TypeError as e:
-            import traceback
-            msg = 'Invalid expression syntax: ' + repr(e) + '\n' + traceback.format_exc()
+            msg = 'Invalid expression syntax: ' + repr(e)
             raise ExpressionError(msg)
 
         if not isinstance(expression, LicenseExpression):
