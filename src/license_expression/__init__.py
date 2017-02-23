@@ -575,7 +575,7 @@ class BaseSymbol(Renderable, boolean.Symbol):
 
 
 # validate license keys
-is_valid_license_key = re.compile(r'^[-+\w\s\.]+$').match
+is_valid_license_key = re.compile(r'^[-+\w\s\.]+$', re.UNICODE).match
 
 #FIXME: we need to implement comparison!!!!
 @total_ordering
@@ -605,11 +605,11 @@ class LicenseSymbol(BaseSymbol):
             raise ExpressionError(
                 'A license key cannot be blank: "%(key)s"' % locals())
 
-        # note: key cannot contain spaces
+        # note: key can contain spaces
         if not is_valid_license_key(key):
             raise ExpressionError(
                 'Invalid license key: the valid characters are: letters and numbers, '
-                'underscore, dot, plus or hyphen signs and spaces: "%(key)s"' % locals())
+                'underscore, dot, plus or hyphen signs and spaces: %(key)r' % locals())
 
         # normalize for spaces
         key = ' '.join(key.split())

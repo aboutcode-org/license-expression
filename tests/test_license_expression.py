@@ -539,17 +539,16 @@ class LicensingParseTest(TestCase):
             try:
                 licensing.parse('mit (and LGPL 2.1)'.encode('utf-8') + extra_bytes)
                 self.fail('Exception not raised')
-            except ExpressionError as pe:
-                assert str(pe).startswith('expression must be a string and')
+            except ExpressionError as ee:
+                assert str(ee).startswith('expression must be a string and')
 
         if py3:
             extra_bytes = bytes(chr(0) + chr(12) + chr(255), encoding='utf-8')
             try:
                 licensing.parse('mit (and LGPL 2.1)'.encode('utf-8') + extra_bytes)
                 self.fail('Exception not raised')
-            except ParseError as pe:
-                expected = {'error_code': PARSE_INVALID_NESTING, 'position': 6, 'token_string': '(', 'token_type': TOKEN_LPAR}
-                assert expected == _parse_error_as_dict(pe)
+            except ExpressionError as ee:
+                assert str(ee).startswith('Invalid license key')
 
     def test_parse_errors_does_not_raise_error_on_plain_non_unicode_raw_string(self):
         # plain non-unicode string does not raise error
