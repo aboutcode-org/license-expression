@@ -1,7 +1,7 @@
 about_resource: .
 name: license-expression
 
-copyright: Copyright (c) 2016 nexB Inc. and others.
+copyright: Copyright (c) 2017 nexB Inc. and others.
 
 dje_license: apache-2.0
 license_text_file: apache-2.0.LICENSE
