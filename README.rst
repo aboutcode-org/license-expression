@@ -61,14 +61,14 @@ For example::
 
     >>> from license_expression import Licensing, LicenseSymbol
     >>> licensing = Licensing()
-    >>> expression = ' GPL-2.0 or LGPL 2.1 and mit '
+    >>> expression = ' GPL-2.0 or LGPL-2.1 and mit '
     >>> parsed = licensing.parse(expression)
-    >>> expected = 'GPL-2.0 OR (LGPL 2.1 AND mit)'
+    >>> expected = 'GPL-2.0 OR (LGPL-2.1 AND mit)'
     >>> assert expected == parsed.render('{symbol.key}')
 
     >>> expected = [
     ...   LicenseSymbol('GPL-2.0'),
-    ...   LicenseSymbol('LGPL 2.1'),
+    ...   LicenseSymbol('LGPL-2.1'),
     ...   LicenseSymbol('mit')
     ... ]
     >>> assert expected == licensing.license_symbols(expression)

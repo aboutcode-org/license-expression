@@ -62,6 +62,10 @@ from boolean.boolean import PARSE_UNBALANCED_CLOSING_PARENS
 from boolean.boolean import PARSE_UNKNOWN_TOKEN
 from boolean.boolean import ParseError
 from boolean.boolean import TOKEN_SYMBOL
+from boolean.boolean import TOKEN_AND
+from boolean.boolean import TOKEN_OR
+from boolean.boolean import TOKEN_LPAR
+from boolean.boolean import TOKEN_RPAR
 
 from license_expression._pyahocorasick import Trie as Scanner
 from license_expression._pyahocorasick import Output
@@ -103,14 +107,16 @@ TOKEN_WITH = 10
 TOKEN_OR_LATER = 11
 
 # actual keyword types
+KW_LPAR = Keyword('(', TOKEN_LPAR)
+KW_RPAR = Keyword(')', TOKEN_RPAR)
 _KEYWORDS = [
-    Keyword('and', boolean.TOKEN_AND),
-    Keyword('or', boolean.TOKEN_OR),
-    Keyword('(', boolean.TOKEN_LPAR),
-    Keyword(')', boolean.TOKEN_RPAR),
-    Keyword('with', TOKEN_WITH),
+    Keyword(' and ', TOKEN_AND),
+    Keyword(' or ', TOKEN_OR),
+    KW_LPAR,
+    KW_RPAR,
+    Keyword(' with ', TOKEN_WITH),
     Keyword('+', TOKEN_OR_LATER),
-    Keyword('or later', TOKEN_OR_LATER),
+    Keyword(' or later', TOKEN_OR_LATER),
 ]
 
 KEYWORDS = tuple(kw.value for kw in _KEYWORDS)
@@ -123,13 +129,13 @@ class Licensing(boolean.BooleanAlgebra):
     For example:
 
     >>> l = Licensing()
-    >>> expr = l.parse(" GPL-2.0 or LGPL 2.1 and mit ")
-    >>> expected = 'GPL-2.0 OR (LGPL 2.1 AND mit)'
+    >>> expr = l.parse(" GPL-2.0 or LGPL-2.1 and mit ")
+    >>> expected = 'GPL-2.0 OR (LGPL-2.1 AND mit)'
     >>> assert expected == expr.render('{symbol.key}')
 
     >>> expected = [
     ...   LicenseSymbol('GPL-2.0'),
-    ...   LicenseSymbol('LGPL 2.1'),
+    ...   LicenseSymbol('LGPL-2.1'),
     ...   LicenseSymbol('mit')
     ... ]
     >>> assert expected == l.license_symbols(expr)
@@ -174,6 +180,8 @@ class Licensing(boolean.BooleanAlgebra):
                 raise ValueError('\n'.join(warns + errors))
 
         # mapping of known symbol used for parsing and resolution as (key, symbol)
+        # TODO: inject lpar, rpar and spaces sourround, before and after
+        # e.g "(sym)" "(sym " "sym)" " sym "
         self.known_symbols = {symbol.key: symbol for symbol in symbols}
 
         # Aho-Corasick automaton-based Scanner used for expression tokenizing
@@ -283,8 +291,8 @@ class Licensing(boolean.BooleanAlgebra):
 
         For example:
         >>> l = Licensing()
-        >>> expr = ' GPL-2.0 and mit or later with blabla and mit or LGPL 2.1 and mit and mit or later with GPL-2.0'
-        >>> expected = ['GPL-2.0', 'mit', 'blabla', 'LGPL 2.1']
+        >>> expr = ' GPL-2.0 and mit+ with blabla and mit or LGPL-2.1 and mit and mit+ with GPL-2.0'
+        >>> expected = ['GPL-2.0', 'mit', 'blabla', 'LGPL-2.1']
         >>> assert expected == l.license_keys(l.parse(expr))
         """
         symbols = self.license_symbols(expression, unique=False, decompose=True, **kwargs)
@@ -349,9 +357,9 @@ class Licensing(boolean.BooleanAlgebra):
         the YYY symbol has `is_exception` set to False.
 
         For example:
-        >>> expression = 'EPL 1.0 and Apache 1.1 OR GPL 2.0 with Classpath exception'
+        >>> expression = 'EPL-1.0 and Apache-1.1 OR GPL-2.0 with Classpath-exception'
         >>> parsed = Licensing().parse(expression)
-        >>> expected = '(EPL 1.0 AND Apache 1.1) OR GPL 2.0 WITH Classpath exception'
+        >>> expected = '(EPL-1.0 AND Apache-1.1) OR GPL-2.0 WITH Classpath-exception'
         >>> assert expected == parsed.render(template='{symbol.key}')
         """
         if expression is None:
@@ -406,12 +414,16 @@ class Licensing(boolean.BooleanAlgebra):
 
         If `strict` is True, additional exceptions will be raised in a expression
         such as "XXX with ZZZ" if the XXX symbol has is_exception` set to True or the
-        YYY symbol has `is_exception` set to False.
+        ZZZ symbol has `is_exception` set to False.
         """
-        scanner = self.get_scanner()
+        if self.known_symbols:
+            # scan with an automaton, recognize whole symbols+keywords or only keywords
+            scanner = self.get_scanner()
+            results = scanner.scan(expression)
+        else:
+            # scan with a simple regex-based splitter
+            results = splitter(expression)
 
-        # scan with an automaton, recognize whole symbols+keywords or only keywords
-        results = scanner.scan(expression)
         results = strip_and_skip_spaces(results)
         results = merge_or_later_results(results)
         result_groups = group_results_for_with_subexpression(results)
@@ -471,9 +483,10 @@ class Licensing(boolean.BooleanAlgebra):
                         TOKEN_SYMBOL, string, start, PARSE_INVALID_EXPRESSION)
 
                 # this is a A with B seq of three results
-                lic_res, _WITH , exc_res = group
+                lic_res, WITH , exc_res = group
                 pos = lic_res.start
-                token_string = ' '.join([t.string for t in group])
+                WITHs = ' ' + WITH.string.strip() + ' '
+                token_string = ''.join([lic_res.string, WITHs, exc_res.string])
 
                 # licenses
                 lic_out = lic_res.output
@@ -511,7 +524,7 @@ class Licensing(boolean.BooleanAlgebra):
                     raise ParseError(TOKEN_SYMBOL, exc_res.string, exc_res.start,
                                      PARSE_INVALID_SYMBOL)
 
-                if strict and not exc_sym.is_exception:
+                if strict and self.known_symbols and not exc_sym.is_exception:
                     raise ParseError(TOKEN_SYMBOL, exc_res.string, exc_res.start,
                                      PARSE_INVALID_SYMBOL_AS_EXCEPTION)
 
@@ -1189,3 +1202,76 @@ def validate_symbols(symbols, validate_keys=False, _keywords=KEYWORDS):
         errors.append('Duplicated or empty aliases ignored for license key: %(dupeal)r.' % locals())
 
     return warnings, errors
+
+
+_splitter = re.compile('''
+    (?P<symbol>[^\s\(\)]+)
+     |
+    (?P<space>\s+)
+     |
+    (?P<lpar>\()
+     |
+    (?P<rpar>\))
+    ''',
+    re.VERBOSE | re.MULTILINE | re.UNICODE
+).finditer
+
+
+def splitter(expression):
+    """
+    Return an iterable of Result describing each token given an
+    expression unicode string.
+
+    This is a simpler tokenizer used when the Licensing does not have
+    known symbols. The split is done on spaces and parens. Anything else
+    is either a token or a symbol.
+    """
+    if not expression:
+        return
+
+    if not isinstance(expression, str):
+        raise ParseError(error_code=PARSE_EXPRESSION_NOT_UNICODE)
+
+    # mapping of lowercase token strings to a token type id
+    TOKENS = {
+        'and': Keyword(value='and', type=TOKEN_AND),
+        'or': Keyword(value='or', type=TOKEN_OR),
+        'with': Keyword(value='with', type=TOKEN_WITH),
+    }
+    KW_PLUS = Keyword(value='+', type=TOKEN_OR_LATER)
+
+    for match in _splitter(expression):
+        if not match:
+            continue
+
+        start, end = match.span()
+        end = end - 1
+        mgd = match.groupdict()
+
+        space = mgd.get('space')
+        if space:
+            yield Result(start, end, space, None)
+
+        lpar = mgd.get('lpar')
+        if lpar:
+            yield Result(start, end, lpar, Output(lpar, KW_LPAR))
+
+        rpar = mgd.get('rpar')
+        if rpar:
+            yield Result(start, end, rpar, Output(rpar, KW_RPAR))
+
+        token_or_sym = mgd.get('symbol')
+        if not token_or_sym:
+            continue
+
+        token = TOKENS.get(token_or_sym.lower())
+        if token:
+            yield Result(start, end, token_or_sym, Output(token_or_sym, token))
+        elif token_or_sym.endswith('+') and token_or_sym != '+':
+            val = token_or_sym[:-1]
+            sym = LicenseSymbol(key=val)
+            yield Result(start, end - 1, val, Output(val, sym))
+            yield Result(end, end, '+', Output('+', KW_PLUS))
+        else:
+            sym = LicenseSymbol(key=token_or_sym)
+            yield Result(start, end, token_or_sym, Output(token_or_sym, sym))
