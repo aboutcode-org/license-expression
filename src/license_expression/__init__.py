@@ -168,6 +168,8 @@ class Licensing(boolean.BooleanAlgebra):
         # FIXME: this should be instead a super class of all symbols
         self.LicenseSymbol = self.Symbol
 
+        symbols = symbols or tuple()
+
         if symbols:
             symbols = tuple(as_symbols(symbols))
             warns, errors = validate_symbols(symbols)

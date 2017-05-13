@@ -102,6 +102,14 @@ class LicenseSymbolTest(TestCase):
         assert sym5 == sym6
 
 
+class LicensingTest(TestCase):
+
+    def test_Licensing_create(self):
+        Licensing()
+        Licensing(None)
+        Licensing(list())
+
+
 class LicensingTokenizeWithoutSymbolsTest(TestCase):
 
     def test_tokenize_plain1(self):
@@ -890,7 +898,7 @@ class LicensingParseWithSymbolsTest(TestCase):
             assert expected == _parse_error_as_dict(pe)
 
 
-class LicensingParseWithSymbolsTest2(TestCase):
+class LicensingParseWithSymbolsAdvancedTest(TestCase):
 
     def get_symbols_and_licensing(self):
         gpl2 = LicenseSymbol('gpl-2.0', ['The GNU GPL 20', 'GPL-2.0', 'GPL v2.0'])
@@ -1159,7 +1167,7 @@ class LicensingSymbolsTest(TestCase):
             parsed, decompose=False).render('{symbol.key}')
 
 
-class SplitAndTokenize(TestCase):
+class SplitAndTokenizeTest(TestCase):
 
     def test_splitter(self):
         expr = (' GPL-2.0 or later with classpath Exception and mit and '
