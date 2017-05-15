@@ -547,13 +547,13 @@ class Licensing(boolean.BooleanAlgebra):
         self.scanner = scanner = Scanner(ignore_case=True)
 
         for keyword in _KEYWORDS:
-            scanner.add(keyword.value, keyword)
+            scanner.add(keyword.value, keyword, priority=0)
 
         # self.known_symbols has been created at Licensing initialization time and is
         # already validated and trusted here
         for key, symbol in self.known_symbols.items():
             # always use the key even if there are no aliases.
-            scanner.add(key, symbol)
+            scanner.add(key, symbol, priority=1)
             aliases = getattr(symbol, 'aliases', [])
             for alias in aliases:
                 # normalize spaces for each alias. The Scanner will lowercase them
@@ -561,7 +561,7 @@ class Licensing(boolean.BooleanAlgebra):
                 if alias:
                     alias = ' '.join(alias.split())
                 if alias:
-                    scanner.add(alias, symbol)
+                    scanner.add(alias, symbol, priority=2)
 
         scanner.make_automaton()
         return scanner

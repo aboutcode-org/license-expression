@@ -59,7 +59,7 @@ class Trie(object):
         # Flag set to True once a Trie has been converted to an Aho-Corasick automaton
         self._converted = False
 
-    def add(self, key, value=None):
+    def add(self, key, value=None, priority=0):
         """
         Add a new (key string, value) pair to the trie. If the key already exists in
         the Trie, its value is replaced with the provided value.
@@ -87,7 +87,7 @@ class Trie(object):
                 node = child
 
         # we always store the original key, not a possibly lowercased version
-        node.output = Output(key, value)
+        node.output = Output(key, value, priority)
 
     def __get_node(self, key):
         """
@@ -359,21 +359,27 @@ class Output(object):
 
     - `key` is the original key unmodified unicode string.
     - `value` is the associated value for this key as provided when adding this key.
+    - `priority` is an optional priority for this key used to disambiguate overalpping matches.
     """
-    __slots__ = 'key', 'value'
+    __slots__ = 'key', 'value', 'priority'
 
-    def __init__(self, key, value=None):
+    def __init__(self, key, value=None, priority=0):
         self.key = key
         self.value = value
+        self.priority = priority
 
     def __repr__(self):
-        return self.__class__.__name__ + '(%(key)r, %(value)r)' % self.as_dict()
+        return self.__class__.__name__ + '(%(key)r, %(value)r, %(priority)r)' % self.as_dict()
 
     def __eq__(self, other):
-        return isinstance(other, Output) and self.key == other.key and self.value == other.value
+        return (
+            isinstance(other, Output)
+            and self.key == other.key
+            and self.value == other.value
+            and self.priority == other.priority)
 
     def __hash__(self):
-        return hash((self.key, self.value,))
+        return hash((self.key, self.value, self.priority,))
 
     def as_dict(self):
         return OrderedDict([(s, getattr(self, s)) for s in self.__slots__])
@@ -420,6 +426,9 @@ class Result(object):
         tup = self.start, self.end, self.string, self.output
         return hash(tup)
 
+    @property
+    def priority(self):
+        return getattr(self.output, 'priority', 0)
 
     def is_after(self, other):
         """
@@ -502,7 +511,7 @@ def filter_overlapping(results):
     overlaping Results using these rules:
 
     - skip a result fully contained in another result.
-    - keep the biggest, left-most result of two overlapping results, skip the other.
+    - keep the biggest, left-most result of two overlapping results and skip the other
 
     For example:
     >>> results = [
@@ -554,14 +563,23 @@ def filter_overlapping(results):
             # overlap: keep the biggest result and skip the smallest overlapping results
             # in case of length tie: keep the left most
             if curr_res.overlap(next_res):
-                if len(curr_res) >= len(next_res):
-                    logger_debug('  del next_res smaller overlap:', next_res)
+                if curr_res.priority < next_res.priority:
+                    logger_debug('  del next_res lower priority:', next_res)
                     del results[j]
                     continue
-                else:
-                    logger_debug('  del curr_res smaller overlap:', curr_res)
+                elif curr_res.priority > next_res.priority:
+                    logger_debug('  del curr_res lower priority:', curr_res)
                     del results[i]
                     break
+                else:
+                    if len(curr_res) >= len(next_res):
+                        logger_debug('  del next_res smaller overlap:', next_res)
+                        del results[j]
+                        continue
+                    else:
+                        logger_debug('  del curr_res smaller overlap:', curr_res)
+                        del results[i]
+                        break
             j += 1
         i += 1
     return results

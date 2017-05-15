@@ -1034,6 +1034,22 @@ class LicensingParseWithSymbolsAdvancedTest(TestCase):
 
             assert expected == _parse_error_as_dict(pe)
 
+    def test_parse_with_overlapping_key_with_licensing(self):
+        symbols = [
+            LicenseSymbol('MIT', ['MIT license']),
+            LicenseSymbol('LGPL-2.1', ['LGPL v2.1']),
+            LicenseSymbol('zlib', ['zlib']),
+            LicenseSymbol('d-zlib', ['D zlib']),
+            LicenseSymbol('mito', ['mit o']),
+            LicenseSymbol('hmit', ['h verylonglicense']),
+        ]
+        licensing = Licensing(symbols)
+
+        expression = 'mit or mit AND zlib or mit or mit with verylonglicense'
+        results = str(licensing.parse(expression))
+        expected = 'mit OR (MIT AND zlib) OR mit OR MIT WITH verylonglicense'
+        self.assertEqual(expected, results)
+
 
 class LicensingSymbolsTest(TestCase):
 
@@ -1308,37 +1324,42 @@ class SplitAndTokenizeTest(TestCase):
         # fist scan
         scanner = licensing.get_scanner()
         result = list(scanner.scan(expr))
+
+        WITH_KW = Keyword(value=' with ', type=10)
+        AND_KW = Keyword(value=' and ', type=1)
+        OR_KW = Keyword(value=' or ', type=2)
+
         expected = [
             Result(0, 0, ' ', None),
-            Result(1, 16, 'GPL-2.0 or later', Output('GPL-2.0 or LATER', gpl2plus)),
-            Result(17, 22, ' with ', Output(' with ', Keyword(value=' with ', type=10))),
-            Result(23, 41, 'classpath Exception', Output('classpath Exception', cpex)),
-            Result(42, 46, ' and ', Output(' and ', Keyword(value=' and ', type=1))),
-            Result(47, 49, 'mit', Output('mit', mit)),
-            Result(50, 54, ' and ', Output(' and ', Keyword(value=' and ', type=1))),
-            Result(55, 57, 'mit', Output('mit', mit)),
-            Result(58, 63, ' with ', Output(' with ', Keyword(value=' with ', type=10))),
-            Result(64, 82, 'mitthing with ELSE+', Output('mitthing with else+', mitthing_with_else)),
-            Result(83, 86, ' or ', Output(' or ', Keyword(value=' or ', type=2))),
-            Result(87, 94, 'LGPL 2.1', Output('LGPL 2.1', lgpl)),
-            Result(95, 99, ' and ', Output(' and ', Keyword(value=' and ', type=1))),
-            Result(100, 115, 'GPL-2.0 or LATER', Output('GPL-2.0 or LATER', gpl2plus)),
-            Result(116, 121, ' with ', Output(' with ', Keyword(value=' with ', type=10))),
-            Result(122, 140, 'Classpath Exception', Output('classpath Exception', cpex)),
-            Result(141, 145, ' and ', Output(' and ', Keyword(value=' and ', type=1))),
-            Result(146, 157, 'mit or later', Output('mit or later', mitplus)),
-            Result(158, 161, ' or ', Output(' or ', Keyword(value=' or ', type=2))),
-            Result(162, 169, 'LGPL 2.1', Output('LGPL 2.1', lgpl)),
-            Result(170, 173, ' or ', Output(' or ', Keyword(value=' or ', type=2))),
-            Result(174, 176, 'mit', Output('mit', mit)),
-            Result(177, 180, ' or ', Output(' or ', Keyword(value=' or ', type=2))),
-            Result(181, 196, 'GPL-2.0 or LATER', Output('GPL-2.0 or LATER', gpl2plus)),
-            Result(197, 202, ' with ', Output(' with ', Keyword(value=' with ', type=10))),
-            Result(203, 221, 'mitthing with ELSE+', Output('mitthing with else+', mitthing_with_else)),
-            Result(222, 226, ' and ', Output(' and ', Keyword(value=' and ', type=1))),
-            Result(227, 234, 'lgpl 2.1', Output('LGPL 2.1', lgpl)),
-            Result(235, 238, ' or ', Output(' or ', Keyword(value=' or ', type=2))),
-            Result(239, 245, 'gpl-2.0', Output('GPL-2.0', gpl2))
+            Result(1, 16, 'GPL-2.0 or later', Output('GPL-2.0 or LATER', gpl2plus, 1)),
+            Result(17, 22, ' with ', Output(' with ', WITH_KW, 0)),
+            Result(23, 41, 'classpath Exception', Output('classpath Exception', cpex, 1)),
+            Result(42, 46, ' and ', Output(' and ', AND_KW, 0)),
+            Result(47, 49, 'mit', Output('mit', mit, 1)),
+            Result(50, 54, ' and ', Output(' and ', AND_KW, 0)),
+            Result(55, 57, 'mit', Output('mit', mit, 1)),
+            Result(58, 63, ' with ', Output(' with ', WITH_KW, 0)),
+            Result(64, 82, 'mitthing with ELSE+', Output('mitthing with else+', mitthing_with_else, 1)),
+            Result(83, 86, ' or ', Output(' or ', OR_KW, 0)),
+            Result(87, 94, 'LGPL 2.1', Output('LGPL 2.1', lgpl, 1)),
+            Result(95, 99, ' and ', Output(' and ', AND_KW, 0)),
+            Result(100, 115, 'GPL-2.0 or LATER', Output('GPL-2.0 or LATER', gpl2plus, 1)),
+            Result(116, 121, ' with ', Output(' with ', WITH_KW, 0)),
+            Result(122, 140, 'Classpath Exception', Output('classpath Exception', cpex, 1)),
+            Result(141, 145, ' and ', Output(' and ', AND_KW, 0)),
+            Result(146, 157, 'mit or later', Output('mit or later', mitplus, 1)),
+            Result(158, 161, ' or ', Output(' or ', OR_KW, 0)),
+            Result(162, 169, 'LGPL 2.1', Output('LGPL 2.1', lgpl, 1)),
+            Result(170, 173, ' or ', Output(' or ', OR_KW, 0)),
+            Result(174, 176, 'mit', Output('mit', mit, 1)),
+            Result(177, 180, ' or ', Output(' or ', OR_KW, 0)),
+            Result(181, 196, 'GPL-2.0 or LATER', Output('GPL-2.0 or LATER', gpl2plus, 1)),
+            Result(197, 202, ' with ', Output(' with ', WITH_KW, 0)),
+            Result(203, 221, 'mitthing with ELSE+', Output('mitthing with else+', mitthing_with_else, 1)),
+            Result(222, 226, ' and ', Output(' and ', AND_KW, 0)),
+            Result(227, 234, 'lgpl 2.1', Output('LGPL 2.1', lgpl, 1)),
+            Result(235, 238, ' or ', Output(' or ', OR_KW, 0)),
+            Result(239, 245, 'gpl-2.0', Output('GPL-2.0', gpl2, 1))
         ]
 
         assert expected == result
@@ -1351,36 +1372,49 @@ class SplitAndTokenizeTest(TestCase):
         assert expected[1:] == result
 
         # group results
+
+        gpl2pluso = Output('GPL-2.0 or LATER', LicenseSymbol('GPL-2.0 or LATER', is_exception=False), 1)
+        cpex0 = Output('classpath Exception', LicenseSymbol('classpath Exception', is_exception=True), 1)
+        mito = Output('mit', LicenseSymbol('mit', is_exception=False), 1)
+        mieo1 = Output('mitthing with else+', LicenseSymbol('mitthing with else+', is_exception=False), 1)
+        lgplo = Output('LGPL 2.1', LicenseSymbol('LGPL 2.1', is_exception=False), 1)
+        mitoo = Output('mit or later', LicenseSymbol('mit or later', is_exception=False), 1)
+        gpl202 = Output('GPL-2.0', LicenseSymbol('GPL-2.0', is_exception=False), 1)
+
+        with_kw = Output(' with ', WITH_KW, 0)
+        and_kw = Output(' and ', AND_KW, 0)
+        or_kw = Output(' or ', OR_KW, 0)
+
         expected_groups = [
-            (Result(1, 16, 'GPL-2.0 or later', Output('GPL-2.0 or LATER', LicenseSymbol('GPL-2.0 or LATER', is_exception=False))),
-             Result(17, 22, ' with ', Output(' with ', Keyword(value=' with ', type=10))),
-             Result(23, 41, 'classpath Exception', Output('classpath Exception', LicenseSymbol('classpath Exception', is_exception=True)))),
-            (Result(42, 46, ' and ', Output(' and ', Keyword(value=' and ', type=1))),),
-            (Result(47, 49, 'mit', Output('mit', LicenseSymbol('mit', is_exception=False))),),
-            (Result(50, 54, ' and ', Output(' and ', Keyword(value=' and ', type=1))),),
-            (Result(55, 57, 'mit', Output('mit', LicenseSymbol('mit', is_exception=False))),
-             Result(58, 63, ' with ', Output(' with ', Keyword(value=' with ', type=10))),
-             Result(64, 82, 'mitthing with ELSE+', Output('mitthing with else+', LicenseSymbol('mitthing with else+', is_exception=False)))),
-            (Result(83, 86, ' or ', Output(' or ', Keyword(value=' or ', type=2))),),
-            (Result(87, 94, 'LGPL 2.1', Output('LGPL 2.1', LicenseSymbol('LGPL 2.1', is_exception=False))),),
-            (Result(95, 99, ' and ', Output(' and ', Keyword(value=' and ', type=1))),),
-            (Result(100, 115, 'GPL-2.0 or LATER', Output('GPL-2.0 or LATER', LicenseSymbol('GPL-2.0 or LATER', is_exception=False))),
-             Result(116, 121, ' with ', Output(' with ', Keyword(value=' with ', type=10))),
-             Result(122, 140, 'Classpath Exception', Output('classpath Exception', LicenseSymbol('classpath Exception', is_exception=True)))),
-            (Result(141, 145, ' and ', Output(' and ', Keyword(value=' and ', type=1))),),
-            (Result(146, 157, 'mit or later', Output('mit or later', LicenseSymbol('mit or later', is_exception=False))),),
-            (Result(158, 161, ' or ', Output(' or ', Keyword(value=' or ', type=2))),),
-            (Result(162, 169, 'LGPL 2.1', Output('LGPL 2.1', LicenseSymbol('LGPL 2.1', is_exception=False))),),
-            (Result(170, 173, ' or ', Output(' or ', Keyword(value=' or ', type=2))),),
-            (Result(174, 176, 'mit', Output('mit', LicenseSymbol('mit', is_exception=False))),),
-            (Result(177, 180, ' or ', Output(' or ', Keyword(value=' or ', type=2))),),
-            (Result(181, 196, 'GPL-2.0 or LATER', Output('GPL-2.0 or LATER', LicenseSymbol('GPL-2.0 or LATER', is_exception=False))),
-             Result(197, 202, ' with ', Output(' with ', Keyword(value=' with ', type=10))),
-             Result(203, 221, 'mitthing with ELSE+', Output('mitthing with else+', LicenseSymbol('mitthing with else+', is_exception=False)))),
-            (Result(222, 226, ' and ', Output(' and ', Keyword(value=' and ', type=1))),),
-            (Result(227, 234, 'lgpl 2.1', Output('LGPL 2.1', LicenseSymbol('LGPL 2.1', is_exception=False))),),
-            (Result(235, 238, ' or ', Output(' or ', Keyword(value=' or ', type=2))),),
-            (Result(239, 245, 'gpl-2.0', Output('GPL-2.0', LicenseSymbol('GPL-2.0', is_exception=False))),)
+            (Result(1, 16, 'GPL-2.0 or later', gpl2pluso),
+             Result(17, 22, ' with ', with_kw),
+             Result(23, 41, 'classpath Exception', cpex0)),
+            (Result(42, 46, ' and ', and_kw),),
+            (Result(47, 49, 'mit', mito),),
+            (Result(50, 54, ' and ', and_kw),),
+            (Result(55, 57, 'mit', mito),
+             Result(58, 63, ' with ', with_kw),
+             Result(64, 82, 'mitthing with ELSE+', mieo1)),
+            (Result(83, 86, ' or ', or_kw),),
+            (Result(87, 94, 'LGPL 2.1', lgplo),),
+            (Result(95, 99, ' and ', and_kw),),
+            (Result(100, 115, 'GPL-2.0 or LATER', gpl2pluso),
+             Result(116, 121, ' with ', with_kw),
+             Result(122, 140, 'Classpath Exception', cpex0)),
+            (Result(141, 145, ' and ', and_kw),),
+            (Result(146, 157, 'mit or later', mitoo),),
+            (Result(158, 161, ' or ', or_kw),),
+            (Result(162, 169, 'LGPL 2.1', lgplo),),
+            (Result(170, 173, ' or ', or_kw),),
+            (Result(174, 176, 'mit', mito),),
+            (Result(177, 180, ' or ', or_kw),),
+            (Result(181, 196, 'GPL-2.0 or LATER', gpl2pluso),
+             Result(197, 202, ' with ', with_kw),
+             Result(203, 221, 'mitthing with ELSE+', mieo1)),
+            (Result(222, 226, ' and ', and_kw),),
+            (Result(227, 234, 'lgpl 2.1', lgplo),),
+            (Result(235, 238, ' or ', or_kw),),
+            (Result(239, 245, 'gpl-2.0', gpl202),)
         ]
 
         result_groups = list(group_results_for_with_subexpression(result))
