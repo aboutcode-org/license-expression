@@ -1,11 +1,10 @@
-===============================
+==================
 license-expression
-===============================
+==================
 
-license-expression is small utility library to parse, compare, simplify and normalize
+license-expression is a small utility library to parse, compare, simplify and normalize
 license expressions (e.g. SPDX license expressions) using boolean logic such as:
 `GPL-2.0 or later WITH Classpath Exception AND MIT`.
-
 
 See also for details:
 https://spdx.org/sites/cpstandard/files/pages/files/spdxversion2.1.pdf#page=95&zoom=auto
@@ -14,17 +13,22 @@ license: apache-2.0
 
 Python: 2.7 and 3.4+
 
-
 Build and tests status
 ======================
 
-+-------+-------------------------------------------------------------------------------+-------------------------------------------------------------------------------+-------------------------------------------------------------------------------------------------------------+
-|Branch |                         **Linux (Travis)**                                    |                         **MacOSX (Travis)**                                   |                         **Windows (AppVeyor)**                                                              |
-+=======+===============================================================================+===============================================================================+=============================================================================================================+
-|       |.. image:: https://api.travis-ci.org/nexB/license-expression.png?branch=master |.. image:: https://api.travis-ci.org/nexB/license-expression.png?branch=master |.. image:: https://ci.appveyor.com/api/projects/status/github/nexB/license-expression?svg=true               |
-|Master |   :target: https://travis-ci.org/nexB/license-expression                      |   :target: https://travis-ci.org/nexB/license-expression                      |   :target: https://ci.appveyor.com/project/nexB/license-expression                                          |
-|       |   :alt: Linux Master branch tests status                                      |   :alt: MacOSX Master branch tests status                                     |   :alt: Windows Master branch tests status                                                                  |
-+-------+-------------------------------------------------------------------------------+-------------------------------------------------------------------------------+-------------------------------------------------------------------------------------------------------------+
++-------+-------------------------------------------+--------------------------------------------+---------------------------------------------+
+|Branch |             **Linux (Travis)**            |            **MacOSX (Travis)**             |            **Windows (AppVeyor)**           |
++=======+===========================================+============================================+=============================================+
+|       |.. image:: travis-master-icon_             |.. image:: travis-master-icon_              |.. image:: appveyor-master-icon_             |
+|Master |   :target: travis-master-link_            |   :target: travis-master-link_             |   :target: appveyor-master-link_            |
+|       |   :alt: Linux Master branch tests status  |   :alt: MacOSX Master branch tests status  |   :alt: Windows Master branch tests status  |
++-------+-------------------------------------------+--------------------------------------------+---------------------------------------------+
+
+.. _travis-master-icon: https://api.travis-ci.org/nexB/license-expression.png?branch=master
+.. _travis-master-link: https://travis-ci.org/nexB/license-expression
+
+.. _appveyor-master-icon: https://ci.appveyor.com/api/projects/status/github/nexB/license-expression?svg=true
+.. _appveyor-master-link: https://ci.appveyor.com/project/nexB/license-expression
 
 
 Source code and download
@@ -42,6 +46,7 @@ Submit bugs and questions at:
 
 Description
 ===========
+
 This module defines a mini language to parse, validate, simplify, normalize and
 compare license expressions using a boolean logic engine.
 
@@ -53,11 +58,12 @@ equivalence and can be normalized or simplified.
 
 The main entry point is the Licensing object.
 
-
 Usage examples
 ==============
 
-For example::
+For example:
+
+.. code-block:: python
 
     >>> from license_expression import Licensing, LicenseSymbol
     >>> licensing = Licensing()
@@ -89,15 +95,17 @@ For example::
     >>> assert expected == licensing.license_symbols(parsed)
     >>> assert expected == licensing.license_symbols(expression)
 
+And expression can be simplified:
 
-And expression can be simplified::
+.. code-block:: python
 
     >>> expression2 = ' GPL-2.0 or (mit and LGPL 2.1) or bsd Or GPL-2.0  or (mit and LGPL 2.1)'
     >>> parsed2 = licensing.parse(expression2)
     >>> assert str(parsed2.simplify()) == 'BSD OR GPL-2.0 OR (LGPL 2.1 AND mit)'
-    
 
-Two expressions can be compared for equivalence and containment::
+Two expressions can be compared for equivalence and containment:
+
+.. code-block:: python
 
     >>> expr1 = licensing.parse(' GPL-2.0 or (LGPL 2.1 and mit) ')
     >>> expr2 = licensing.parse(' (mit and LGPL 2.1)  or GPL-2.0 ')
@@ -117,11 +125,10 @@ Two expressions can be compared for equivalence and containment::
     >>> licensing.contains(expr2, expr4)
     True
 
-    
 Development
 ===========
 
 * Checkout a clone from https://github.com/nexB/license-expression.git
-* Then run `./configure` (or `configure.bat`) and then `source bin/activate`. This will
+* Then run ``./configure`` (or ``configure.bat``) and then ``source bin/activate``. This will
   install all vendored dependencies in a local virtualenv, including development deps.
-* To run the tests, run `py.test -vvs`
+* To run the tests, run ``py.test -vvs``
