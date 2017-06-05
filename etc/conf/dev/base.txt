@@ -2,3 +2,5 @@
 py
 colorama
 pytest
+pluggy
+tox
