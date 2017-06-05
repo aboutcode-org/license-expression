@@ -1,6 +1,6 @@
-about_resource: pytest-3.0.5-py2.py3-none-any.whl
-download_url: https://pypi.python.org/packages/dd/28/4abc547194d8e6ff93d3ef186cb809a413d719cdc21e524af08fe986f7c2/pytest-3.0.5-py2.py3-none-any.whl#md5=790888ee21cfd19c104155b0ae9b84e5
-version: 3.0.5
+about_resource: pytest-3.1.1-py2.py3-none-any.whl
+download_url: https://pypi.python.org/packages/43/67/bd3a6148fc8a2d989ded3af319100e30fb6908f2d0a284e5cd9d20fbeb6d/pytest-3.1.1-py2.py3-none-any.whl#md5=34f4a39d5265dfc895c19796fd3b0dc1
+version: 3.1.1
 
 name: pytest
 description: pytest: simple powerful testing with Python
