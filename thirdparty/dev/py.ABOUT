@@ -1,10 +1,10 @@
-about_resource: py-1.4.32-py2.py3-none-any.whl
-version: 1.4.32
-download_url: https://pypi.python.org/packages/02/79/ea0c2750dde4b19bf2e305d201e4dd488f6671b51f52d8cf87aba174a158/py-1.4.32-py2.py3-none-any.whl#md5=b032575d68c53dca60b8bdd8ffb8716b
+about_resource: py-1.4.34-py2.py3-none-any.whl
+version: 1.4.34
+download_url: https://pypi.python.org/packages/53/67/9620edf7803ab867b175e4fd23c7b8bd8eba11cb761514dcd2e726ef07da/py-1.4.34-py2.py3-none-any.whl#md5=0cb02dbd9cf647f97b8963d4def97a7f
 
 name: py
 description: library with cross-python path, ini-parsing, io, code, log facilities
-home_url: http://pylib.readthedocs.org/
+home_url: http://py.readthedocs.org/
 owner: holger krekel, Ronny Pfannschmidt, Benjamin Peterson and others
 contatct: pytest-dev@python.org
 dje_license: mit
