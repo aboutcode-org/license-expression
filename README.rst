@@ -16,20 +16,23 @@ Python: 2.7 and 3.4+
 Build and tests status
 ======================
 
-+-------+-------------------------------------------+--------------------------------------------+---------------------------------------------+
-|Branch |             **Linux (Travis)**            |            **MacOSX (Travis)**             |            **Windows (AppVeyor)**           |
-+=======+===========================================+============================================+=============================================+
-|       |.. image:: travis-master-icon_             |.. image:: travis-master-icon_              |.. image:: appveyor-master-icon_             |
-|Master |   :target: travis-master-link_            |   :target: travis-master-link_             |   :target: appveyor-master-link_            |
-|       |   :alt: Linux Master branch tests status  |   :alt: MacOSX Master branch tests status  |   :alt: Windows Master branch tests status  |
-+-------+-------------------------------------------+--------------------------------------------+---------------------------------------------+
+.. |travis-master-icon| image:: https://api.travis-ci.org/nexB/license-expression.png?branch=master
+                        :target: https://travis-ci.org/nexB/license-expression
+                        :alt: MacOSX Master branch tests status
+                        :align: middle
 
-.. _travis-master-icon: https://api.travis-ci.org/nexB/license-expression.png?branch=master
-.. _travis-master-link: https://travis-ci.org/nexB/license-expression
+.. |appveyor-master-icon| image:: https://ci.appveyor.com/api/projects/status/github/nexB/license-expression?svg=true
+                          :target: https://ci.appveyor.com/project/nexB/license-expression
+                          :alt: Windows Master branch tests status
+                          :align: middle
 
-.. _appveyor-master-icon: https://ci.appveyor.com/api/projects/status/github/nexB/license-expression?svg=true
-.. _appveyor-master-link: https://ci.appveyor.com/project/nexB/license-expression
-
++-------+-----------------------+----------------------+------------------------+
+|Branch |**Linux (Travis)**     |**MacOSX (Travis)**   |**Windows (AppVeyor)**  |
++=======+=======================+======================+========================+
+|       |                       |                      |                        |
+|Master | |travis-master-icon|  | |travis-master-icon| | |appveyor-master-icon| |
+|       |                       |                      |                        |
++-------+-----------------------+----------------------+------------------------+
 
 Source code and download
 ========================
