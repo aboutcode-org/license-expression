@@ -1,12 +1,12 @@
-about_resource: colorama-0.3.7-py2.py3-none-any.whl
-download_url: https://pypi.python.org/packages/b7/8e/ddb32ddaabd431813e180ca224e844bab8ad42fbb47ee07553f0ec44cd86/colorama-0.3.7-py2.py3-none-any.whl#md5=7d474974709d63d1f249ec61f8e62663
-version: 0.3.7
+about_resource: colorama-0.3.9-py2.py3-none-any.whl
+download_url: https://pypi.python.org/packages/db/c8/7dcf9dbcb22429512708fe3a547f8b6101c0d02137acbd892505aee57adf/colorama-0.3.9-py2.py3-none-any.whl#md5=cc0c01c7b3b34d0354d813e9ab26aca3
+version: 0.3.9
 
 name: colorama
 description: Cross-platform colored terminal text.
-home_url: https://pypi.python.org/pypi/colorama
+home_url: https://github.com/tartley/colorama
 owner: Jonathan Hartley
-contains: tartley@tartley.com
+contact: tartley@tartley.com
 dje_license: bds-new
 keywords: color colour terminal text ansi windows crossplatform xplatform
 license_text_file: colorama.LICENSE
