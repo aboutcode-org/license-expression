@@ -18,14 +18,10 @@ from __future__ import absolute_import
 from __future__ import print_function
 from __future__ import unicode_literals
 
-import sys
+from collections import OrderedDict
 from unittest import TestCase
+import sys
 
-from boolean.boolean import TOKEN_AND
-from boolean.boolean import TOKEN_LPAR
-from boolean.boolean import TOKEN_OR
-from boolean.boolean import TOKEN_RPAR
-from boolean.boolean import TOKEN_SYMBOL
 
 from boolean.boolean import PARSE_UNBALANCED_CLOSING_PARENS
 from boolean.boolean import PARSE_INVALID_SYMBOL_SEQUENCE
@@ -50,6 +46,11 @@ from license_expression import splitter
 from license_expression import strip_and_skip_spaces
 from license_expression import validate_symbols
 
+from license_expression import TOKEN_AND
+from license_expression import TOKEN_LPAR
+from license_expression import TOKEN_OR
+from license_expression import TOKEN_RPAR
+from license_expression import TOKEN_SYMBOL
 from license_expression import TOKEN_WITH
 
 
@@ -896,6 +897,91 @@ class LicensingParseWithSymbolsTest(TestCase):
                 'token_string': 'gpl',
                 'token_type': TOKEN_SYMBOL}
             assert expected == _parse_error_as_dict(pe)
+
+
+class LicensingSymbolsReplacement(TestCase):
+
+    def get_symbols_and_licensing(self):
+        gpl2 = LicenseSymbol('gpl-2.0', ['The GNU GPL 20', 'GPL-2.0', 'GPL v2.0'])
+        gpl2plus = LicenseSymbol('gpl-2.0+', ['The GNU GPL 20 or later', 'GPL-2.0 or later', 'GPL v2.0 or later'])
+        lgpl = LicenseSymbol('LGPL-2.1', ['LGPL v2.1'])
+        mit = LicenseSymbol('MIT', ['MIT license'])
+        mitand2 = LicenseSymbol('mitand2', ['mitand2', 'mitand2 license'])
+        symbols = [gpl2, gpl2plus, lgpl, mit, mitand2]
+        licensing = Licensing(symbols)
+        return gpl2, gpl2plus, lgpl, mit, mitand2, licensing
+
+    def test_simple_substitution(self):
+        gpl2, gpl2plus, _lgpl, _mit, _mitand2, licensing = self.get_symbols_and_licensing()
+        subs = {gpl2plus: gpl2}
+
+        expr = licensing.parse('gpl-2.0 or gpl-2.0+')
+        result = expr.subs(subs)
+        assert 'gpl-2.0 OR gpl-2.0' == result.render()
+
+    def test_advanced_substitution(self):
+        _gpl2, _gpl2plus, lgpl, _mit, _mitand2, licensing = self.get_symbols_and_licensing()
+        source = licensing.parse('gpl-2.0+ and mit')
+        target = lgpl
+        subs = {source: target}
+
+        expr = licensing.parse('gpl-2.0 or gpl-2.0+ and mit')
+        result = expr.subs(subs)
+        assert 'gpl-2.0 OR LGPL-2.1' == result.render()
+
+    def test_multiple_substitutions(self):
+        gpl2, gpl2plus, lgpl, mit, _mitand2, licensing = self.get_symbols_and_licensing()
+
+        source1 = licensing.parse('gpl-2.0+ and mit')
+        target1 = lgpl
+
+        source2 = licensing.parse('mitand2')
+        target2 = mit
+
+        source3 = gpl2
+        target3 = gpl2plus
+
+        subs = OrderedDict([
+            (source1, target1),
+            (source2, target2),
+            (source3, target3),
+        ])
+
+        expr = licensing.parse('gpl-2.0 or gpl-2.0+ and mit')
+        # step 1: yields 'gpl-2.0 or lgpl'
+        # step 2: yields 'gpl-2.0+ or LGPL-2.1'
+        result = expr.subs(subs)
+        assert 'gpl-2.0+ OR LGPL-2.1' == result.render()
+
+    def test_multiple_substitutions_complex(self):
+        gpl2, gpl2plus, lgpl, mit, _mitand2, licensing = self.get_symbols_and_licensing()
+
+        source1 = licensing.parse('gpl-2.0+ and mit')
+        target1 = lgpl
+
+        source2 = licensing.parse('mitand2')
+        target2 = mit
+
+        source3 = gpl2
+        target3 = gpl2plus
+
+        subs = OrderedDict([
+            (source1, target1),
+            (source2, target2),
+            (source3, target3),
+        ])
+
+        expr = licensing.parse('(gpl-2.0 or gpl-2.0+ and mit) and (gpl-2.0 or gpl-2.0+ and mit)')
+        # step 1: yields 'gpl-2.0 or lgpl'
+        # step 2: yields 'gpl-2.0+ or LGPL-2.1'
+        result = expr.subs(subs)
+        assert '(gpl-2.0+ OR LGPL-2.1) AND (gpl-2.0+ OR LGPL-2.1)' == result.render()
+
+        expr = licensing.parse('(gpl-2.0 or mit and gpl-2.0+) and (gpl-2.0 or gpl-2.0+ and mit)')
+        # step 1: yields 'gpl-2.0 or lgpl'
+        # step 2: yields 'gpl-2.0+ or LGPL-2.1'
+        result = expr.subs(subs)
+        assert '(gpl-2.0+ OR LGPL-2.1) AND (gpl-2.0+ OR LGPL-2.1)' == result.render()
 
 
 class LicensingParseWithSymbolsAdvancedTest(TestCase):
