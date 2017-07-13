@@ -1,0 +1,7 @@
+about_resource: typed-ast-1.0.4.tar.gz
+download_url: https://github.com/all3fox/Transcrypt/tree/vendored
+version: 1.0.4
+
+name: typed-ast
+dje_license: apche-2.0 and mit and python
+license_text_file: typed-ast.LICENSE
