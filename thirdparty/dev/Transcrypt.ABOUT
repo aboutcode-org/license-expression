@@ -1,0 +1,11 @@
+about_resource: Transcrypt-3.6.34_vendored-py2.py3-none-any.whl
+download_url: https://github.com/all3fox/Transcrypt/tree/vendored
+version: 3.6.34_vendored
+
+name: Transcrypt
+description: Transpile Python 3 to JavaScript
+home_url: http://www.transcrypt.org/
+owner: Jacques de Hooge
+contact: jacques.de.hooge@qquick.org
+dje_license: Apache 2.0
+license_text_file: Transcrypt.LICENSE
