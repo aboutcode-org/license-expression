@@ -1,0 +1,7 @@
+about_resource: mypy-0.520.tar.gz
+download_url:  https://pypi.python.org/packages/e0/a1/b3dd0bc98097d101fb3e5c0712fd985cb42e76663a1cb93ce86b76dc1422/mypy-0.520.tar.gz#md5=c6be8fcdc6bd938e73213dcec99b2ce2
+version: 0.520
+
+name: mypy
+dje_license: mit and python
+license_text_file: mypy.LICENSE

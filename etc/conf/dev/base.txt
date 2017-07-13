@@ -4,5 +4,3 @@ colorama
 pytest
 pluggy
 tox
-# Transpiling
-thirdparty/dev/Transcrypt-3.6.34_vendored-py2.py3-none-any.whl
