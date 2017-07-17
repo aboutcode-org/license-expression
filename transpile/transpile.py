@@ -134,8 +134,21 @@ def transpile():
     cmd = create_transcrypt_cmd(args, transcrypt_args)
 
     logger.debug('subprocess.run() call')
-    subprocess.run(cmd)
+    process = subprocess.run(
+        cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+    )
     logger.debug('subprocess.run() done')
+
+    if process.returncode != 0:
+        logger.warning('Transcrypt failed:')
+
+        logger.warning(process.stdout)
+        logger.warning(process.stderr)
+
+        sys.exit(1)
+
+    logger.debug(process.stdout)
+    logger.debug(process.stderr)
 
     logger.debug('transpile() done')
 
