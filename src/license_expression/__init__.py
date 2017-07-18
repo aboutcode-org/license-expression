@@ -41,7 +41,6 @@ except NameError:
     # Python 3
     unicode = str
 
-import collections
 from copy import copy
 from copy import deepcopy
 from functools import total_ordering
@@ -1040,9 +1039,9 @@ def validate_symbols(symbols, validate_keys=False, _keywords=KEYWORDS):
     not_symbol_classes = []
     dupe_keys = set()
     dupe_exceptions = set()
-    dupe_aliases = collections.defaultdict(list)
+    dupe_aliases = {}
     invalid_keys_as_kw = set()
-    invalid_alias_as_kw = collections.defaultdict(list)
+    invalid_alias_as_kw = {}
 
     # warning
     warning_dupe_aliases = set()
@@ -1091,10 +1090,12 @@ def validate_symbols(symbols, validate_keys=False, _keywords=KEYWORDS):
             # ensure that a possibly duplicated alias does not point to another key
             aliased_key = seen_aliases.get(alias)
             if aliased_key and aliased_key != keyl:
+                dupe_aliases.setdefault(alias, [])
                 dupe_aliases[alias].append(key)
 
             # an alias cannot be an expression keyword
             if alias in _keywords:
+                invalid_alias_as_kw.setdefault(key, [])
                 invalid_alias_as_kw[key].append(alias)
 
             seen_aliases[alias] = keyl
