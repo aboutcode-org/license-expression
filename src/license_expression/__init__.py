@@ -100,7 +100,13 @@ class ExpressionError(Exception):
 
 
 # Used for tokenizing
-Keyword = collections.namedtuple('Keyword', 'value type')
+class Keyword:
+    def __init__(self, value, type):
+        self.value = value
+        self.type  = type
+
+    def __eq__(self, other):
+        return self.value == other.value and self.type == other.type
 
 # id for "with" token which is not a proper boolean symbol but an expression symbol
 TOKEN_WITH = 10
