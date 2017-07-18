@@ -108,6 +108,25 @@ class Keyword:
     def __eq__(self, other):
         return self.value == other.value and self.type == other.type
 
+class Deque:
+    def __init__(self):
+        self.xs = []
+
+    def clear(self):
+        self.xs = []
+
+    def popleft(self):
+        return self.xs.pop(0)
+
+    def append(self, value):
+        self.xs.append(value)
+
+    def __len__(self):
+        return len(self.xs)
+
+    def __iter__(self):
+        return self.xs.__iter__()
+
 # id for "with" token which is not a proper boolean symbol but an expression symbol
 TOKEN_WITH = 10
 
@@ -926,7 +945,7 @@ def group_results_for_with_subexpression(results):
         return
 
     # accumulate three contiguous results
-    triple = collections.deque()
+    triple = Deque()
     triple_popleft = triple.popleft
     triple_clear = triple.clear
     tripple_append = triple.append
