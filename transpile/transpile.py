@@ -5,6 +5,7 @@ import logging
 import logging.config
 import subprocess
 import yaml
+import sys
 
 from argparse import ArgumentParser
 from pathlib import Path
@@ -52,7 +53,10 @@ def create_transcrypt_cmd(args, transcrypt_args):
     """
     logger.debug('create_transcrypt_cmd() call')
 
-    cmd = ['./bin/transcrypt']
+    # Assume transcrypt executable is ../bin/transcrypt, full path:
+    cmd = [str(Path(
+        Path(__file__).resolve().parent.parent, 'bin', 'transcrypt'
+    ))]
 
     # You can specify '--' on the command line to pass parameters
     # directly to transcrypt, example: transpile -- --help
@@ -134,16 +138,16 @@ def transpile():
     cmd = create_transcrypt_cmd(args, transcrypt_args)
 
     logger.debug('subprocess.run() call')
-    process = subprocess.run(
-        cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE
-    )
+    process = subprocess.run(cmd)
     logger.debug('subprocess.run() done')
 
     if process.returncode != 0:
         logger.warning('Transcrypt failed:')
 
-        logger.warning(process.stdout)
-        logger.warning(process.stderr)
+        for line in str(process.stdout).split('\\n'):
+            logger.warning(line)
+        for line in str(process.stderr).split('\\n'):
+            logger.warning(line)
 
         sys.exit(1)
 
