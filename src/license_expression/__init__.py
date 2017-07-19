@@ -42,7 +42,6 @@ except NameError:
     unicode = str
 
 from copy import copy
-from copy import deepcopy
 from functools import total_ordering
 import itertools
 import re
