@@ -18,7 +18,7 @@ from __future__ import unicode_literals
 from __future__ import absolute_import
 from __future__ import print_function
 
-from collections import deque
+from license_expression.my_collections import Deque
 from collections import OrderedDict
 import logging
 
@@ -178,7 +178,7 @@ class Trie(object):
         Note that this is an error to add new keys to a Trie once it has been
         converted to an Automaton.
         """
-        queue = deque()
+        queue = Deque()
         queue_append = queue.append
         queue_popleft = queue.popleft
 
