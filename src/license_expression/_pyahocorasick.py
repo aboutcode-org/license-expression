@@ -19,7 +19,6 @@ from __future__ import absolute_import
 from __future__ import print_function
 
 from license_expression.my_collections import Deque
-from collections import OrderedDict
 import logging
 
 logger = logging.getLogger(__name__)
@@ -382,7 +381,7 @@ class Output(object):
         return hash((self.key, self.value, self.priority,))
 
     def as_dict(self):
-        return OrderedDict([(s, getattr(self, s)) for s in self.__slots__])
+        return dict([(s, getattr(self, s)) for s in self.__slots__])
 
 
 class Result(object):
@@ -409,7 +408,7 @@ class Result(object):
         return self.__class__.__name__ + '(%(start)r, %(end)r, %(string)r, %(output)r)' % self.as_dict()
 
     def as_dict(self):
-        return OrderedDict([(s, getattr(self, s)) for s in self.__slots__])
+        return dict([(s, getattr(self, s)) for s in self.__slots__])
 
     def __len__(self):
         return self.end + 1 - self.start
