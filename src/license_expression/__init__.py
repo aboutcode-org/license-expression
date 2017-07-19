@@ -41,7 +41,6 @@ except NameError:
     # Python 3
     unicode = str
 
-from functools import total_ordering
 import itertools
 import re
 import string
@@ -630,8 +629,6 @@ class BaseSymbol(Renderable, boolean.Symbol):
 # validate license keys
 is_valid_license_key = re.compile(r'^[-\w\s\.\+]+$', re.UNICODE).match
 
-#FIXME: we need to implement comparison!!!!
-@total_ordering
 class LicenseSymbol(BaseSymbol):
     """
     A LicenseSymbol represents a license as used in a license expression.
@@ -729,8 +726,6 @@ class LicenseSymbol(BaseSymbol):
         return hasattr(symbol, 'key') and hasattr(symbol, 'is_exception')
 
 
-#FIXME: we need to implement comparison!!!!
-@total_ordering
 class LicenseSymbolLike(LicenseSymbol):
     """
     A LicenseSymbolLike object wraps a symbol-like object to expose a LicenseSymbol
@@ -763,8 +758,6 @@ class LicenseSymbolLike(LicenseSymbol):
         return super(LicenseSymbolLike, self).render(template, *args, **kwargs)
 
 
-#FIXME: we need to implement comparison!!!!
-@total_ordering
 class LicenseWithExceptionSymbol(BaseSymbol):
     """
     A LicenseWithExceptionSymbol represents a license "with" an exception as used in
