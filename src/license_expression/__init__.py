@@ -43,7 +43,6 @@ except NameError:
 
 import itertools
 import re
-import string
 
 import boolean
 from boolean import Expression as LicenseExpression
