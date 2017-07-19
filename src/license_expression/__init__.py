@@ -41,7 +41,6 @@ except NameError:
     # Python 3
     unicode = str
 
-from copy import copy
 from functools import total_ordering
 import itertools
 import re
@@ -124,6 +123,12 @@ class Deque:
 
     def __iter__(self):
         return self.xs.__iter__()
+
+def copy(target):
+    if isinstance(target, LicenseSymbol):
+        return target.__copy__()
+
+    raise RuntimeError('Custom copy cannot copy ' + str(type(target)))
 
 # id for "with" token which is not a proper boolean symbol but an expression symbol
 TOKEN_WITH = 10
