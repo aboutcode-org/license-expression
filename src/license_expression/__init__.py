@@ -65,6 +65,7 @@ from boolean.boolean import TOKEN_RPAR
 from license_expression._pyahocorasick import Trie as Scanner
 from license_expression._pyahocorasick import Output
 from license_expression._pyahocorasick import Result
+from license_expression.my_collections import Deque
 
 
 # append new error codes to PARSE_ERRORS by monkey patching
@@ -102,25 +103,6 @@ class Keyword:
 
     def __eq__(self, other):
         return self.value == other.value and self.type == other.type
-
-class Deque:
-    def __init__(self):
-        self.xs = []
-
-    def clear(self):
-        self.xs = []
-
-    def popleft(self):
-        return self.xs.pop(0)
-
-    def append(self, value):
-        self.xs.append(value)
-
-    def __len__(self):
-        return len(self.xs)
-
-    def __iter__(self):
-        return self.xs.__iter__()
 
 def copy(target):
     if isinstance(target, LicenseSymbol):
