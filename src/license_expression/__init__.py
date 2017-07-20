@@ -672,7 +672,11 @@ class LicenseSymbol(BaseSymbol):
                 and self.is_exception == other.is_exception)
         )
 
-    __nonzero__ = __bool__ = lambda s: True
+    def __bool__(self):
+        return True
+
+    def __nonzero__(self):
+        return True
 
     def render(self, template='{symbol.key}', *args, **kwargs):
         return template.format(symbol=self)
@@ -790,7 +794,11 @@ class LicenseWithExceptionSymbol(BaseSymbol):
             and self.license_symbol == other.license_symbol
             and self.exception_symbol == other.exception_symbol)
 
-    __nonzero__ = __bool__ = lambda s: True
+    def __bool__(self):
+        return True
+
+    def __nonzero__(self):
+        return True
 
     def __str__(self):
         lkey = self.license_symbol.key
