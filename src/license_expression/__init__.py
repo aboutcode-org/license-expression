@@ -171,7 +171,7 @@ class Licensing(boolean.BooleanAlgebra):
         or LicenseSymbol-like objects or license key strings. If provided and this
         list data is invalid, raise a ValueError.
         """
-        super(Licensing, self).__init__(Symbol_class=LicenseSymbol, AND_class=AND, OR_class=OR)
+        super().__init__(Symbol_class=LicenseSymbol, AND_class=AND, OR_class=OR)
 
         # FIXME: this should be instead a super class of all symbols
         self.LicenseSymbol = self.Symbol
@@ -398,7 +398,7 @@ class Licensing(boolean.BooleanAlgebra):
         try:
             # this will raise a ParseError on errors
             tokens = list(self.tokenize(expression, strict=strict))
-            expression = super(Licensing, self).parse(tokens)
+            expression = super().parse(tokens)
         except TypeError as e:
             msg = 'Invalid expression syntax: ' + repr(e)
             raise ExpressionError(msg)
@@ -660,7 +660,7 @@ class LicenseSymbol(BaseSymbol):
         self.as_exception = False
 
         # super only know about a single "obj" object.
-        super(LicenseSymbol, self).__init__(self.key)
+        super().__init__(self.key)
 
     def decompose(self):
         """
@@ -718,7 +718,7 @@ class LicenseSymbolLike(LicenseSymbol):
                 'Not a symbol-like object: %(symbol_like)r' % locals())
 
         self.wrapped = symbol_like
-        super(LicenseSymbolLike, self).__init__(self.wrapped.key, *args, **kwargs)
+        super().__init__(self.wrapped.key, *args, **kwargs)
 
         self.is_exception = self.wrapped.is_exception
         self.aliases = getattr(self.wrapped, 'aliases', tuple())
@@ -736,7 +736,7 @@ class LicenseSymbolLike(LicenseSymbol):
     def render(self, template='{symbol.key}', *args, **kwargs):
         if self._render:
             return self._render(template, *args, **kwargs)
-        return super(LicenseSymbolLike, self).render(template, *args, **kwargs)
+        return super().render(template, *args, **kwargs)
 
 
 class LicenseWithExceptionSymbol(BaseSymbol):
@@ -776,7 +776,7 @@ class LicenseWithExceptionSymbol(BaseSymbol):
         exception_symbol.as_exception = True
         self.exception_symbol = exception_symbol
 
-        super(LicenseWithExceptionSymbol, self).__init__(str(self))
+        super().__init__(str(self))
 
     def __copy__(self):
         return LicenseWithExceptionSymbol(copy(self.license_symbol), copy(self.exception_symbol))
@@ -864,7 +864,7 @@ class AND(RenderableFunction, boolean.AND):
     Custom representation for the AND operator to uppercase.
     """
     def __init__(self, *args):
-        super(AND, self).__init__(*args)
+        super().__init__(*args)
         self.operator = ' AND '
 
 
@@ -873,7 +873,7 @@ class OR(RenderableFunction, boolean.OR):
     Custom representation for the OR operator to uppercase.
     """
     def __init__(self, *args):
-        super(OR, self).__init__(*args)
+        super().__init__(*args)
         self.operator = ' OR '
 
 
