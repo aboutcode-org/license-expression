@@ -33,7 +33,10 @@ def logger_debug(*args):
 
 
 # used to distinguish from None
-nil = object()
+class Nil:
+    pass
+
+nil = Nil()
 
 
 class Trie(object):
