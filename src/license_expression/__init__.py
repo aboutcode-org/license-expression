@@ -32,15 +32,6 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from __future__ import print_function
 
-# Python 2 and 3 support
-try:
-    # Python 2
-    unicode
-    str = unicode
-except NameError:
-    # Python 3
-    unicode = str
-
 import itertools
 import re
 
@@ -384,7 +375,7 @@ class Licensing(boolean.BooleanAlgebra):
 
         if isinstance(expression, bytes):
             try:
-                expression = unicode(expression)
+                expression = str(expression)
             except:
                 ext = type(expression)
                 raise ExpressionError('expression must be a string and not: %(ext)r' % locals())
@@ -622,7 +613,7 @@ class LicenseSymbol(BaseSymbol):
         if not isinstance(key, str):
             if isinstance(key, bytes):
                 try:
-                    key = unicode(key)
+                    key = str(key)
                 except:
                     raise ExpressionError(
                         'A license key must be a unicode string: %(key)r' % locals())
@@ -976,11 +967,11 @@ def as_symbols(symbols):
                 continue
             if isinstance(symbol, bytes):
                 try:
-                    symbol = unicode(symbol)
+                    symbol = str(symbol)
                 except:
                     raise TypeError('%(symbol)r is not a unicode string.' % locals())
 
-            if isinstance(symbol, unicode):
+            if isinstance(symbol, str):
                 if symbol.strip():
                     yield LicenseSymbol(symbol)
 
