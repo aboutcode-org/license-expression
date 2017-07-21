@@ -18,6 +18,8 @@ from __future__ import absolute_import
 from __future__ import print_function
 from __future__ import unicode_literals
 
+import pytest
+
 from collections import OrderedDict
 from unittest import TestCase
 import sys
@@ -386,6 +388,7 @@ class LicensingParseTest(TestCase):
             expected = {'error_code': PARSE_INVALID_EXPRESSION, 'position': 0, 'token_string':  'with', 'token_type': TOKEN_WITH}
             assert expected == _parse_error_as_dict(pe)
 
+    @pytest.mark.skip(reason='Transcrypt does not support bytes (Python builtin)')
     def test_parse_errors_catch_invalid_non_unicode_byte_strings_on_python3(self):
         py2 = sys.version_info[0] == 2
         py3 = sys.version_info[0] == 3

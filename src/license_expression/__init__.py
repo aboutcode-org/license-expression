@@ -341,7 +341,7 @@ class Licensing(boolean.BooleanAlgebra):
         string. Check that the expression syntax is valid and raise an Exception,
         ExpressionError or ParseError on errors. Return None for empty expressions.
         `expression` is either a string or a LicenseExpression object. If this is a
-        LicenseExpression it is retruned as-si.
+        LicenseExpression it is retruned as-is.
 
         Symbols are always recognized from known symbols if `symbols` were provided
         Licensing creation time: each license and exception is recognized from known
@@ -372,13 +372,6 @@ class Licensing(boolean.BooleanAlgebra):
 
         if isinstance(expression, LicenseExpression):
             return expression
-
-        if isinstance(expression, bytes):
-            try:
-                expression = str(expression)
-            except:
-                ext = type(expression)
-                raise ExpressionError('expression must be a string and not: %(ext)r' % locals())
 
         if not isinstance(expression, str):
             ext = type(expression)
@@ -421,7 +414,7 @@ class Licensing(boolean.BooleanAlgebra):
         such as "XXX with ZZZ" if the XXX symbol has is_exception` set to True or the
         ZZZ symbol has `is_exception` set to False.
         """
-        if self.known_symbols:
+        if transcrypt_true(self.known_symbols):
             # scan with an automaton, recognize whole symbols+keywords or only keywords
             scanner = self.get_scanner()
             results = scanner.scan(expression)
@@ -443,7 +436,7 @@ class Licensing(boolean.BooleanAlgebra):
                 pos = result.start
                 token_string = result.string
                 output = result.output
-                if output:
+                if transcrypt_true(output):
                     val = output.value
                     if isinstance(val, Keyword):
                         # keyword
@@ -492,11 +485,11 @@ class Licensing(boolean.BooleanAlgebra):
                 lic_sym = lic_out and lic_out.value
 
                 # this should not happen
-                if lic_sym and not isinstance(lic_sym, LicenseSymbol):
+                if transcrypt_true(lic_sym) and not isinstance(lic_sym, LicenseSymbol):
                     raise ParseError(TOKEN_SYMBOL, lic_res.string, lic_res.start,
                                      PARSE_INVALID_SYMBOL)
 
-                if not lic_sym:
+                if not transcrypt_true(lic_sym):
                     lic_sym = LicenseSymbol(lic_res.string, is_exception=False)
 
                 if not isinstance(lic_sym, LicenseSymbol):
@@ -512,13 +505,13 @@ class Licensing(boolean.BooleanAlgebra):
                 exc_sym = exc_out and exc_out.value
 
                 # this should not happen
-                if exc_sym and not isinstance(exc_sym, LicenseSymbol):
+                if transcrypt_true(exc_sym) and not isinstance(exc_sym, LicenseSymbol):
                     raise ParseError(TOKEN_SYMBOL, lic_sym.string, lic_sym.start,
                                      PARSE_INVALID_SYMBOL)
-                if exc_sym:
+                if transcrypt_true(exc_sym):
                     exc_sym = copy(exc_sym)
 
-                if not exc_sym:
+                if not transcrypt_true(exc_sym):
                     exc_sym = LicenseSymbol(exc_res.string)
 
                 if not isinstance(exc_sym, LicenseSymbol):
