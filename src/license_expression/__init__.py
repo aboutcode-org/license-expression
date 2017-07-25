@@ -381,7 +381,7 @@ class Licensing(boolean.BooleanAlgebra):
             return
         try:
             # this will raise a ParseError on errors
-            tokens = list(self.tokenize(expression, strict=strict))
+            tokens = [token for token in self.tokenize(expression, strict=strict)]
             expression = super().parse(tokens)
         except TypeError as e:
             msg = 'Invalid expression syntax: ' + repr(e)
