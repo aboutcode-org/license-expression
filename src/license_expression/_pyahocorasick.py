@@ -540,7 +540,9 @@ def filter_overlapping(results):
     >>> filtered == expected
     True
     """
-    results = Result.reorder(results)
+    # Transcrypt can call classmethods only from a class instance, so make one:
+    result = Result(start=0, end=0, string="not a real result")
+    results = result.reorder(results)
 
     # compare pair of results in the sorted sequence: current and next
     i = 0
