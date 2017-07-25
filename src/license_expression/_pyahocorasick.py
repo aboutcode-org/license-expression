@@ -230,7 +230,7 @@ class Trie(object):
         >>> a.add('KL')
         >>> a.make_automaton()
         >>> string = 'abcdefghijklm'
-        >>> results = Result.sort(a.iter(string))
+        >>> results = Result.reorder(a.iter(string))
 
         >>> expected = [
         ...     Result(1, 5, 'bcdef', Output('BCDEF')),
@@ -490,7 +490,7 @@ class Result(object):
         return (start <= other.start <= end) or (start <= other.end <= end)
 
     @classmethod
-    def sort(cls, results):
+    def reorder(cls, results):
         """
         Return a new sorted sequence of results given a sequence of results. The
         primary sort is on start and the secondary sort is on longer lengths.
@@ -500,7 +500,7 @@ class Result(object):
         For example:
         >>> results = [Result(0, 0), Result(5, 5), Result(1, 1), Result(2, 4), Result(2, 5)]
         >>> expected = [Result(0, 0), Result(1, 1), Result(2, 5), Result(2, 4), Result(5, 5)]
-        >>> expected == Result.sort(results)
+        >>> expected == Result.reorder(results)
         True
         """
         key = lambda s: (s.start, -len(s),)
@@ -540,7 +540,7 @@ def filter_overlapping(results):
     >>> filtered == expected
     True
     """
-    results = Result.sort(results)
+    results = Result.reorder(results)
 
     # compare pair of results in the sorted sequence: current and next
     i = 0
@@ -625,7 +625,7 @@ def add_unmatched(string, results):
 
     """
     string_pos = 0
-    for result in Result.sort(results):
+    for result in Result.reorder(results):
         if result.start > string_pos:
             start = string_pos
             end = result.start - 1
