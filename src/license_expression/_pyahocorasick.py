@@ -81,12 +81,7 @@ class Trie(object):
 
         node = self.root
         for char in stored_key:
-            try:
-                node = node.children[char]
-            except KeyError:
-                child = TrieNode(char)
-                node.children[char] = child
-                node = child
+            node = node.children.setdefault(char, TrieNode(char))
 
         # we always store the original key, not a possibly lowercased version
         node.output = Output(key, value, priority)
