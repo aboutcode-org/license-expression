@@ -210,7 +210,7 @@ class Trie(object):
         # Mark the trie as converted so it cannot be modified anymore
         self._converted = True
 
-    def iter(self, string):
+    def iterate(self, string):
         """
         Yield Result objects for matched strings by performing the Aho-Corasick search procedure.
 
@@ -230,7 +230,7 @@ class Trie(object):
         >>> a.add('KL')
         >>> a.make_automaton()
         >>> string = 'abcdefghijklm'
-        >>> results = Result.reorder(a.iter(string))
+        >>> results = Result.reorder(a.iterate(string))
 
         >>> expected = [
         ...     Result(1, 5, 'bcdef', Output('BCDEF')),
@@ -242,10 +242,10 @@ class Trie(object):
         >>> results == expected
         True
 
-        >>> list(a.iter('')) == []
+        >>> list(a.iterate('')) == []
         True
 
-        >>> list(a.iter(' ')) == []
+        >>> list(a.iterate(' ')) == []
         True
         """
         if not string:
@@ -319,7 +319,7 @@ class Trie(object):
         >>> results == expected
         True
         """
-        results = self.iter(string)
+        results = self.iterate(string)
         results = filter_overlapping(results)
         results = add_unmatched(string, results)
         return results
