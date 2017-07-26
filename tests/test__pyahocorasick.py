@@ -141,7 +141,7 @@ class TestTrie(unittest.TestCase):
         test_string = "he she himan"
 
         t = get_test_automaton()
-        result = list(t.iter(test_string))
+        result = list(t.iterate(test_string))
         expected = [
             Result(start=0, end=1, string='he', output=Output('he', 'he')),
             Result(start=3, end=5, string='she', output=Output('she', 'she')),
@@ -166,7 +166,7 @@ class TestTrie(unittest.TestCase):
         test_string = '((l-a + AND l-b) OR (l -c+))'
 
         t = get_test_automaton()
-        result = list(t.iter(test_string))
+        result = list(t.iterate(test_string))
         expected = [
             Result(0, 0, '(', Output('(', '(')),
             Result(1, 1, '(', Output('(', '(')),
@@ -217,7 +217,7 @@ class TestTrie(unittest.TestCase):
         t.add('AND', 'AND')
         t.make_automaton()
         test_string = 'AND  an a and'
-        result = list(t.iter(test_string))
+        result = list(t.iterate(test_string))
         assert 'ANDand' == ''.join(r.string for r in result)
 
     def test_iter_with_unmatched_simple2(self):
@@ -225,6 +225,5 @@ class TestTrie(unittest.TestCase):
         t.add('AND', 'AND')
         t.make_automaton()
         test_string = 'AND  an a and'
-        result = list(t.iter(test_string))
+        result = list(t.iterate(test_string))
         assert 'ANDand' == ''.join(r.string for r in result)
-
