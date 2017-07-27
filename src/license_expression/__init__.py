@@ -414,7 +414,7 @@ class Licensing(boolean.BooleanAlgebra):
         such as "XXX with ZZZ" if the XXX symbol has is_exception` set to True or the
         ZZZ symbol has `is_exception` set to False.
         """
-        if transcrypt_true(self.known_symbols):
+        if self.known_symbols:
             # scan with an automaton, recognize whole symbols+keywords or only keywords
             scanner = self.get_scanner()
             results = scanner.scan(expression)
@@ -436,7 +436,7 @@ class Licensing(boolean.BooleanAlgebra):
                 pos = result.start
                 token_string = result.string
                 output = result.output
-                if transcrypt_true(output):
+                if output:
                     val = output.value
                     if isinstance(val, Keyword):
                         # keyword
@@ -485,11 +485,11 @@ class Licensing(boolean.BooleanAlgebra):
                 lic_sym = lic_out and lic_out.value
 
                 # this should not happen
-                if transcrypt_true(lic_sym) and not isinstance(lic_sym, LicenseSymbol):
+                if lic_sym and not isinstance(lic_sym, LicenseSymbol):
                     raise ParseError(TOKEN_SYMBOL, lic_res.string, lic_res.start,
                                      PARSE_INVALID_SYMBOL)
 
-                if not transcrypt_true(lic_sym):
+                if not lic_sym:
                     lic_sym = LicenseSymbol(lic_res.string, is_exception=False)
 
                 if not isinstance(lic_sym, LicenseSymbol):
@@ -505,13 +505,13 @@ class Licensing(boolean.BooleanAlgebra):
                 exc_sym = exc_out and exc_out.value
 
                 # this should not happen
-                if transcrypt_true(exc_sym) and not isinstance(exc_sym, LicenseSymbol):
+                if exc_sym and not isinstance(exc_sym, LicenseSymbol):
                     raise ParseError(TOKEN_SYMBOL, lic_sym.string, lic_sym.start,
                                      PARSE_INVALID_SYMBOL)
-                if transcrypt_true(exc_sym):
+                if exc_sym:
                     exc_sym = copy(exc_sym)
 
-                if not transcrypt_true(exc_sym):
+                if not exc_sym:
                     exc_sym = LicenseSymbol(exc_res.string)
 
                 if not isinstance(exc_sym, LicenseSymbol):
