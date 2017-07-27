@@ -71,7 +71,11 @@ def create_transcrypt_cmd(args, transcrypt_args):
     if not transcrypt_args:
         # Force transpiling from scratch
         cmd.append("-b")
-        # Force EcmaScript 6 for generator support
+        # Force compatibility with Python truth-value testing.
+        # There is a warning that this switch will slow everything down a lot.
+        # This forces empty dictionaries, lists, and tuples to compare as false.
+        cmd.append("-t")
+        # Force EcmaScript 6 to enable generators
         cmd.append("-e 6")
         cmd.append(str(args.src[0]))
 
