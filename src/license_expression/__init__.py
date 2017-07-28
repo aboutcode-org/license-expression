@@ -1106,20 +1106,7 @@ def validate_symbols(symbols, validate_keys=False, _keywords=KEYWORDS):
 
     return warnings, errors
 
-
-_splitter = re.compile('''
-    (?P<symbol>[^\s\(\)]+)
-     |
-    (?P<space>\s+)
-     |
-    (?P<lpar>\()
-     |
-    (?P<rpar>\))
-    ''',
-    re.VERBOSE | re.MULTILINE | re.UNICODE
-).finditer
-
-
+# NOTE: drop regular expressions and generators because of transpiling issues
 def splitter(expression):
     """
     Return an iterable of Result describing each token given an
@@ -1142,38 +1129,40 @@ def splitter(expression):
         'with': Keyword(value='with', type=TOKEN_WITH),
     }
 
-    for match in _splitter(expression):
-        if not match:
-            continue
+    lft, results =  0, []
+    while lft != len(expression):
+        rgt = lft + 1
+        if expression[lft].isspace():
+            while rgt != len(expression) and expression[rgt].isspace():
+                rgt += 1
 
-        start, end = match.span()
-        end = end - 1
-        mgd = match.groupdict()
+            results.append(Result(lft, rgt - 1, expression[lft:rgt], None))
+        elif expression[lft] == '(':
+            lpar = expression[lft:rgt]
 
-        space = mgd.get('space')
-        if space:
-            yield Result(start, end, space, None)
+            results.append(Result(lft, rgt - 1, lpar, Output(lpar, KW_LPAR)))
+        elif expression[lft] == ')':
+            rpar = expression[lft:rgt]
 
-        lpar = mgd.get('lpar')
-        if lpar:
-            yield Result(start, end, lpar, Output(lpar, KW_LPAR))
-
-        rpar = mgd.get('rpar')
-        if rpar:
-            yield Result(start, end, rpar, Output(rpar, KW_RPAR))
-
-        token_or_sym = mgd.get('symbol')
-        if not token_or_sym:
-            continue
-
-        token = TOKENS.get(token_or_sym.lower())
-        if token:
-            yield Result(start, end, token_or_sym, Output(token_or_sym, token))
-#         elif token_or_sym.endswith('+') and token_or_sym != '+':
-#             val = token_or_sym[:-1]
-#             sym = LicenseSymbol(key=val)
-#             yield Result(start, end - 1, val, Output(val, sym))
-#             yield Result(end, end, '+', Output('+', KW_PLUS))
+            results.append(Result(lft, rgt - 1, rpar, Output(rpar, KW_RPAR)))
         else:
-            sym = LicenseSymbol(key=token_or_sym)
-            yield Result(start, end, token_or_sym, Output(token_or_sym, sym))
+            while rgt != len(expression):
+                nxt = expression[rgt]
+
+                if nxt.isspace() or nxt == '(' or nxt == ')':
+                    break
+
+                rgt += 1
+
+            tok_or_sym = expression[lft:rgt]
+
+            token = TOKENS.get(tok_or_sym.lower())
+            if token:
+                results.append(Result(lft, rgt - 1, tok_or_sym, Output(tok_or_sym, token)))
+            else:
+                symbol = LicenseSymbol(key=tok_or_sym)
+                results.append(Result(lft, rgt - 1, tok_or_sym, Output(tok_or_sym, symbol)))
+
+        lft = rgt
+
+    return results
