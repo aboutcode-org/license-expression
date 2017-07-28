@@ -875,15 +875,12 @@ def ordered_unique(seq):
         uniques.append(item)
     return uniques
 
-
+# NOTE: return a list and *not* a generator because of transpiling issues
 def strip_and_skip_spaces(results):
     """
-    Yield results given a sequence of Result skipping whitespace-only results
+    Return results given a sequence of Result skipping whitespace-only results
     """
-    for result in results:
-        if result.string.strip():
-            yield result
-
+    return [result for result in results if result.string.strip()]
 
 def group_results_for_with_subexpression(results):
     """
