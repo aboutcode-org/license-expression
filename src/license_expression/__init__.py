@@ -878,55 +878,40 @@ def ordered_unique(seq):
 # NOTE: return a list and *not* a generator because of transpiling issues
 def strip_and_skip_spaces(results):
     """
-    Return results given a sequence of Result skipping whitespace-only results
+    Return results given a list of Result skipping whitespace-only results
     """
     return [result for result in results if result.string.strip()]
 
 def group_results_for_with_subexpression(results):
     """
-    Yield tuples of (Result) given a sequence of Result such that:
-     - all symbol-with-symbol subsequences of three results are grouped in a three-tuple
+    Return tuples of (Result) given a list of Result such that:
+     - all symbol-with-symbol subsequences of 3 results are grouped in a 3-tuple
      - other results are the single result in a tuple.
     """
 
     # if n-1 is sym, n is with and n+1 is sym: yield this as a group for a with exp
     # otherwise: yield each single result as a group
 
-    results = list(results)
+    groups = []
+    n = len(results)
+    lft, mid, rgt = 0, 1, 2
 
-    # check three contiguous result from scanning at a time
-    triple_len = 3
+    while lft != n and mid != n and rgt != n:
+        res0, res1, res2 = results[lft], results[mid], results[rgt]
 
-    # shortcut if there are no grouping possible
-    if len(results) < triple_len:
-        for res in results:
-            yield (res,)
-        return
+        if is_with_subexpression(res0, res1, res2):
+            groups.append((res0, res1, res2))
 
-    # accumulate three contiguous results
-    triple = Deque()
-    triple_popleft = triple.popleft
-    triple_clear = triple.clear
-    tripple_append = triple.append
-
-    for res in results:
-        if len(triple) == triple_len:
-            if is_with_subexpression(triple):
-                yield tuple(triple)
-                triple_clear()
-            else:
-                prev_res = triple_popleft()
-                yield (prev_res,)
-        tripple_append(res)
-
-    # end remainders
-    if triple:
-        if len(triple) == triple_len and is_with_subexpression(triple):
-            yield tuple(triple)
+            lft, mid, rgt = lft + 3, mid + 3, rgt + 3
         else:
-            for res in triple:
-                yield (res,)
+            groups.append((res0, ))
 
+            lft, mid, rgt = lft + 1, mid + 1, rgt + 1
+
+    for result in results[lft:]:
+        groups.append((result, ))
+
+    return groups
 
 def is_symbol(result):
     # either the output value is a known sym, or we have no output for unknown sym
@@ -938,9 +923,10 @@ def is_with_keyword(result):
             and isinstance(result.output.value, Keyword)
             and result.output.value.type == TOKEN_WITH)
 
-
-def is_with_subexpression(results):
-    lic, wit, exc = results
+def is_with_subexpression(lic, wit, exc):
+    """
+    Check if provided arguments are a 'lic'ense 'wit'h 'exc'eption triplet
+    """
     return (is_symbol(lic) and is_with_keyword(wit) and is_symbol(exc))
 
 
