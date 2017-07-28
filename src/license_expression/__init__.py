@@ -598,7 +598,7 @@ class LicenseSymbol(BaseSymbol):
     """
     A LicenseSymbol represents a license as used in a license expression.
     """
-    def __init__(self, key, aliases=tuple(), is_exception=False, *args, **kwargs):
+    def __init__(self, key, aliases=tuple(), is_exception=False):
         if not key:
             raise ExpressionError(
                 'A license key cannot be empty: %(key)r' % locals())
@@ -693,13 +693,13 @@ class LicenseSymbolLike(LicenseSymbol):
     A LicenseSymbolLike object wraps a symbol-like object to expose a LicenseSymbol
     behavior.
     """
-    def __init__(self, symbol_like, *args, **kwargs):
+    def __init__(self, symbol_like):
         if not self.symbol_like(symbol_like):
             raise ExpressionError(
                 'Not a symbol-like object: %(symbol_like)r' % locals())
 
         self.wrapped = symbol_like
-        super().__init__(self.wrapped.key, *args, **kwargs)
+        super().__init__(self.wrapped.key)
 
         self.is_exception = self.wrapped.is_exception
         self.aliases = getattr(self.wrapped, 'aliases', tuple())
