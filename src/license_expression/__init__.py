@@ -604,15 +604,8 @@ class LicenseSymbol(BaseSymbol):
                 'A license key cannot be empty: %(key)r' % locals())
 
         if not isinstance(key, str):
-            if isinstance(key, bytes):
-                try:
-                    key = str(key)
-                except:
-                    raise ExpressionError(
-                        'A license key must be a unicode string: %(key)r' % locals())
-            else:
-                raise ExpressionError(
-                    'A license key must be a unicode string: %(key)r' % locals())
+            raise ExpressionError(
+                'A license key must be a unicode string: %(key)r' % locals())
 
         key = key.strip()
 
