@@ -1153,7 +1153,7 @@ def splitter(expression):
             if token:
                 results.append(Result(lft, rgt - 1, tok_or_sym, Output(tok_or_sym, token)))
             else:
-                symbol = LicenseSymbol(key=tok_or_sym)
+                symbol = LicenseSymbol(tok_or_sym)
                 results.append(Result(lft, rgt - 1, tok_or_sym, Output(tok_or_sym, symbol)))
 
         lft = rgt
