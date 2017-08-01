@@ -1100,9 +1100,9 @@ def splitter(expression):
 
     # mapping of lowercase token strings to a token type id
     TOKENS = {
-        'and': Keyword(value='and', type=TOKEN_AND),
-        'or': Keyword(value='or', type=TOKEN_OR),
-        'with': Keyword(value='with', type=TOKEN_WITH),
+        'and': Keyword('and', TOKEN_AND),
+        'or': Keyword('or', TOKEN_OR),
+        'with': Keyword('with', TOKEN_WITH),
     }
 
     lft, results =  0, []
