@@ -88,7 +88,7 @@ def create_transcrypt_cmd(args, transcrypt_args):
 
 def transpile():
     """
-    Call transcrypt to transpile boolean.py into JavaScript
+    Call transcrypt to transpile license-expression into JavaScript
     """
 
     fpath = Path(__file__).resolve()
@@ -96,7 +96,7 @@ def transpile():
 
     parser = ArgumentParser(
         prog=fpath.name,
-        description="Transpile boolean.py into JavaScript"
+        description="Transpile license-expression into JavaScript"
     )
 
     # source path, directory where license_expression resides
