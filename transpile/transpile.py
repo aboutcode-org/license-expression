@@ -135,8 +135,8 @@ def transpile():
     logger.debug('transpile() call')
 
     logger.debug('.parse_known_args() call')
-    logger.debug('src            : ' + str(args.src))
-    logger.debug('dst            : ' + str(args.dst))
+    logger.debug('src: ' + str(args.src))
+    logger.debug('dst: ' + str(args.dst))
     logger.debug('transcrypt_args: ' + str(transcrypt_args))
     logger.debug('.parse_known_args() done')
 
