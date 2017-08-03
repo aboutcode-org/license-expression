@@ -3,6 +3,7 @@
 import argparse
 import logging
 import logging.config
+import shutil
 import subprocess
 import yaml
 import sys
@@ -109,7 +110,7 @@ def transpile():
     )
 
     # javascript path, for output
-    jpath = Path(spath, '__javascript__')
+    jpath = Path(spath.parent, 'license_expression.js', '__javascript__')
     parser.add_argument(
         '--dst', nargs=1, default=[jpath],
         help='store produced javascript here'
@@ -142,7 +143,9 @@ def transpile():
     cmd = create_transcrypt_cmd(args, transcrypt_args)
 
     logger.debug('subprocess.run() call')
-    process = subprocess.run(cmd)
+    process = subprocess.run(
+        cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+    )
     logger.debug('subprocess.run() done')
 
     if process.returncode != 0:
@@ -155,8 +158,37 @@ def transpile():
 
         sys.exit(1)
 
-    logger.debug(process.stdout)
-    logger.debug(process.stderr)
+    # Transcrypt always puts the transpiled result into __javascript__,
+    # move it to ./src/license_expression.js, create directories if necessary
+    stdout = [line for line in str(process.stdout).split('\\n') if line]
+    lines = list(
+        filter(lambda line: line.startswith('Saving result in:'), stdout)
+    )
+
+    if len(lines) != 1:
+        logger.warning('Transcrypt output format changed!')
+        logger.warning('Expected a path to __javascript__ result, instead got:')
+
+        for line in lines:
+            logger.warning(line)
+
+    src = Path(lines[0].split(': ')[1]).parent
+    dst = args.dst[0]
+
+    if src != dst:
+        logger.debug('Copy original __javascript__')
+        logger.debug('copy src: ' + str(src))
+        logger.debug('copy dst: ' + str(dst))
+
+        if dst.exists():
+            logger.debug('Remove previous __javascript__')
+            shutil.rmtree(dst)
+
+        shutil.copytree(src, dst)
+
+        if src.exists():
+            logger.debug('Remove original __javascript__')
+            shutil.rmtree(src)
 
     logger.debug('transpile() done')
 
