@@ -77,7 +77,12 @@ def create_transcrypt_cmd(args, transcrypt_args):
         # This forces empty dictionaries, lists, and tuples to compare as false.
         cmd.append("-t")
         # Force EcmaScript 6 to enable generators
-        cmd.append("-e 6")
+        cmd.append("-e")
+        cmd.append("6")
+        # Drop global 'window' object and prepare for node.js runtime instead
+        cmd.append("-p")
+        cmd.append(".none")
+        # Supply path to the python file to be transpiled
         cmd.append(str(args.src[0]))
 
     logger.info('constructed the following command')
