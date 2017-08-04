@@ -51,5 +51,9 @@ docs/_build
 # Transpilation results
 __javascript__
 
+# node.js and yarn
+/node_modules/
+yarn.lock
+
 /share/
 /local/

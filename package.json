@@ -1,0 +1,14 @@
+{
+  "name": "license-expression",
+  "version": "0.93.0",
+  "main": "src/license_expression.js/__javascript__/__init__.js",
+  "repository": "git@github.com:nexB/license-expression",
+  "author": "nexB Inc. <info@nexb.com>",
+  "license": "Apache-2.0",
+  "scripts": {
+      "test": "mocha"
+  },
+  "devDependencies": {
+    "mocha": "^3.5.0"
+  }
+}
