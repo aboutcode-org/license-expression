@@ -19,17 +19,6 @@ from __future__ import absolute_import
 from __future__ import print_function
 
 from license_expression.my_collections import Deque
-import logging
-
-logger = logging.getLogger(__name__)
-
-def logger_debug(*args):
-    return logger.debug(' '.join(isinstance(a, str) and a or repr(a) for a in args))
-
-# uncomment for local debug logging
-# import sys
-# logging.basicConfig(stream=sys.stdout)
-# logger.setLevel(logging.DEBUG)
 
 
 # used to distinguish from None
@@ -547,15 +536,12 @@ def filter_overlapping(results):
             curr_res = results[i]
             next_res = results[j]
 
-            logger_debug('curr_res, i, next_res, j:', curr_res, i, next_res, j)
             # disjoint results: break, there is nothing to do
             if next_res.is_after(curr_res):
-                logger_debug('  break to next', curr_res)
                 break
 
             # contained result: discard the contained result
             if next_res in curr_res:
-                logger_debug('  del next_res contained:', next_res)
                 del results[j]
                 continue
 
@@ -563,20 +549,16 @@ def filter_overlapping(results):
             # in case of length tie: keep the left most
             if curr_res.overlap(next_res):
                 if curr_res.priority < next_res.priority:
-                    logger_debug('  del next_res lower priority:', next_res)
                     del results[j]
                     continue
                 elif curr_res.priority > next_res.priority:
-                    logger_debug('  del curr_res lower priority:', curr_res)
                     del results[i]
                     break
                 else:
                     if len(curr_res) >= len(next_res):
-                        logger_debug('  del next_res smaller overlap:', next_res)
                         del results[j]
                         continue
                     else:
-                        logger_debug('  del curr_res smaller overlap:', curr_res)
                         del results[i]
                         break
             j += 1
