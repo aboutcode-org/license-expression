@@ -81,7 +81,7 @@ def create_transcrypt_cmd(args, transcrypt_args):
         cmd.append("6")
         # Drop global 'window' object and prepare for node.js runtime instead
         cmd.append("-p")
-        cmd.append(".none")
+        cmd.append("module.exports")
         # Supply path to the python file to be transpiled
         cmd.append(str(args.src[0]))
 
