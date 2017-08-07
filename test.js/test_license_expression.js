@@ -65,18 +65,18 @@ describe('LicenseSymbol', function() {
         assert.ok(license_symbol.is_exception)
     })
 
-    it.skip('should compare equal if the same license .key', function() {
+    it('should compare equal if the same license .key', function() {
         let license_symbol0 = LicenseSymbol(key='MIT')
         let license_symbol1 = LicenseSymbol(key='MIT')
 
-        assert.equal(license_symbol0, license_symbol1)
+        assert.ok(license_symbol0.__eq__(license_symbol1))
     })
 
     it('should compare not equal if different licenses', function() {
         let license_symbol0 = LicenseSymbol(key='MIT')
         let license_symbol1 = LicenseSymbol(key='GPL')
 
-        assert.notEqual(license_symbol0, license_symbol1)
+        assert.ok(!license_symbol0.__eq__(license_symbol1))
     })
 })
 
@@ -106,8 +106,8 @@ describe('LicenseWithExceptionSymbol', function() {
             license_symbol = license_symbol0, exception_symbol = license_symbol1
         )
 
-        assert.equal(
-            license_symbol_with_exception0, license_symbol_with_exception1
+        assert.ok(
+            license_symbol_with_exception0.__eq__(license_symbol_with_exception1)
         )
     })
 })
