@@ -114,9 +114,13 @@ describe('LicenseWithExceptionSymbol', function() {
 
 describe('Licensing', function() {
     describe('tokenize', function() {
-        it('should tokenize a single license', function() {
-            let licensing = Licensing()
+        let licensing
 
+        beforeEach(function() {
+            licensing = Licensing()
+        })
+
+        it('should tokenize a single license', function() {
             tokens = []
             for (let token of licensing.tokenize('MIT')) {
                 tokens.push(token)
@@ -133,35 +137,7 @@ describe('Licensing', function() {
             assert.equal(0    , pos)
         })
 
-        it('should tokenize a single license in parenthesis', function() {
-            let licensing = Licensing()
-
-            tokens = []
-            for (let token of licensing.tokenize('(MIT)')) {
-                tokens.push(token)
-            }
-
-            assert.ok(tokens.length === 3)
-            for (let token of tokens) {
-                assert.ok(token.length === 3)
-            }
-
-            assert.equal(TOKEN_LPAR, tokens[0][0])
-            assert.equal('('       , tokens[0][1])
-            assert.equal(0         , tokens[0][2])
-
-            assert.equal('MIT', tokens[1][0].key)
-            assert.equal('MIT', tokens[1][1])
-            assert.equal(1    , tokens[1][2])
-
-            assert.equal(TOKEN_RPAR, tokens[2][0])
-            assert.equal(')'       , tokens[2][1])
-            assert.equal(4         , tokens[2][2])
-        })
-
         it('should tokenize a single OR expression', function() {
-            let licensing = Licensing()
-
             tokens = []
             for (let token of licensing.tokenize('mit or gpl')) {
                 tokens.push(token)
@@ -185,103 +161,7 @@ describe('Licensing', function() {
             assert.equal(7    , tokens[2][2])
         })
 
-        it('should tokenize a single OR expression with parenthesis', function() {
-            let licensing = Licensing()
-
-            tokens = []
-            for (let token of licensing.tokenize('mit or ( gpl )')) {
-                tokens.push(token)
-            }
-
-            assert.ok(tokens.length === 5)
-            for (let token of tokens) {
-                assert.ok(token.length === 3)
-            }
-
-            assert.equal('mit', tokens[0][0].key)
-            assert.equal('mit', tokens[0][1])
-            assert.equal(0    , tokens[0][2])
-
-            assert.equal(TOKEN_OR, tokens[1][0])
-            assert.equal('or'    , tokens[1][1])
-            assert.equal(4       , tokens[1][2])
-
-            assert.equal(TOKEN_LPAR, tokens[2][0])
-            assert.equal('('       , tokens[2][1])
-            assert.equal(7         , tokens[2][2])
-
-            assert.equal('gpl', tokens[3][0].key)
-            assert.equal('gpl', tokens[3][1])
-            assert.equal(9    , tokens[3][2])
-
-            assert.equal(TOKEN_RPAR, tokens[4][0])
-            assert.equal(')'       , tokens[4][1])
-            assert.equal(13        , tokens[4][2])
-        })
-
-        it('should tokenize a single AND expression', function() {
-            let licensing = Licensing()
-
-            tokens = []
-            for (let token of licensing.tokenize('mit and gpl')) {
-                tokens.push(token)
-            }
-
-            assert.ok(tokens.length === 3)
-            for (let token of tokens) {
-                assert.ok(token.length === 3)
-            }
-
-            assert.equal('mit', tokens[0][0].key)
-            assert.equal('mit', tokens[0][1])
-            assert.equal(0    , tokens[0][2])
-
-            assert.equal(TOKEN_AND, tokens[1][0])
-            assert.equal('and'    , tokens[1][1])
-            assert.equal(4       , tokens[1][2])
-
-            assert.equal('gpl', tokens[2][0].key)
-            assert.equal('gpl', tokens[2][1])
-            assert.equal(8    , tokens[2][2])
-        })
-
-        it('should tokenize a single AND expression with parenthesis', function() {
-            let licensing = Licensing()
-
-            tokens = []
-            for (let token of licensing.tokenize('( mit) and gpl')) {
-                tokens.push(token)
-            }
-
-            assert.ok(tokens.length === 5)
-            for (let token of tokens) {
-                assert.ok(token.length === 3)
-            }
-
-            assert.equal(TOKEN_LPAR, tokens[0][0])
-            assert.equal('('       , tokens[0][1])
-            assert.equal(0         , tokens[0][2])
-
-            assert.equal('mit', tokens[1][0].key)
-            assert.equal('mit', tokens[1][1])
-            assert.equal(2    , tokens[1][2])
-
-            assert.equal(TOKEN_RPAR, tokens[2][0])
-            assert.equal(')'       , tokens[2][1])
-            assert.equal(5         , tokens[2][2])
-
-            assert.equal(TOKEN_AND, tokens[3][0])
-            assert.equal('and'    , tokens[3][1])
-            assert.equal(7        , tokens[3][2])
-
-            assert.equal('gpl', tokens[4][0].key)
-            assert.equal('gpl', tokens[4][1])
-            assert.equal(11   , tokens[4][2])
-        })
-
         it('should tokenize a double OR expression', function() {
-            let licensing = Licensing()
-
             tokens = []
             for (let token of licensing.tokenize('mit or gpl or apache')) {
                 tokens.push(token)
@@ -313,42 +193,31 @@ describe('Licensing', function() {
             assert.equal(14      , tokens[4][2])
         })
 
-        // it('should tokenize a double OR expression with parenthesis', function() {
-        //     let licensing = Licensing()
-        //
-        //     tokens = []
-        //     for (let token of licensing.tokenize('mit')) {
-        //         tokens.push(token)
-        //     }
-        //
-        //     for (let token of tokens) {
-        //         console.log(token)
-        //     }
+        it('should tokenize a single AND expression', function() {
+            tokens = []
+            for (let token of licensing.tokenize('mit and gpl')) {
+                tokens.push(token)
+            }
 
-            // assert.equal('mit', tokens[0][0].key)
-            // assert.equal('mit', tokens[0][1])
-            // assert.equal(0    , tokens[0][2])
-            //
-            // assert.equal(TOKEN_OR, tokens[1][0])
-            // assert.equal('or'    , tokens[1][1])
-            // assert.equal(4       , tokens[1][2])
-            //
-            // assert.equal('gpl', tokens[2][0].key)
-            // assert.equal('gpl', tokens[2][1])
-            // assert.equal(7    , tokens[2][2])
-            //
-            // assert.equal(TOKEN_OR, tokens[3][0])
-            // assert.equal('or'    , tokens[3][1])
-            // assert.equal(11      , tokens[3][2])
-            //
-            // assert.equal('apache', tokens[4][0].key)
-            // assert.equal('apache', tokens[4][1])
-            // assert.equal(14      , tokens[4][2])
-        // })
+            assert.ok(tokens.length === 3)
+            for (let token of tokens) {
+                assert.ok(token.length === 3)
+            }
+
+            assert.equal('mit', tokens[0][0].key)
+            assert.equal('mit', tokens[0][1])
+            assert.equal(0    , tokens[0][2])
+
+            assert.equal(TOKEN_AND, tokens[1][0])
+            assert.equal('and'    , tokens[1][1])
+            assert.equal(4       , tokens[1][2])
+
+            assert.equal('gpl', tokens[2][0].key)
+            assert.equal('gpl', tokens[2][1])
+            assert.equal(8    , tokens[2][2])
+        })
 
         it('should tokenize a double AND expression', function() {
-            let licensing = Licensing()
-
             tokens = []
             for (let token of licensing.tokenize('mit and gpl and apache')) {
                 tokens.push(token)
@@ -379,27 +248,367 @@ describe('Licensing', function() {
             assert.equal('apache', tokens[4][1])
             assert.equal(16      , tokens[4][2])
         })
+
+        it('should tokenize a single license with parenthesis', function() {
+            tokens = []
+            for (let token of licensing.tokenize('(MIT)')) {
+                tokens.push(token)
+            }
+
+            assert.ok(tokens.length === 3)
+            for (let token of tokens) {
+                assert.ok(token.length === 3)
+            }
+
+            assert.equal(TOKEN_LPAR, tokens[0][0])
+            assert.equal('('       , tokens[0][1])
+            assert.equal(0         , tokens[0][2])
+
+            assert.equal('MIT', tokens[1][0].key)
+            assert.equal('MIT', tokens[1][1])
+            assert.equal(1    , tokens[1][2])
+
+            assert.equal(TOKEN_RPAR, tokens[2][0])
+            assert.equal(')'       , tokens[2][1])
+            assert.equal(4         , tokens[2][2])
+        })
+
+        it('should tokenize a single OR expression with parenthesis', function() {
+            tokens = []
+            for (let token of licensing.tokenize('mit or ( gpl )')) {
+                tokens.push(token)
+            }
+
+            assert.ok(tokens.length === 5)
+            for (let token of tokens) {
+                assert.ok(token.length === 3)
+            }
+
+            assert.equal('mit', tokens[0][0].key)
+            assert.equal('mit', tokens[0][1])
+            assert.equal(0    , tokens[0][2])
+
+            assert.equal(TOKEN_OR, tokens[1][0])
+            assert.equal('or'    , tokens[1][1])
+            assert.equal(4       , tokens[1][2])
+
+            assert.equal(TOKEN_LPAR, tokens[2][0])
+            assert.equal('('       , tokens[2][1])
+            assert.equal(7         , tokens[2][2])
+
+            assert.equal('gpl', tokens[3][0].key)
+            assert.equal('gpl', tokens[3][1])
+            assert.equal(9    , tokens[3][2])
+
+            assert.equal(TOKEN_RPAR, tokens[4][0])
+            assert.equal(')'       , tokens[4][1])
+            assert.equal(13        , tokens[4][2])
+        })
+
+        it('should tokenize a double OR expression with parenthesis', function() {
+            tokens = []
+            for (let token of licensing.tokenize('mit or (gpl or apache)')) {
+                tokens.push(token)
+            }
+
+            assert.ok(tokens.length === 7)
+            for (let token of tokens) {
+                assert.ok(token.length === 3)
+            }
+
+            assert.equal('mit', tokens[0][0].key)
+            assert.equal('mit', tokens[0][1])
+            assert.equal(0    , tokens[0][2])
+
+            assert.equal(TOKEN_OR, tokens[1][0])
+            assert.equal('or'    , tokens[1][1])
+            assert.equal(4       , tokens[1][2])
+
+            assert.equal(TOKEN_LPAR, tokens[2][0])
+            assert.equal('('       , tokens[2][1])
+            assert.equal(7         , tokens[2][2])
+
+            assert.equal('gpl', tokens[3][0].key)
+            assert.equal('gpl', tokens[3][1])
+            assert.equal(8    , tokens[3][2])
+
+            assert.equal(TOKEN_OR, tokens[4][0])
+            assert.equal('or'    , tokens[4][1])
+            assert.equal(12      , tokens[4][2])
+
+            assert.equal('apache', tokens[5][0].key)
+            assert.equal('apache', tokens[5][1])
+            assert.equal(15      , tokens[5][2])
+
+            assert.equal(TOKEN_RPAR, tokens[6][0])
+            assert.equal(')'       , tokens[6][1])
+            assert.equal(21        , tokens[6][2])
+        })
+
+        it('should tokenize a single AND expression with parenthesis', function() {
+            tokens = []
+            for (let token of licensing.tokenize('( mit) and gpl')) {
+                tokens.push(token)
+            }
+
+            assert.ok(tokens.length === 5)
+            for (let token of tokens) {
+                assert.ok(token.length === 3)
+            }
+
+            assert.equal(TOKEN_LPAR, tokens[0][0])
+            assert.equal('('       , tokens[0][1])
+            assert.equal(0         , tokens[0][2])
+
+            assert.equal('mit', tokens[1][0].key)
+            assert.equal('mit', tokens[1][1])
+            assert.equal(2    , tokens[1][2])
+
+            assert.equal(TOKEN_RPAR, tokens[2][0])
+            assert.equal(')'       , tokens[2][1])
+            assert.equal(5         , tokens[2][2])
+
+            assert.equal(TOKEN_AND, tokens[3][0])
+            assert.equal('and'    , tokens[3][1])
+            assert.equal(7        , tokens[3][2])
+
+            assert.equal('gpl', tokens[4][0].key)
+            assert.equal('gpl', tokens[4][1])
+            assert.equal(11   , tokens[4][2])
+        })
+
+        it('should tokenize a double AND expression with parenthsis', function() {
+            tokens = []
+            for (let token of licensing.tokenize('( mit and gpl ) and apache')) {
+                tokens.push(token)
+            }
+
+            assert.ok(tokens.length === 7)
+            for (let token of tokens) {
+                assert.ok(token.length === 3)
+            }
+
+            assert.equal(TOKEN_LPAR, tokens[0][0])
+            assert.equal('('       , tokens[0][1])
+            assert.equal(0         , tokens[0][2])
+
+            assert.equal('mit', tokens[1][0].key)
+            assert.equal('mit', tokens[1][1])
+            assert.equal(2    , tokens[1][2])
+
+            assert.equal(TOKEN_AND, tokens[2][0])
+            assert.equal('and'    , tokens[2][1])
+            assert.equal(6        , tokens[2][2])
+
+            assert.equal('gpl', tokens[3][0].key)
+            assert.equal('gpl', tokens[3][1])
+            assert.equal(10    , tokens[3][2])
+
+            assert.equal(TOKEN_RPAR, tokens[4][0])
+            assert.equal(')'       , tokens[4][1])
+            assert.equal(14        , tokens[4][2])
+
+            assert.equal(TOKEN_AND, tokens[5][0])
+            assert.equal('and'    , tokens[5][1])
+            assert.equal(16       , tokens[5][2])
+
+            assert.equal('apache', tokens[6][0].key)
+            assert.equal('apache', tokens[6][1])
+            assert.equal(20      , tokens[6][2])
+        })
+
+        it('should tokenize a mixed OR-AND expression', function() {
+            let tokens = []
+            for (let token of licensing.tokenize('mit or (bsd and bsd)')) {
+                tokens.push(token)
+            }
+
+            assert.ok(tokens.length === 7)
+            for (let token of tokens) {
+                assert.ok(token.length === 3)
+            }
+
+            assert.equal('mit', tokens[0][0].key)
+            assert.equal('mit', tokens[0][1])
+            assert.equal(0    , tokens[0][2])
+
+            assert.equal(TOKEN_OR, tokens[1][0])
+            assert.equal('or'    , tokens[1][1])
+            assert.equal(4       , tokens[1][2])
+
+            assert.equal(TOKEN_LPAR, tokens[2][0])
+            assert.equal('('       , tokens[2][1])
+            assert.equal(7         , tokens[2][2])
+
+            assert.equal('bsd', tokens[3][0].key)
+            assert.equal('bsd', tokens[3][1])
+            assert.equal(8    , tokens[3][2])
+
+            assert.equal(TOKEN_AND, tokens[4][0])
+            assert.equal('and'    , tokens[4][1])
+            assert.equal(12       , tokens[4][2])
+
+            assert.equal('bsd', tokens[5][0].key)
+            assert.equal('bsd', tokens[5][1])
+            assert.equal(16   , tokens[5][2])
+
+            assert.equal(TOKEN_RPAR, tokens[6][0])
+            assert.equal(')'       , tokens[6][1])
+            assert.equal(19        , tokens[6][2])
+        })
+
+        it.skip('should tokenize gpl with classpath (an exception)', function() {
+            let tokens = []
+            for (let token of licensing.tokenize('gpl with classpath')) {
+                tokens.push(token)
+            }
+        })
+    })
+
+    describe('tokenize with symbols', function() {
+        let gpl_20, gpl_20_plus
+
+        beforeEach(function() {
+            gpl_20 = LicenseSymbol('GPL-2.0', ['The GNU GPL 20'])
+            gpl_20_plus = LicenseSymbol(
+                'gpl-2.0+', [
+                    'The GNU GPL 20 or later'
+                    , 'GPL-2.0 or later'
+                    , 'GPL v2.0 or later'
+                ]
+            )
+        })
+
+        it.skip('should work with predefined symbols (one)', function() {
+            let licensing = Licensing([gpl_20])
+
+            let tokens = []
+            for (let token of licensing.parse('The GNU GPL 20')) {
+                tokens.push(token)
+            }
+        })
     })
 
     describe('parse', function() {
-        it('should parse a single license', function() {
-            let licensing = Licensing()
+        let licensing;
 
+        beforeEach(function() {
+            licensing = Licensing()
+        })
+
+        it('should parse an empty string', function() {
+            assert.equal(undefined, licensing.parse(''))
+        })
+
+        it('should parse a single license', function() {
             assert.equal('MIT', licensing.parse('MIT').toString())
         })
 
-        it('should parse a bracketed license', function() {
-            let licensing = Licensing()
+        it('should parse a single OR expression', function() {
+            let expression = licensing.parse('MIT or GPL')
 
+            assert.ok(expression.__name__ === 'OR')
+
+            assert.ok(expression.args.length === 2)
+            assert.ok(expression.args[0].key === 'MIT')
+            assert.ok(expression.args[1].key === 'GPL')
+        })
+
+        it('should parse a double OR expression', function() {
+            let expression = licensing.parse('mit or bsd or gpl')
+
+            assert.ok(expression.__name__ === 'OR')
+
+            assert.ok(expression.args.length === 3)
+            assert.ok(expression.args[0].key === 'mit')
+            assert.ok(expression.args[1].key === 'bsd')
+            assert.ok(expression.args[2].key === 'gpl')
+        })
+
+        it('should parse a single AND expression', function() {
+            let expression = licensing.parse('MIT and GPL')
+
+            assert.ok(expression.__name__ === 'AND')
+
+            assert.ok(expression.args.length === 2)
+            assert.ok(expression.args[0].key === 'MIT')
+            assert.ok(expression.args[1].key === 'GPL')
+        })
+
+        it('should parse a double AND expression', function() {
+            let expression = licensing.parse('mit and bsd and gpl')
+
+            assert.ok(expression.__name__ === 'AND')
+
+            assert.ok(expression.args.length === 3)
+            assert.ok(expression.args[0].key === 'mit')
+            assert.ok(expression.args[1].key === 'bsd')
+            assert.ok(expression.args[2].key === 'gpl')
+        })
+
+        it('should parse a single license with parenthesis', function() {
             assert.equal('MIT', licensing.parse('(MIT)').toString())
         })
 
-        it.skip('should parse an "OR" expression', function() {
-            let licensing = Licensing()
+        it('should parse a single OR expression with parenthesis', function() {
+            let expression = licensing.parse('(MIT)')
 
-            let expression = licensing.parse('MIT or GPL')
+            assert.ok(expression.key === 'MIT')
+        })
 
-            assert.ok(expression instanceof license_expression.OR)
+        it('should parse a double OR expression with parenthesis', function() {
+            let expression = licensing.parse('(MIT or GPL) or BSD')
+
+            assert.ok(expression.__name__ === 'OR')
+
+            assert.ok(expression.args.length === 2)
+            assert.ok(expression.args[0].__name__ === 'OR')
+            assert.ok(expression.args[1].key === 'BSD')
+
+            expression = expression.args[0]
+            assert.ok(expression.args.length === 2)
+            assert.ok(expression.args[0].key === 'MIT')
+            assert.ok(expression.args[1].key === 'GPL')
+        })
+
+        it('should parse a single AND expression with parenthesis', function() {
+            let expression = licensing.parse('MIT and (GPL)')
+
+            assert.ok(expression.__name__ === 'AND')
+
+            assert.ok(expression.args.length === 2)
+            assert.ok(expression.args[0].key === 'MIT')
+            assert.ok(expression.args[1].key === 'GPL')
+        })
+
+        it('should parse a double AND expression with parenthesis', function() {
+            let expression = licensing.parse('mit and (gpl and bsd)')
+
+            assert.ok(expression.__name__ === 'AND')
+
+            assert.ok(expression.args.length === 2)
+            assert.ok(expression.args[0].key === 'mit')
+            assert.ok(expression.args[1].__name__ === 'AND')
+
+            expression = expression.args[1]
+            assert.ok(expression.args.length === 2)
+            assert.ok(expression.args[0].key === 'gpl')
+            assert.ok(expression.args[1].key === 'bsd')
+        })
+
+        it('should parse a mixed OR-AND expression', function() {
+            let expression = licensing.parse('mit or (bsd and bsd)')
+
+            assert.ok(expression.__name__ === 'OR')
+
+            assert.ok(expression.args.length === 2)
+            assert.ok(expression.args[0].key === 'mit')
+            assert.ok(expression.args[1].__name__ === 'AND')
+
+            expression = expression.args[1]
+            assert.ok(expression.args.length === 2)
+            assert.ok(expression.args[0].key === 'bsd')
+            assert.ok(expression.args[1].key === 'bsd')
         })
     })
 })
