@@ -938,25 +938,23 @@ def as_symbols(symbols):
     will raise a TypeError expection if an item is neither a string or LicenseSymbol-
     like.
     """
-    if symbols:
-        for symbol in symbols:
-            if not symbol:
-                continue
+    for symbol in symbols:
+        if not symbol:
+            continue
 
-            if isinstance(symbol, str):
-                if symbol.strip():
-                    yield LicenseSymbol(symbol)
+        if isinstance(symbol, str):
+            if symbol.strip():
+                yield LicenseSymbol(symbol)
 
-            elif isinstance(symbol, LicenseSymbol):
-                yield symbol
+        elif isinstance(symbol, LicenseSymbol):
+            yield symbol
 
-            elif LicenseSymbol.symbol_like(symbol):
-                yield LicenseSymbolLike(symbol)
+        elif LicenseSymbol.symbol_like(symbol):
+            yield LicenseSymbolLike(symbol)
 
-            else:
-                raise TypeError('%(symbol)r is not a unicode string '
-                                'or a LicenseSymbol-like instance.' % locals())
-
+        else:
+            raise TypeError('%(symbol)r is not a unicode string '
+                            'or a LicenseSymbol-like instance.' % locals())
 
 def validate_symbols(symbols, validate_keys=False, _keywords=KEYWORDS):
     """
