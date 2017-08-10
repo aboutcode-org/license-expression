@@ -942,11 +942,6 @@ def as_symbols(symbols):
         for symbol in symbols:
             if not symbol:
                 continue
-            if isinstance(symbol, bytes):
-                try:
-                    symbol = str(symbol)
-                except:
-                    raise TypeError('%(symbol)r is not a unicode string.' % locals())
 
             if isinstance(symbol, str):
                 if symbol.strip():
