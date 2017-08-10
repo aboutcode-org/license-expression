@@ -233,7 +233,7 @@ class Trie(object):
         True
         """
         if not string:
-            return
+            return []
 
         # keep a copy for results
         original_string = string
@@ -241,6 +241,7 @@ class Trie(object):
 
         known_chars = self._known_chars
         state = self.root
+        results = []
         for end, char in enumerate(string):
             if char not in known_chars:
                 state = self.root
@@ -257,8 +258,10 @@ class Trie(object):
                     # TODO: this could be precomputed or cached
                     n = len(match.output.key)
                     start = end - n + 1
-                    yield Result(start, end, original_string[start:end + 1], match.output)
+                    results.append(Result(start, end, original_string[start:end + 1], match.output))
                 match = match.fail
+
+        return results
 
     def scan(self, string):
         """
