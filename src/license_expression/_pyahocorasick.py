@@ -591,7 +591,7 @@ def add_unmatched(string, results):
     ...   Result(9, 10, 'jk'),
     ...   Result(11, 13, 'lmn')
     ... ]
-    >>> expected == list(add_unmatched(string, results))
+    >>> expected == add_unmatched(string, results)
     True
 
     >>> string ='abc2'
@@ -602,21 +602,24 @@ def add_unmatched(string, results):
     ...   Result(0, 2, 'abc'),
     ...   Result(3, 3, '2', None),
     ... ]
-    >>> expected == list(add_unmatched(string, results))
+    >>> expected == add_unmatched(string, results)
     True
 
     """
+    results_and_unmatched = []
     string_pos = 0
     for result in Result.reorder(results):
         if result.start > string_pos:
             start = string_pos
             end = result.start - 1
-            yield Result(start, end, string[start:end + 1])
-        yield result
+            results_and_unmatched.append(Result(start, end, string[start:end + 1]))
+        results_and_unmatched.append(result)
         string_pos = result.end + 1
 
     len_string = len(string)
     if string_pos < len_string:
         start = string_pos
         end = len_string - 1
-        yield Result(start, end, string[start:end + 1])
+        results_and_unmatched.append(Result(start, end, string[start:end + 1]))
+
+    return results_and_unmatched
