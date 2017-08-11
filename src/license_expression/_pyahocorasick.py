@@ -606,9 +606,12 @@ def add_unmatched(string, results):
     True
 
     """
+    # Transcrypt can call classmethods only from a class instance, so make one:
+    result_instance = Result(start=0, end=0, string="not a real result")
+
     results_and_unmatched = []
     string_pos = 0
-    for result in Result.reorder(results):
+    for result in result_instance.reorder(results):
         if result.start > string_pos:
             start = string_pos
             end = result.start - 1
