@@ -2,21 +2,22 @@
 # multi-os builds with custom Python versions in Travis CI.
 language: cpp
 
-os: 
+os:
   - osx
-  - linux 
+  - linux
 
 env:
     matrix:
         - PYTHON_EXE="`which python2`"
         - PYTHON_EXE="`which python3.4`"
         - PYTHON_EXE="`which python3.5`"
+        - PYTHON_EXE="`which pytohn3.6`"
 
 install:
     - PYTHON_EXE=$PYTHON_EXE ./configure
 
 script:
-    - "bin/py.test -vvs"
+    - "./bin/py.test -vvs"
 
 notifications:
     irc:
