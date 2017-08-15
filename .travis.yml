@@ -2,9 +2,9 @@
 # multi-os builds with custom Python versions in Travis CI.
 language: cpp
 
-os: 
+os:
   - osx
-  - linux 
+  - linux
 
 env:
   matrix:
