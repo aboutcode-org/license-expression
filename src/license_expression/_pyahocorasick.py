@@ -397,6 +397,9 @@ class Result(object):
     def __repr__(self):
         return self.__class__.__name__ + '(%(start)r, %(end)r, %(string)r, %(output)r)' % self.as_dict()
 
+    def toString(self):
+        return self.__repr__()
+
     def as_dict(self):
         return dict([(s, getattr(self, s)) for s in self.__slots__])
 
@@ -530,43 +533,56 @@ def filter_overlapping(results):
     # Transcrypt can call classmethods only from a class instance, so make one:
     result = Result(start=0, end=0, string="not a real result")
     results = result.reorder(results)
+    results_with_no_overlaps = []
 
-    # compare pair of results in the sorted sequence: current and next
-    i = 0
-    while i < len(results) - 1:
-        j = i + 1
-        while j < len(results):
-            curr_res = results[i]
-            next_res = results[j]
+    i, j, N = 0, 0, len(results)
+    while i != N:
+        assert i == j
 
-            # disjoint results: break, there is nothing to do
-            if next_res.is_after(curr_res):
+        # advance j to the right as far as it can go
+
+        # advance j over strictly contained results
+        # this loop makes at least one iteration because:
+        # a) Result.__contains__ is True for the same results
+        # b) the above invariant of 'assert i == j'
+        while j != N and results[j] in results[i]:
+            j += 1
+
+        assert i < j
+
+        # advance j over overlapping results
+        # if right result becomes "better" than left result
+        # then make right index the new left index and restart
+        while j != N and results[i].overlap(results[j]):
+            # right is "better" because it has stronger priority
+            if results[j].priority < results[i].priority:
+                i = j
+
                 break
 
-            # contained result: discard the contained result
-            if next_res in curr_res:
-                del results[j]
-                continue
+            # right is "better" because same priority but longer
+            if results[j].priority == results[i].priority:
+                if len(results[j]) > len(results[i]):
+                    i = j
 
-            # overlap: keep the biggest result and skip the smallest overlapping results
-            # in case of length tie: keep the left most
-            if curr_res.overlap(next_res):
-                if curr_res.priority < next_res.priority:
-                    del results[j]
-                    continue
-                elif curr_res.priority > next_res.priority:
-                    del results[i]
                     break
-                else:
-                    if len(curr_res) >= len(next_res):
-                        del results[j]
-                        continue
-                    else:
-                        del results[i]
-                        break
+
+            # right is not "better", so keep advancing right
             j += 1
-        i += 1
-    return results
+
+        # i == j if and only if right was "better" than left
+        # so, if that is the case, just restart the loop again
+
+        # i != j implies i < j and since j <= N, so i < j <= N
+        # i != j also implies that either j == N or left and right
+        # results are disjoint (no longer overlap). So, left result
+        # should survive the filter and be eventually returned
+        if i != j:
+            results_with_no_overlaps.append(results[i])
+
+            i = j
+
+    return results_with_no_overlaps
 
 
 def add_unmatched(string, results):
