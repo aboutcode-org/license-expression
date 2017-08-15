@@ -1,29 +1,32 @@
-# This deliberately is not "python" as a work-around to support
-# multi-os builds with custom Python versions in Travis CI.
-language: cpp
+language: generic
 
 os:
-  - osx
-  - linux
+    - osx
+    - linux
 
 env:
     matrix:
-        - PYTHON_EXE="`pyenv install -s 2.7.6 && pyenv local 2.7.6`"
-        - PYTHON_EXE="`pyenv install -s 2.7.13 && pyenv local 2.7.13`"
-        - PYTHON_EXE="`pyenv install -s 3.5.3 && pyenv local 3.5.3`"
-        - PYTHON_EXE="`pyenv install -s 3.6.1 && pyenv local 3.6.1`"
+        - PYENV_VERSION='3.6.1' NODE_VERSION='6.11.2'  PYENV_VERSION_STRING='Python 3.6.1'
+#       - PYENV_VERSION='3.5.3' NODE_VERSION='8.4.0'   PYENV_VERSION_STRING='Python 3.5.3'
+
+before_install:
+    - nvm install ${NODE_VERSION} && nvm use ${NODE_VERSION}
+    - source setup-pyenv.sh
 
 install:
     - pyenv install --list
-    - PYTHON_EXE=$PYTHON_EXE ./configure
-    - PYTHON_EXE=$PYTHON_EXE ./configure etc/conf/dev/transpile
+    - npm install
+    - ./configure
+    - ./configure ./etc/conf/dev/transpile
+    - ./bin/python transpile/transpile.py
 
 before_script:
     - bin/pip install aboutcode-toolkit
     - bin/about-code check --show-all .
 
 script:
-    - "bin/py.test -vvs"
+    - ./bin/py.test -vvs
+    - npm test
 
 notifications:
     irc:
