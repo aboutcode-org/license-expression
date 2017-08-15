@@ -479,13 +479,22 @@ describe('Licensing', function() {
             )
         })
 
-        it.skip('should work with predefined symbols (one)', function() {
-            let licensing = Licensing([gpl_20])
+        it('should work with predefined symbols (symbol as string)', function() {
+            let licensing = Licensing(['gpl-2.0'])
 
             let tokens = []
-            for (let token of licensing.parse('The GNU GPL 20')) {
+            for (let token of licensing.tokenize('gpl-2.0')) {
                 tokens.push(token)
             }
+
+            assert.equal(1, tokens.length)
+            for (let token of tokens) {
+                assert.equal(3, token.length)
+            }
+
+            assert.equal('gpl-2.0', tokens[0][0].key)
+            assert.equal('gpl-2.0', tokens[0][1])
+            assert.equal(0        , tokens[0][2])
         })
     })
 
@@ -609,6 +618,29 @@ describe('Licensing', function() {
             assert.ok(expression.args.length === 2)
             assert.ok(expression.args[0].key === 'bsd')
             assert.ok(expression.args[1].key === 'bsd')
+        })
+    })
+
+    describe('parse with symbols', function() {
+        let gpl_20, gpl_20_plus
+
+        beforeEach(function() {
+            gpl_20 = LicenseSymbol('GPL-2.0', ['The GNU GPL 20'])
+            gpl_20_plus = LicenseSymbol(
+                'gpl-2.0+', [
+                    'The GNU GPL 20 or later'
+                    , 'GPL-2.0 or later'
+                    , 'GPL v2.0 or later'
+                ]
+            )
+        })
+
+        it('should work with predefined symbols (one)', function() {
+            let licensing = Licensing(['gpl-2.0'])
+
+            let expression = licensing.parse('gpl-2.0')
+
+            assert.equal('gpl-2.0', expression.key)
         })
     })
 })
