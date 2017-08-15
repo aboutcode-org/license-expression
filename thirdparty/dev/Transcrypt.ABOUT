@@ -1,6 +1,6 @@
-about_resource: Transcrypt-3.6.34_vendored-py2.py3-none-any.whl
-download_url: https://github.com/all3fox/Transcrypt/tree/vendored
-version: 3.6.34_vendored
+about_resource: Transcrypt-3.6.45-py2.py3-none-any.whl
+download_url: https://github.com/all3fox/Transcrypt/tree/patched
+version: 3.6.45
 
 name: Transcrypt
 description: Transpile Python 3 to JavaScript
