@@ -15,6 +15,7 @@ env:
 
 install:
     - PYTHON_EXE=$PYTHON_EXE ./configure
+    - PYTHON_EXE=$PYTHON_EXE ./configure etc/conf/dev/transpile
 
 script:
     - "./bin/py.test -vvs"
