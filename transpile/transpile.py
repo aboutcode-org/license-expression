@@ -24,7 +24,7 @@ def configure_logging(parent, args):
     :param parent: -- directory where 'transpile.yml' resides
     :param args:   -- general arguments for transpile
     """
-    with open(Path(parent, 'transpile.yml'), 'r') as config:
+    with open(str(Path(parent, 'transpile.yml')), 'r') as config:
         params = yaml.load(config)
 
         logging.config.dictConfig(params['logging'])
@@ -187,13 +187,13 @@ def transpile():
 
         if dst.exists():
             logger.debug('Remove previous __javascript__')
-            shutil.rmtree(dst)
+            shutil.rmtree(str(dst))
 
-        shutil.copytree(src, dst)
+        shutil.copytree(str(src), str(dst))
 
         if src.exists():
             logger.debug('Remove original __javascript__')
-            shutil.rmtree(src)
+            shutil.rmtree(str(src))
 
     logger.debug('transpile() done')
 
