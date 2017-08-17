@@ -17,7 +17,7 @@ let TOKEN_AND = license_expression.TOKEN_AND
 let TOKEN_LPAR = license_expression.TOKEN_LPAR
 let TOKEN_RPAR = license_expression.TOKEN_RPAR
 
-describe('LicenseSymbol', function() {
+ describe('LicenseSymbol', function() {
     it('should compare equal to itself', function() {
         let license_symbol = LicenseSymbol(key='MIT')
 
@@ -479,8 +479,67 @@ describe('Licensing', function() {
             )
         })
 
-        it('should work with predefined symbols (symbol as string)', function() {
-            let licensing = Licensing(['gpl-2.0'])
+        describe('should work with one predefined symbol (as a string)', function () {
+            let licensing, tokens
+            let expressions = ['mit', 'gpl-2.0']
+            let operations = [' OR ', ' AND ', ' or ', ' and ']
+            let identifiers = [TOKEN_OR, TOKEN_AND, TOKEN_OR, TOKEN_AND]
+
+            beforeEach(function() {
+                tokens = []
+                licensing = Licensing(['gpl-2.0'])
+            })
+
+            for (let expression of expressions) {
+                it('should tokenize a single license: ' + expression, function() {
+                    for (let token of licensing.tokenize(expression)) {
+                        tokens.push(token)
+                    }
+
+                    assert.equal(1, tokens.length)
+                    for (let token of tokens) {
+                        assert.equal(3, token.length)
+                    }
+
+                    assert.equal(expression, tokens[0][0].key)
+                    assert.equal(expression, tokens[0][1])
+                    assert.equal(0        , tokens[0][2])
+                })
+            }
+
+            operations.forEach((operation, i) => {
+                let identifier = identifiers[i]
+                let expression = expressions[0] + operation + expressions[1]
+
+                it('should tokenize a simple expression: ' + expression, function() {
+                    for (let token of licensing.tokenize(expression)) {
+                        tokens.push(token)
+                    }
+
+                    assert.equal(3, tokens.length)
+                    for (let token of tokens) {
+                        assert.equal(3, token.length)
+                    }
+
+                    let lft = expressions[0], rgt = expressions[1]
+
+                    assert.equal(lft, tokens[0][0].key)
+                    assert.equal(lft, tokens[0][1])
+                    assert.equal(0             , tokens[0][2])
+
+                    assert.equal(identifier, tokens[1][0])
+                    assert.equal(operation , tokens[1][1])
+                    assert.equal(lft.length, tokens[1][2])
+
+                    assert.equal(rgt                          , tokens[2][0].key)
+                    assert.equal(rgt                          , tokens[2][1])
+                    assert.equal(lft.length + operation.length, tokens[2][2])
+                })
+            })
+        })
+
+        it('should work with predefined symbols (symbol as LicenseSymbol)', function() {
+            let licensing = Licensing([gpl_20])
 
             let tokens = []
             for (let token of licensing.tokenize('gpl-2.0')) {
@@ -492,9 +551,43 @@ describe('Licensing', function() {
                 assert.equal(3, token.length)
             }
 
-            assert.equal('gpl-2.0', tokens[0][0].key)
+            assert.equal('GPL-2.0', tokens[0][0].key)
             assert.equal('gpl-2.0', tokens[0][1])
             assert.equal(0        , tokens[0][2])
+        })
+
+        it('should work with an alias of a predefined symbol', function() {
+            let licensing = Licensing([gpl_20])
+
+            let tokens = []
+            for (let token of licensing.tokenize('The GNU GPL 20')) {
+                tokens.push(token)
+            }
+
+            assert.equal(1, tokens.length)
+            for (let token of tokens) {
+                assert.equal(3, token.length)
+            }
+
+            assert.equal('GPL-2.0'       , tokens[0][0].key)
+            assert.equal('The GNU GPL 20', tokens[0][1])
+            assert.equal(0               , tokens[0][2])
+        })
+
+        it.skip('should work with an alias of a predefined symbol (one OR)', function() {
+            let licensing = Licensing([gpl_20])
+
+            let tokens = []
+            for (let token of licensing.tokenize('gpl-2.0 or gpl-2.0')) {
+                tokens.push(token)
+            }
+
+            console.log(tokens)
+
+            assert.equal(3, tokens.length)
+            for (let token of tokens) {
+                assert.equal(3, token.length)
+            }
         })
     })
 
