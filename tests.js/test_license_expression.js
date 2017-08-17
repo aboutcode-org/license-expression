@@ -503,7 +503,7 @@ describe('Licensing', function() {
 
                     assert.equal(expression, tokens[0][0].key)
                     assert.equal(expression, tokens[0][1])
-                    assert.equal(0        , tokens[0][2])
+                    assert.equal(0         , tokens[0][2])
                 })
             }
 
@@ -538,22 +538,47 @@ describe('Licensing', function() {
             })
         })
 
-        it('should work with predefined symbols (symbol as LicenseSymbol)', function() {
-            let licensing = Licensing([gpl_20])
+        describe('should work with one predefined symbol (as a LicenseSymbol)', function() {
+            let licensing, tokens
+            let expressions = ['mit', 'gpl-2.0', 'The GNU GPL 20']
+            let expected = ['mit', 'GPL-2.0', 'GPL-2.0']
+            let operations = [' OR ', ' AND ', ' or ', ' and ']
+            let identifiers = [TOKEN_OR, TOKEN_AND, TOKEN_OR, TOKEN_AND]
 
-            let tokens = []
-            for (let token of licensing.tokenize('gpl-2.0')) {
-                tokens.push(token)
-            }
+            beforeEach(function() {
+                tokens = []
+                licensing = Licensing([gpl_20])
+            })
 
-            assert.equal(1, tokens.length)
-            for (let token of tokens) {
-                assert.equal(3, token.length)
-            }
+            expressions.forEach((expression, i) => {
+                it('should tokenize a single license: ' + expression, function() {
+                    for (let token of licensing.tokenize(expression)) {
+                        tokens.push(token)
+                    }
 
-            assert.equal('GPL-2.0', tokens[0][0].key)
-            assert.equal('gpl-2.0', tokens[0][1])
-            assert.equal(0        , tokens[0][2])
+                    assert.equal(1, tokens.length)
+                    for (let token of tokens) {
+                        assert.equal(3, token.length)
+                    }
+
+                    assert.equal(expected[i], tokens[0][0].key)
+                    assert.equal(expression , tokens[0][1])
+                    assert.equal(0          , tokens[0][2])
+                })
+            })
+
+            operations.forEach((operation, i) => {
+                let expression0 = expressions[0] + operation + expressions[1]
+                let expression1 = expressions[1] + operation + expressions[2]
+
+                let tests = [expression0, expression1]
+
+                tests.forEach(expression => {
+                    it('should tokenize a simple expression: ' + expression, function() {
+
+                    })
+                })
+            })
         })
 
         it('should work with an alias of a predefined symbol', function() {
