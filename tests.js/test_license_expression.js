@@ -618,6 +618,23 @@ describe('Licensing', function() {
                     assert(gpl_20_plus.key, tokens[2][0].key)
                 })
             })
+
+            it('should tokenize a mixed OR-AND with parenthesis', function() {
+                let expression = '(gpl-2.0 or gpl-2.0) and mit'
+
+                for (let token of licensing.tokenize(expression)) {
+                    tokens.push(token)
+                }
+
+                assert(7, tokens.length)
+                assert(TOKEN_LPAR     , tokens[0][0])
+                assert(gpl_20.key     , tokens[1][0].key)
+                assert(TOKEN_OR       , tokens[2][0])
+                assert(gpl_20_plus.key, tokens[3][0].key)
+                assert(TOKEN_RPAR     , tokens[4][0])
+                assert(TOKEN_AND      , tokens[5][0])
+                assert('mit'          , tokens[6][0].key)
+            })
         })
     })
 
