@@ -493,8 +493,15 @@ class Result(object):
         >>> expected == Result.reorder(results)
         True
         """
-        key = lambda s: (s.start, -len(s),)
-        return sorted(results, key=key)
+        # Transcrypt compares lists (javascript Arrays, actually) elementwise,
+        # however each element is treated as a Unicode string, so for instance
+        # 11 < 5 is false (numbers) and [11] < [5] is true (Unicode strings)
+        # So, use a comparison function that returns a single number
+        total_length = 0
+        for result in results:
+            total_length += len(result)
+
+        return sorted(results, key=lambda s: s.start * total_length - len(s))
 
 
 def filter_overlapping(results):
