@@ -594,6 +594,31 @@ describe('Licensing', function() {
                 }
             }
         })
+
+        describe('should work with several predefined symbols', function() {
+            let licensing, tokens
+            let operations = [' OR ', ' AND ', ' or ', ' and ']
+            let identifiers = [TOKEN_OR, TOKEN_AND, TOKEN_OR, TOKEN_AND]
+
+            beforeEach(function() {
+                tokens = []
+                licensing = Licensing([gpl_20, gpl_20_plus])
+            })
+
+            operations.forEach((operation, i) => {
+                let expression = 'gpl-2.0' + operation + 'gpl-2.0+'
+                it('should tokenize a simple expression: ' + expression, function() {
+                    for (let token of licensing.tokenize(expression)) {
+                        tokens.push(token)
+                    }
+
+                    assert(3, tokens.length)
+                    assert(gpl_20.key     , tokens[0][0].key)
+                    assert(identifiers[i] , tokens[1][0])
+                    assert(gpl_20_plus.key, tokens[2][0].key)
+                })
+            })
+        })
     })
 
     describe('parse', function() {
