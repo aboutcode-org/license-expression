@@ -1,6 +1,6 @@
-about_resource: Transcrypt-3.6.45-py2.py3-none-any.whl
+about_resource: Transcrypt-3.6.47-py2.py3-none-any.whl
 download_url: https://github.com/all3fox/Transcrypt/tree/patched
-version: 3.6.45
+version: 3.6.47
 
 name: Transcrypt
 description: Transpile Python 3 to JavaScript
