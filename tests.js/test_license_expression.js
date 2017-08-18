@@ -775,12 +775,32 @@ describe('Licensing', function() {
             )
         })
 
-        it('should work with predefined symbols (one)', function() {
+        it('should parse with one predefined symbol (as a string)', function() {
             let licensing = Licensing(['gpl-2.0'])
 
             let expression = licensing.parse('gpl-2.0')
 
             assert.equal('gpl-2.0', expression.key)
+        })
+
+        it('should parse with one predefined symbol (as a LicenseSymbol)', function() {
+            let licensing = Licensing([gpl_20])
+
+            let expression = licensing.parse('gpl-2.0')
+
+            assert.equal(gpl_20.key, expression.key)
+        })
+
+        it('should parse with several predefined symbols and aliases', function() {
+            let licensing = Licensing([gpl_20, gpl_20_plus])
+
+            let expression = licensing.parse('gpl-2.0+ or gpl-2.0 or GPL-2.0 or later')
+
+            assert.equal('OR', expression.__name__)
+            assert.equal(3, expression.args.length)
+            assert.equal(gpl_20_plus.key, expression.args[0].key)
+            assert.equal(gpl_20.key, expression.args[1].key)
+            assert.equal(gpl_20_plus.key, expression.args[2].key)
         })
     })
 })
