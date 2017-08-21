@@ -5,6 +5,21 @@
         <title>License Expression Sandbox</title>
     </head>
     <body>
+        <p>
+            If you would like to run license expression in the browser,
+            you should tell Transcrypt to transpile it for the browser:
+        </p>
+        <code>./bin/python transpile/transpile.py --browser</code>
+        <p>
+            This will define function <code>__init__</code> on the
+            <code>window</code> object.
+        </p>
+        <p>
+            Without the <code>--browser</code> flag, the <code>__init__</code>
+            function will be defined on the <code>module.exports</code> object,
+            which works for node.js
+        </p>
+        <p>To debug license expression in the browser, open developer tools.</p>
         <script src="./__javascript__/__init__.js"></script>
     </body>
 </html>

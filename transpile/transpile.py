@@ -71,17 +71,25 @@ def create_transcrypt_cmd(args, transcrypt_args):
     # them all yourself. Otherwise, let me provide sensible defaults:
     if not transcrypt_args:
         # Force transpiling from scratch
-        cmd.append("-b")
+        cmd.append('-b')
         # Force compatibility with Python truth-value testing.
         # There is a warning that this switch will slow everything down a lot.
         # This forces empty dictionaries, lists, and tuples to compare as false.
-        cmd.append("-t")
+        cmd.append('-t')
         # Force EcmaScript 6 to enable generators
-        cmd.append("-e")
-        cmd.append("6")
-        # Drop global 'window' object and prepare for node.js runtime instead
-        cmd.append("-p")
-        cmd.append("module.exports")
+        cmd.append('-e')
+        cmd.append('6')
+
+        if args.browser:
+            logger.debug('transpile license_expression for the browser')
+
+            pass
+        else:
+            logger.debug('transpile license_expression for node.js')
+            # Drop global 'window' object and prepare for node.js runtime instead
+            cmd.append("-p")
+            cmd.append("module.exports")
+
         # Supply path to the python file to be transpiled
         cmd.append(str(args.src[0]))
 
@@ -124,6 +132,11 @@ def transpile():
     parser.add_argument(
         '-v', '--verbose', action='count',
         help='print more output information'
+    )
+
+    parser.add_argument(
+        '--browser', action='store_true',
+        help='transpile license_expression for the browser'
     )
 
     parser.add_argument(
