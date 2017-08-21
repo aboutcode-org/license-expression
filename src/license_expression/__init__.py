@@ -654,7 +654,7 @@ class LicenseSymbol(BaseSymbol):
             or (isinstance(other, self.__class__)
                 and self.key == other.key
                 and self.is_exception == other.is_exception)
-            or (self.symbol_like(other)
+            or (is_symbol_like(other)
                 and self.key == other.key
                 and self.is_exception == other.is_exception)
         )
@@ -681,12 +681,15 @@ class LicenseSymbol(BaseSymbol):
     def __copy__(self):
         return LicenseSymbol(self.key, tuple(self.aliases), self.is_exception)
 
-    @classmethod
-    def symbol_like(cls, symbol):
-        """
-        Return True if `symbol` is a symbol-like object with its essential attributes.
-        """
-        return hasattr(symbol, 'key') and hasattr(symbol, 'is_exception')
+
+# Transcrypt supports classmethods only if you call them by creating an
+# instance of the class first (and calling the method of that instance)
+# This is confusing, so make this classmethod into a standalone function
+def is_symbol_like(symbol):
+    """
+    Return True if `symbol` is a symbol-like object with its essential attributes.
+    """
+    return hasattr(symbol, 'key') and hasattr(symbol, 'is_exception')
 
 
 class LicenseSymbolLike(LicenseSymbol):
@@ -695,7 +698,7 @@ class LicenseSymbolLike(LicenseSymbol):
     behavior.
     """
     def __init__(self, symbol_like):
-        if not self.symbol_like(symbol_like):
+        if not is_symbol_like(symbol_like):
             raise ExpressionError(
                 'Not a symbol-like object: %(symbol_like)r' % locals())
 
@@ -737,7 +740,7 @@ class LicenseWithExceptionSymbol(BaseSymbol):
         - license_symbol.is_exception is True
         - exception_symbol.is_exception is not True
         """
-        if not LicenseSymbol.symbol_like(license_symbol):
+        if not is_symbol_like(license_symbol):
             raise ExpressionError(
                 'license_symbol must be a LicenseSymbol-like object: %(license_symbol)r' % locals())
 
@@ -745,7 +748,7 @@ class LicenseWithExceptionSymbol(BaseSymbol):
             raise ExpressionError(
                 'license_symbol cannot be an exception with "is_exception" set to True: %(license_symbol)r' % locals())
 
-        if not LicenseSymbol.symbol_like(exception_symbol):
+        if not is_symbol_like(exception_symbol):
             raise ExpressionError(
                 'exception_symbol must be a LicenseSymbol-like object: %(exception_symbol)r' % locals())
 
@@ -951,7 +954,7 @@ def as_symbols(symbols):
         elif isinstance(symbol, LicenseSymbol):
             results.append(symbol)
 
-        elif LicenseSymbol.symbol_like(symbol):
+        elif is_symbol_like(symbol):
             results.append(LicenseSymbolLike(symbol))
 
         else:
