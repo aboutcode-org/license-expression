@@ -214,7 +214,7 @@ class Trie(object):
         >>> a.add('KL')
         >>> a.make_automaton()
         >>> string = 'abcdefghijklm'
-        >>> results = Result.reorder(a.iterate(string))
+        >>> results = reorder(a.iterate(string))
 
         >>> expected = [
         ...     Result(1, 5, 'bcdef', Output('BCDEF')),
@@ -479,29 +479,31 @@ class Result(object):
         end = self.end
         return (start <= other.start <= end) or (start <= other.end <= end)
 
-    @classmethod
-    def reorder(cls, results):
-        """
-        Return a new sorted sequence of results given a sequence of results. The
-        primary sort is on start and the secondary sort is on longer lengths.
-        Therefore if two results have the same start, the longer result will sort
-        first.
+# Transcrypt supports classmethods only if you call them by creating an
+# instance of the class first (and calling the method of that instance)
+# This is confusing, so make this classmethod into a standalone function
+def reorder(results):
+    """
+    Return a new sorted sequence of results given a sequence of results. The
+    primary sort is on start and the secondary sort is on longer lengths.
+    Therefore if two results have the same start, the longer result will sort
+    first.
 
-        For example:
-        >>> results = [Result(0, 0), Result(5, 5), Result(1, 1), Result(2, 4), Result(2, 5)]
-        >>> expected = [Result(0, 0), Result(1, 1), Result(2, 5), Result(2, 4), Result(5, 5)]
-        >>> expected == Result.reorder(results)
-        True
-        """
-        # Transcrypt compares lists (javascript Arrays, actually) elementwise,
-        # however each element is treated as a Unicode string, so for instance
-        # 11 < 5 is false (numbers) and [11] < [5] is true (Unicode strings)
-        # So, use a comparison function that returns a single number
-        total_length = 0
-        for result in results:
-            total_length += len(result)
+    For example:
+    >>> results = [Result(0, 0), Result(5, 5), Result(1, 1), Result(2, 4), Result(2, 5)]
+    >>> expected = [Result(0, 0), Result(1, 1), Result(2, 5), Result(2, 4), Result(5, 5)]
+    >>> expected == reorder(results)
+    True
+    """
+    # Transcrypt compares lists (javascript Arrays, actually) elementwise,
+    # however each element is treated as a Unicode string, so for instance
+    # 11 < 5 is false (numbers) and [11] < [5] is true (Unicode strings)
+    # So, use a comparison function that returns a single number
+    total_length = 0
+    for result in results:
+        total_length += len(result)
 
-        return sorted(results, key=lambda s: s.start * total_length - len(s))
+    return sorted(results, key=lambda s: s.start * total_length - len(s))
 
 
 def filter_overlapping(results):
@@ -537,9 +539,7 @@ def filter_overlapping(results):
     >>> filtered == expected
     True
     """
-    # Transcrypt can call classmethods only from a class instance, so make one:
-    result = Result(start=0, end=0, string="not a real result")
-    results = result.reorder(results)
+    results = reorder(results)
     results_with_no_overlaps = []
 
     i, j, N = 0, 0, len(results)
@@ -629,12 +629,10 @@ def add_unmatched(string, results):
     True
 
     """
-    # Transcrypt can call classmethods only from a class instance, so make one:
-    result_instance = Result(start=0, end=0, string="not a real result")
 
     results_and_unmatched = []
     string_pos = 0
-    for result in result_instance.reorder(results):
+    for result in reorder(results):
         if result.start > string_pos:
             start = string_pos
             end = result.start - 1
