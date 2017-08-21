@@ -81,34 +81,42 @@ let TOKEN_RPAR = license_expression.TOKEN_RPAR
 })
 
 describe('LicenseWithExceptionSymbol', function() {
-    it.skip('should throw if no arguments', function() {
+    it.skip('should complain if no arguments', function() {
         let license_symbol_with_exception = LicenseWithExceptionSymbol()
     })
 
-    it.skip('should support two LicenseSymbol-like arguments', function() {
-        let license_symbol0 = LicenseSymbol(key='MIT', is_exeption=true)
+    it('should support two LicenseSymbol-like arguments', function() {
+        let license_symbol0 = LicenseSymbol(key='MIT', aliases=[], is_exeption=true)
         let license_symbol1 = LicenseSymbol(key='GPL')
 
-        let license_symbol_with_exception = LicenseWithExceptionSymbol(
+        let license_symbol2 = LicenseWithExceptionSymbol(
             license_symbol = license_symbol0, exception_symbol = license_symbol1
         )
+
+        assert.ok(license_symbol2.license_symbol !== undefined)
+        assert.ok(license_symbol2.license_symbol.key === 'MIT')
+        assert.ok(license_symbol2.license_symbol.is_exception === true)
+        assert.ok(license_symbol2.license_symbol.as_exception === false)
+
+        assert.ok(license_symbol2.exception_symbol !== undefined)
+        assert.ok(license_symbol2.exception_symbol.key === 'GPL')
+        assert.ok(license_symbol2.exception_symbol.is_exception === false)
+        assert.ok(license_symbol2.exception_symbol.as_exception === true)
     })
 
-    it.skip('should compare equal if the same license .key', function() {
-        let license_symbol0 = LicenseSymbol(key='MIT', is_exeption=true)
+    it('should compare equal if the same license .key', function() {
+        let license_symbol0 = LicenseSymbol(key='MIT', aliases=[], is_exeption=true)
         let license_symbol1 = LicenseSymbol(key='GPL')
 
-        let license_symbol_with_exception0 = LicenseWithExceptionSymbol(
+        let license_symbol2 = LicenseWithExceptionSymbol(
             license_symbol = license_symbol0, exception_symbol = license_symbol1
         )
 
-        let license_symbol_with_exception1 = LicenseWithExceptionSymbol(
+        let license_symbol3 = LicenseWithExceptionSymbol(
             license_symbol = license_symbol0, exception_symbol = license_symbol1
         )
 
-        assert.ok(
-            license_symbol_with_exception0.__eq__(license_symbol_with_exception1)
-        )
+        assert.ok(license_symbol2.__eq__(license_symbol3))
     })
 })
 
