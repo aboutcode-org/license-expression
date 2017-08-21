@@ -59,8 +59,8 @@ let TOKEN_RPAR = license_expression.TOKEN_RPAR
         assert.equal(false, license_symbol.is_exception)
     })
 
-    it.skip('should support a license with is_exception being true', function() {
-        let license_symbol = LicenseSymbol(key='MIT', is_exception=true)
+    it('should support a license with is_exception being true', function() {
+        let license_symbol = LicenseSymbol(key='MIT', aliases=[], is_exception=true)
 
         assert.ok(license_symbol.is_exception)
     })

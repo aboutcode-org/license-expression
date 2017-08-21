@@ -490,7 +490,8 @@ class Licensing(boolean.BooleanAlgebra):
                                      PARSE_INVALID_SYMBOL)
 
                 if not lic_sym:
-                    lic_sym = LicenseSymbol(lic_res.string, is_exception=False)
+                    # Transcrypt stumbles if you skip a named argument, so aliases=[]
+                    lic_sym = LicenseSymbol(lic_res.string, aliases=[], is_exception=False)
 
                 if not isinstance(lic_sym, LicenseSymbol):
                     raise ParseError(TOKEN_SYMBOL, lic_res.string, lic_res.start,
