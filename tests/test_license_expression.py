@@ -1538,3 +1538,75 @@ class SplitAndTokenizeTest(TestCase):
         ]
 
         assert expected == list(licensing.tokenize(expr))
+
+
+class LicensingExpression(TestCase):
+
+    def test_is_equivalent_with_same_Licensing(self):
+        licensing = Licensing()
+        parsed1 = licensing.parse('gpl-2.0 AND zlib')
+        parsed2 = licensing.parse('gpl-2.0 AND zlib AND zlib')
+        assert licensing.is_equivalent(parsed1, parsed2)
+        assert Licensing().is_equivalent(parsed1, parsed2)
+
+    def test_is_equivalent_with_same_Licensing2(self):
+        licensing = Licensing()
+        parsed1 = licensing.parse('(gpl-2.0 AND zlib) or lgpl')
+        parsed2 = licensing.parse('lgpl or (gpl-2.0 AND zlib)')
+        assert licensing.is_equivalent(parsed1, parsed2)
+        assert Licensing().is_equivalent(parsed1, parsed2)
+
+    def test_is_equivalent_with_different_Licensing_and_compound_expression(self):
+        licensing1 = Licensing()
+        licensing2 = Licensing()
+        parsed1 = licensing1.parse('gpl-2.0 AND zlib')
+        parsed2 = licensing2.parse('gpl-2.0 AND zlib AND zlib')
+        assert Licensing().is_equivalent(parsed1, parsed2)
+        assert licensing1.is_equivalent(parsed1, parsed2)
+        assert licensing2.is_equivalent(parsed1, parsed2)
+
+    def test_is_equivalent_with_different_Licensing_and_compound_expression2(self):
+        licensing1 = Licensing()
+        licensing2 = Licensing()
+        parsed1 = licensing1.parse('gpl-2.0 AND zlib')
+        parsed2 = licensing2.parse('zlib and gpl-2.0')
+        assert Licensing().is_equivalent(parsed1, parsed2)
+        assert licensing1.is_equivalent(parsed1, parsed2)
+        assert licensing2.is_equivalent(parsed1, parsed2)
+
+    def test_is_equivalent_with_different_Licensing_and_simple_expression(self):
+        licensing1 = Licensing()
+        licensing2 = Licensing()
+        parsed1 = licensing1.parse('gpl-2.0')
+        parsed2 = licensing2.parse('gpl-2.0')
+        assert Licensing().is_equivalent(parsed1, parsed2)
+        assert licensing1.is_equivalent(parsed1, parsed2)
+        assert licensing2.is_equivalent(parsed1, parsed2)
+
+    def test_is_equivalent_with_symbols_and_complex_expression(self):
+        licensing_no_sym = Licensing()
+        licensing1 = Licensing([
+            'GPL-2.0 or LATER',
+            'classpath Exception',
+            'agpl+',
+            'mit',
+            'LGPL 2.1',
+        ])
+        licensing2 = Licensing([
+            'GPL-2.0 or LATER',
+            'classpath Exception',
+            'agpl+',
+            'mit',
+            'LGPL 2.1',
+        ])
+
+        parsed1 = licensing1.parse(' ((LGPL 2.1 or mit) and GPL-2.0 or LATER with classpath Exception) and agpl+')
+        parsed2 = licensing2.parse(' agpl+ and (GPL-2.0 or LATER with classpath Exception and (mit  or LGPL 2.1))')
+        assert licensing1.is_equivalent(parsed1, parsed2)
+        assert licensing2.is_equivalent(parsed1, parsed2)
+        assert licensing_no_sym.is_equivalent(parsed1, parsed2)
+
+        parsed3 = licensing1.parse(' ((LGPL 2.1 or mit) OR GPL-2.0 or LATER with classpath Exception) and agpl+')
+        assert not licensing1.is_equivalent(parsed1, parsed3)
+        assert not licensing2.is_equivalent(parsed1, parsed3)
+        assert not licensing_no_sym.is_equivalent(parsed1, parsed3)
