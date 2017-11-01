@@ -11,6 +11,7 @@ env:
         - PYTHON_EXE="`which python2`"
         - PYTHON_EXE="`which python3.4`"
         - PYTHON_EXE="`which python3.5`"
+        - PYTHON_EXE="`which python3.6`"
 
 install:
     - PYTHON_EXE=$PYTHON_EXE ./configure
