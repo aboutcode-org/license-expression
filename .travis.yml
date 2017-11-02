@@ -13,6 +13,7 @@ env:
         - PYTHON_EXE="`pyenv install -s 3.6.1 && pyenv local 3.6.1`"
 
 install:
+    - pyenv install --list
     - ./configure
 
 script:
