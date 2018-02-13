@@ -11,7 +11,7 @@ https://spdx.org/sites/cpstandard/files/pages/files/spdxversion2.1.pdf#page=95&z
 
 license: apache-2.0
 
-Python: 2.7 and 3.4+
+Python: 2.7 and 3.5+
 
 Build and tests status
 ======================

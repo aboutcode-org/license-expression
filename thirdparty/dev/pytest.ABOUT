@@ -3,10 +3,10 @@ download_url: https://pypi.python.org/packages/43/67/bd3a6148fc8a2d989ded3af3191
 version: 3.1.1
 
 name: pytest
-description: pytest: simple powerful testing with Python
-home_url: http://pytest.org
+description: "pytest: simple powerful testing with Python"
+homepage_url: http://pytest.org
 owner: Holger Krekel, Benjamin Peterson, Ronny Pfannschmidt, Floris Bruynooghe and others
 contact: holger at merlinux.eu
-dje_license: mit
-license_text_file: pytest.LICENSE
+license_expression: mit
+license_file: pytest.LICENSE
 copyright: Copyright Holger Krekel and others, 2004-2014

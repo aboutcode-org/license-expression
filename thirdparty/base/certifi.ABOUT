@@ -7,8 +7,8 @@ download_url: https://pypi.python.org/packages/eb/01/c1f58987b777d6c4ec535b4e004
 name: certifi
 owner: Kenneth Reitz
 contact: me@kennethreitz.com
-home_url: http://certifi.io/
+homepage_url: http://certifi.io/
 
-dje_license: mpl-2.0
-license_text_file: mpl-2.0.LICENSE
+license_expression: mpl-2.0
+license_file: mpl-2.0.LICENSE
 notice_file: certifi.NOTICE

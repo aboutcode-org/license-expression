@@ -7,25 +7,29 @@ os:
   - linux 
 
 env:
-    matrix:
-        - PYTHON_EXE="`pyenv install -s 2.7.13 && pyenv local 2.7.13`"
-        - PYTHON_EXE="`pyenv install -s 3.5.3 && pyenv local 3.5.3`"
-        - PYTHON_EXE="`pyenv install -s 3.6.1 && pyenv local 3.6.1`"
+  matrix:
+    - PYTHON_EXE="`pyenv install -s 2.7.13 && pyenv local 2.7.13`"
+    - PYTHON_EXE="`pyenv install -s 3.5.3 && pyenv local 3.5.3`"
+    - PYTHON_EXE="`pyenv install -s 3.6.1 && pyenv local 3.6.1`"
 
 install:
-    - pyenv install --list
-    - ./configure
+  - pyenv install --list
+  - ./configure
+
+before_script:
+  - pip install aboutcode-toolkit
+  - about-code check --show-all .
 
 script:
-    - "bin/py.test -vvs"
+  - "bin/py.test -vvs"
 
 notifications:
-    irc:
-        channels:
-          - "chat.freenode.net#aboutcode"
-    on_success: change
-    on_failure: always
-    use_notice: true
-    skip_join: true
-    template:
-      - "%{repository_slug}#%{build_number} (%{branch} - %{commit} : %{author}): %{message} : %{build_url}"
+  irc:
+    channels:
+      - "chat.freenode.net#aboutcode"
+  on_success: change
+  on_failure: always
+  use_notice: true
+  skip_join: true
+  template:
+    - "%{repository_slug}#%{build_number} (%{branch} - %{commit} : %{author}): %{message} : %{build_url}"

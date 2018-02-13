@@ -4,8 +4,8 @@ version: 0.4.0
 
 name: pluggy
 description: plugin and hook calling mechanisms for python
-home_url: https://github.com/pytest-dev/pluggy
+homepage_url: https://github.com/pytest-dev/pluggy
 owner: Holger Krekel
 contact: holger at merlinux.eu
-dje_license: mit
-license_text_file: pluggy.LICENSE
+license_expression: mit
+license_file: pluggy.LICENSE

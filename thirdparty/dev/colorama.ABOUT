@@ -4,9 +4,8 @@ version: 0.3.9
 
 name: colorama
 description: Cross-platform colored terminal text.
-home_url: https://github.com/tartley/colorama
+homepage_url: https://github.com/tartley/colorama
 owner: Jonathan Hartley
 contact: tartley@tartley.com
-dje_license: bds-new
-keywords: color colour terminal text ansi windows crossplatform xplatform
-license_text_file: colorama.LICENSE
+license_expression: bds-new
+license_file: colorama.LICENSE

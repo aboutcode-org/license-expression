@@ -5,11 +5,10 @@ version: 9.0.1
 name: pip
 owner: The pip developers
 contact: python-virtualenv@groups.google.com
-home_url: http://www.pip-installer.org
+homepage_url: http://www.pip-installer.org
 
-author_file: pip.AUTHORS
-dje_license: mit, OTHER TODO
-license_text_file: pip.LICENSE
+license_expression: mit, OTHER TODO
+license_file: pip.LICENSE
 
 vcs_tool: git
 vcs_repository: https://github.com/pypa/pip.git

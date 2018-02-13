@@ -3,8 +3,8 @@ download_url: https://github.com/WojciechMula/pyahocorasick/tree/ec2fb9cb393f571
 name: pyahocorasick-python
 version: ec2fb9
 
-home_url: https://github.com/WojciechMula/pyahocorasick
-dje_license: public-domain
+homepage_url: https://github.com/WojciechMula/pyahocorasick
+license_expression: public-domain
 
 copyright: originally authored by Wojciech Mula, modified by the license_expression authors.
 
