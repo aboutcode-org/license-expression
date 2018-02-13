@@ -17,8 +17,8 @@ install:
   - ./configure
 
 before_script:
-  - pip install aboutcode-toolkit
-  - about-code check --show-all .
+  - bin/pip install aboutcode-toolkit
+  - bin/about-code check --show-all .
 
 script:
   - "bin/py.test -vvs"
