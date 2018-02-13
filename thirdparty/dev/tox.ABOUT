@@ -4,8 +4,8 @@ version: 2.7.0
 
 name: tox
 description: virtualenv-based automation of test activities
-home_url: https://tox.readthedocs.org/
+homepage_url: https://tox.readthedocs.org/
 owner: Holger Krekel
 contact: holger@merlinux.eu
-dje_license: mit
-license_text_file: tox.LICENSE
+license_expression: mit
+license_file: tox.LICENSE

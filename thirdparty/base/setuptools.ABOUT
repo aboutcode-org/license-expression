@@ -7,7 +7,7 @@ download_url: https://pypi.python.org/packages/fc/cb/748dcabb152fbc7eceaf585d052
 name: setuptools
 owner: Python Packaging Authority
 contact: distutils-sig@python.org
-home_url: https://pypi.python.org/pypi/setuptools
+homepage_url: https://pypi.python.org/pypi/setuptools
 
-dje_license: mit
-license_text_file: setuptools.LICENSE
+license_expression: mit
+license_file: setuptools.LICENSE
