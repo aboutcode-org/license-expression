@@ -24,6 +24,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 def logger_debug(*args):
     return logger.debug(' '.join(isinstance(a, str) and a or repr(a) for a in args))
 
@@ -42,6 +43,7 @@ class Trie(object):
     A Trie and Aho-Corasick automaton. This behaves more or less like a mapping of
     key->value. This is the main entry point.
     """
+
     def __init__(self, ignore_case=True):
         """
         Initialize a new Trie.

@@ -26,6 +26,7 @@ from license_expression._pyahocorasick import Result
 
 
 class TestTrie(unittest.TestCase):
+
     def testAddedWordShouldBeCountedAndAvailableForRetrieval(self):
         t = Trie()
         t.add('python', 'value')
@@ -94,7 +95,6 @@ class TestTrie(unittest.TestCase):
         self.assertIn(('pascal', 4), result)
         self.assertIn(('php', 5), result)
 
-
     def testKeysShouldReturnAllKeysAlreadyAddedToTheTrie(self):
         t = Trie()
 
@@ -110,7 +110,6 @@ class TestTrie(unittest.TestCase):
         self.assertIn('perl', result)
         self.assertIn('pascal', result)
         self.assertIn('php', result)
-
 
     def testValuesShouldReturnAllValuesAlreadyAddedToTheTrie(self):
         t = Trie()
@@ -155,6 +154,7 @@ class TestTrie(unittest.TestCase):
         assert expected == result
 
     def test_iter_vs_scan(self):
+
         def get_test_automaton():
             words = "( AND ) OR".split()
             t = Trie()
@@ -198,6 +198,7 @@ class TestTrie(unittest.TestCase):
         assert expected == result
 
     def test_scan_with_unmatched(self):
+
         def get_test_automaton():
             words = "( AND ) OR".split()
             t = Trie()
