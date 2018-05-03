@@ -27,7 +27,6 @@ equivalence and can be normalized or simplified.
 The main entry point is the Licensing object.
 """
 
-
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from __future__ import print_function
@@ -36,10 +35,10 @@ from __future__ import print_function
 try:
     # Python 2
     unicode
-    str = unicode
+    str = unicode  # NOQA
 except NameError:
     # Python 3
-    unicode = str
+    unicode = str  # NOQA
 
 import collections
 from copy import copy
@@ -70,7 +69,6 @@ from boolean.boolean import TOKEN_RPAR
 from license_expression._pyahocorasick import Trie as Scanner
 from license_expression._pyahocorasick import Output
 from license_expression._pyahocorasick import Result
-
 
 # append new error codes to PARSE_ERRORS by monkey patching
 PARSE_EXPRESSION_NOT_UNICODE = 100
@@ -119,6 +117,7 @@ _KEYWORDS = [
 KEYWORDS = tuple(kw.value for kw in _KEYWORDS)
 KEYWORDS_STRIPPED = tuple(k.strip() for k in KEYWORDS)
 
+
 class Licensing(boolean.BooleanAlgebra):
     """
     Define a mini language to parse, validate and compare license expressions.
@@ -157,6 +156,7 @@ class Licensing(boolean.BooleanAlgebra):
     >>> assert l.license_symbols(parsed)[1].as_exception
 
     """
+
     def __init__(self, symbols=tuple(), quiet=True):
         """
         Initialize a Licensing with an optional `symbols` sequence of LicenseSymbol
@@ -571,6 +571,7 @@ class Renderable(object):
     """
     An interface for renderable objects.
     """
+
     def render(self, template='{symbol.key}', *args, **kwargs):
         """
         Return a formatted string rendering for this expression using the `template`
@@ -598,9 +599,21 @@ class BaseSymbol(Renderable, boolean.Symbol):
         """
         raise NotImplementedError
 
+    def __contains__(self, other):
+        """
+        Test if expr is contained in this symbol.
+        """
+        if not isinstance(other, BaseSymbol):
+            return False
+        if self == other:
+            return True
+
+        return any(mine == other for mine in self.decompose())
+
 
 # validate license keys
 is_valid_license_key = re.compile(r'^[-\w\s\.\+]+$', re.UNICODE).match
+
 
 #FIXME: we need to implement comparison!!!!
 @total_ordering
@@ -608,6 +621,7 @@ class LicenseSymbol(BaseSymbol):
     """
     A LicenseSymbol represents a license as used in a license expression.
     """
+
     def __init__(self, key, aliases=tuple(), is_exception=False, *args, **kwargs):
         if not key:
             raise ExpressionError(
@@ -708,6 +722,7 @@ class LicenseSymbolLike(LicenseSymbol):
     A LicenseSymbolLike object wraps a symbol-like object to expose a LicenseSymbol
     behavior.
     """
+
     def __init__(self, symbol_like, *args, **kwargs):
         if not self.symbol_like(symbol_like):
             raise ExpressionError(
@@ -744,6 +759,7 @@ class LicenseWithExceptionSymbol(BaseSymbol):
     license proper and one for the right-hand exception to this license and deals
     with the specifics of resolution, validation and representation.
     """
+
     def __init__(self, license_symbol, exception_symbol, strict=False, *args, **kwargs):
         """
         Initialize a new LicenseWithExceptionSymbol from a `license_symbol` and a
@@ -861,6 +877,7 @@ class AND(RenderableFunction, boolean.AND):
     """
     Custom representation for the AND operator to uppercase.
     """
+
     def __init__(self, *args):
         super(AND, self).__init__(*args)
         self.operator = ' AND '
@@ -870,6 +887,7 @@ class OR(RenderableFunction, boolean.OR):
     """
     Custom representation for the OR operator to uppercase.
     """
+
     def __init__(self, *args):
         super(OR, self).__init__(*args)
         self.operator = ' OR '

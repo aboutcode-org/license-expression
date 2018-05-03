@@ -13,7 +13,6 @@
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
 
-
 from __future__ import absolute_import
 from __future__ import print_function
 from __future__ import unicode_literals
@@ -21,7 +20,6 @@ from __future__ import unicode_literals
 from collections import OrderedDict
 from unittest import TestCase
 import sys
-
 
 from boolean.boolean import PARSE_UNBALANCED_CLOSING_PARENS
 from boolean.boolean import PARSE_INVALID_SYMBOL_SEQUENCE
@@ -534,6 +532,22 @@ class LicensingParseTest(TestCase):
         assert expr4.simplify() in expr2.simplify()
 
         assert l.contains(expr2, expr4)
+
+    def test_contains_works_with_plain_symbol(self):
+        l = Licensing()
+        assert not l.contains('mit', 'mit and LGPL-2.1')
+        assert l.contains('mit and LGPL-2.1', 'mit')
+        assert l.contains('mit', 'mit')
+        assert not l.contains(l.parse('mit'), l.parse('mit and LGPL-2.1'))
+        assert l.contains(l.parse('mit and LGPL-2.1'), l.parse('mit'))
+
+        assert l.contains('mit with GPL', 'GPL')
+        assert l.contains('mit with GPL', 'mit')
+        assert l.contains('mit with GPL', 'mit with GPL')
+        assert not l.contains('mit with GPL', 'GPL with mit')
+        assert not l.contains('mit with GPL', 'GPL and mit')
+        assert not l.contains('GPL', 'mit with GPL')
+        assert l.contains('mit with GPL and GPL and BSD', 'GPL and BSD')
 
     def test_create_from_python(self):
         # Expressions can be built from Python expressions, using bitwise operators
