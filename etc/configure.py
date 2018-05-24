@@ -12,7 +12,6 @@
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
 
-
 """
 This script a configuration helper to select pip requirement files to install
 and python and shell configuration scripts to execute based on provided config
@@ -74,7 +73,6 @@ import sys
 import shutil
 import subprocess
 
-
 # platform-specific file base names
 sys_platform = str(sys.platform).lower()
 on_win = False
@@ -88,7 +86,6 @@ elif 'darwin' in sys_platform:
 else:
     raise Exception('Unsupported OS/platform')
     platform_names = tuple()
-
 
 # common file basenames for requirements and scripts
 base = ('base',)
@@ -108,9 +105,12 @@ if on_win:
     shell_scripts = ('win.bat',)
 
 
-def call(cmd, root_dir):
+def call(cmd, root_dir, quiet=True):
     """ Run a `cmd` command (as a list of args) with all env vars."""
     cmd = ' '.join(cmd)
+    if not quiet:
+        print('  Running command:', repr(cmd))
+
     if  subprocess.Popen(cmd, shell=True, env=dict(os.environ), cwd=root_dir).wait() != 0:
         print()
         print('Failed to execute command:\n%(cmd)s. Aborting...' % locals())
@@ -188,18 +188,18 @@ def create_virtualenv(std_python, root_dir, tpp_dirs, quiet=False):
     components.
     """
     if not quiet:
-        print("* Configuring Python ...")
+        print('* Configuring Python ...')
     # search virtualenv.py in the tpp_dirs. keep the first found
     venv_py = None
     for tpd in tpp_dirs:
         venv = os.path.join(root_dir, tpd, 'virtualenv.py')
         if os.path.exists(venv):
-            venv_py = '"' + venv + '"'
+            venv_py = ''' + venv + '''
             break
 
     # error out if venv_py not found
     if not venv_py:
-        print("Configuration Error ... aborting.")
+        print('Configuration Error ... aborting.')
         exit(1)
 
     vcmd = [std_python, venv_py, '--never-download']
@@ -209,12 +209,12 @@ def create_virtualenv(std_python, root_dir, tpp_dirs, quiet=False):
     vcmd.extend(build_pip_dirs_args(tpp_dirs, root_dir))
     # we create the virtualenv in the root_dir
     vcmd.append('"' + root_dir + '"')
-    call(vcmd, root_dir)
+    call(vcmd, root_dir, quiet)
 
 
 def activate(root_dir):
     """ Activate a virtualenv in the current process."""
-    print("* Activating ...")
+    print('* Activating ...')
     bin_dir = os.path.join(root_dir, 'bin')
     activate_this = os.path.join(bin_dir, 'activate_this.py')
     with open(activate_this) as f:
@@ -228,17 +228,24 @@ def install_3pp(configs, root_dir, tpp_dirs, quiet=False):
     using the vendored components in `tpp_dirs`.
     """
     if not quiet:
-        print("* Installing components ...")
+        print('* Installing components ...')
     requirement_files = get_conf_files(configs, root_dir, requirements)
     for req_file in requirement_files:
-        pcmd = ['pip', 'install', '--no-index', '--no-cache-dir']
+        if on_win:
+            pcmd = ['python', '-m']
+        else:
+            pcmd = []
+        pcmd += ['pip', 'install', '--no-index', '--no-cache-dir']
         if quiet:
             pcmd += ['--quiet']
+        if on_win:
+            pcmd += ['--verbose', '--verbose', '--verbose']
+
         pip_dir_args = list(build_pip_dirs_args(tpp_dirs, root_dir, '--find-links='))
         pcmd.extend(pip_dir_args)
         req_loc = os.path.join(root_dir, req_file)
         pcmd.extend(['-r' , '"' + req_loc + '"'])
-        call(pcmd, root_dir)
+        call(pcmd, root_dir, quiet)
 
 
 def run_scripts(configs, root_dir, configured_python, quiet=False):
@@ -246,11 +253,11 @@ def run_scripts(configs, root_dir, configured_python, quiet=False):
     Run Python scripts and shell scripts found in `configs`.
     """
     if not quiet:
-        print("* Configuring ...")
+        print('* Configuring ...')
     # Run Python scripts for each configurations
     for py_script in get_conf_files(configs, root_dir, python_scripts):
         cmd = [configured_python, '"' + os.path.join(root_dir, py_script) + '"']
-        call(cmd, root_dir)
+        call(cmd, root_dir, quiet)
 
     # Run sh_script scripts for each configurations
     for sh_script in get_conf_files(configs, root_dir, shell_scripts):
@@ -259,7 +266,7 @@ def run_scripts(configs, root_dir, configured_python, quiet=False):
         if on_win:
             cmd = []
         cmd = cmd + [os.path.join(root_dir, sh_script)]
-        call(cmd, root_dir)
+        call(cmd, root_dir, quiet)
 
 
 def chmod_bin(directory):
@@ -352,8 +359,11 @@ if __name__ == '__main__':
         if not os.path.exists(scripts_dir):
             os.makedirs(scripts_dir)
         if not os.path.exists(bin_dir):
-            cmd = ('mklink /J "%(bin_dir)s" "%(scripts_dir)s"' % locals()).split()
-            call(cmd, root_dir)
+            cmd = [
+                'mklink', '/J',
+                '"%(bin_dir)s"' % locals(),
+                '"%(scripts_dir)s"' % locals()]
+            call(cmd, root_dir, run_quiet)
     else:
         configured_python = os.path.join(bin_dir, 'python')
         scripts_dir = bin_dir
@@ -398,5 +408,5 @@ if __name__ == '__main__':
     run_scripts(configs, root_dir, configured_python, quiet=run_quiet)
     chmod_bin(bin_dir)
     if not run_quiet:
-        print("* Configuration completed.")
+        print('* Configuration completed.')
         print()
