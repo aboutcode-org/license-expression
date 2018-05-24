@@ -3,9 +3,9 @@ download_url: https://pypi.python.org/packages/db/c8/7dcf9dbcb22429512708fe3a547
 version: 0.3.9
 
 name: colorama
-description: Cross-platform colored terminal text.
-homepage_url: https://github.com/tartley/colorama
+description: Cross-platform colored terminal text
+homepage_url: https://pypi.python.org/pypi/colorama
 owner: Jonathan Hartley
-contact: tartley@tartley.com
 license_expression: bds-new
 license_file: colorama.LICENSE
+copyright: Copyright (c) 2010 Jonathan Hartley

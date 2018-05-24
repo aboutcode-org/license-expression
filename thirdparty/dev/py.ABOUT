@@ -1,6 +1,6 @@
-about_resource: py-1.4.34-py2.py3-none-any.whl
-version: 1.4.34
-download_url: https://pypi.python.org/packages/53/67/9620edf7803ab867b175e4fd23c7b8bd8eba11cb761514dcd2e726ef07da/py-1.4.34-py2.py3-none-any.whl#md5=0cb02dbd9cf647f97b8963d4def97a7f
+about_resource: py-1.5.3-py2.py3-none-any.whl
+version: 1.5.3
+download_url: https://files.pythonhosted.org/packages/67/a5/f77982214dd4c8fd104b066f249adea2c49e25e8703d284382eb5e9ab35a/py-1.5.3-py2.py3-none-any.whl
 
 name: py
 description: library with cross-python path, ini-parsing, io, code, log facilities

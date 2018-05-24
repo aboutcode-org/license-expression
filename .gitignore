@@ -50,3 +50,4 @@ docs/_build
 
 /share/
 /local/
+/.pytest_cache/
