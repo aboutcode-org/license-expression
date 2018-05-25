@@ -108,8 +108,8 @@ if on_win:
 def call(cmd, root_dir, quiet=True):
     """ Run a `cmd` command (as a list of args) with all env vars."""
     cmd = ' '.join(cmd)
-    if not quiet:
-        print('  Running command:', repr(cmd))
+    # if not quiet:
+    #     print('  Running command:', repr(cmd))
 
     if  subprocess.Popen(cmd, shell=True, env=dict(os.environ), cwd=root_dir).wait() != 0:
         print()
@@ -238,8 +238,6 @@ def install_3pp(configs, root_dir, tpp_dirs, quiet=False):
         pcmd += ['pip', 'install', '--no-index', '--no-cache-dir']
         if quiet:
             pcmd += ['--quiet']
-        if on_win:
-            pcmd += ['--verbose', '--verbose', '--verbose']
 
         pip_dir_args = list(build_pip_dirs_args(tpp_dirs, root_dir, '--find-links='))
         pcmd.extend(pip_dir_args)
