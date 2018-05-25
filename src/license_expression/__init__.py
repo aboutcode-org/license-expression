@@ -150,11 +150,6 @@ class Licensing(boolean.BooleanAlgebra):
     ... ]
     >>> assert expected == l.license_symbols(parsed)
     >>> assert expected == l.license_symbols(expression)
-
-    This is set at runtime during parsing:
-
-    >>> assert l.license_symbols(parsed)[1].as_exception
-
     """
 
     def __init__(self, symbols=tuple(), quiet=True):
@@ -359,8 +354,6 @@ class Licensing(boolean.BooleanAlgebra):
         If `strict` is True, additional exceptions will be raised if in a expression
         such as "XXX with ZZZ" if the XXX symbol has `is_exception` set to True or
         the YYY symbol has `is_exception` set to False.
-
-        When a symbol used as an exception its attribute `as_exception` is set to True.
 
         For example:
         >>> expression = 'EPL-1.0 and Apache-1.1 OR GPL-2.0 with Classpath-exception'
@@ -664,9 +657,6 @@ class LicenseSymbol(BaseSymbol):
         self.aliases = aliases and tuple(aliases) or tuple()
         self.is_exception = is_exception
 
-        # set at runtime based on parsing when the symbol was used as an exception
-        self.as_exception = False
-
         # super only know about a single "obj" object.
         super(LicenseSymbol, self).__init__(self.key)
 
@@ -680,14 +670,25 @@ class LicenseSymbol(BaseSymbol):
         return hash((self.key, self.is_exception))
 
     def __eq__(self, other):
-        return (self is other
-            or (isinstance(other, self.__class__)
-                and self.key == other.key
-                and self.is_exception == other.is_exception)
-            or (self.symbol_like(other)
-                and self.key == other.key
-                and self.is_exception == other.is_exception)
-        )
+        if self is other:
+            return True
+        if not (isinstance(other, self.__class__) or self.symbol_like(other)):
+            return False
+        return self.key == other.key and self.is_exception == other.is_exception
+
+    def __ne__(self, other):
+        if self is other:
+            return False
+        if not (isinstance(other, self.__class__) or self.symbol_like(other)):
+            return True
+        return (self.key != other.key or self.is_exception != other.is_exception)
+
+    def __lt__(self, other):
+        if isinstance(
+            other, (LicenseSymbol, LicenseWithExceptionSymbol, LicenseSymbolLike)):
+            return str(self) < str(other)
+        else:
+            return NotImplemented
 
     __nonzero__ = __bool__ = lambda s: True
 
@@ -749,6 +750,32 @@ class LicenseSymbolLike(LicenseSymbol):
             return self._render(template, *args, **kwargs)
         return super(LicenseSymbolLike, self).render(template, *args, **kwargs)
 
+    __nonzero__ = __bool__ = lambda s: True
+
+    def __hash__(self, *args, **kwargs):
+        return hash((self.key, self.is_exception))
+
+    def __eq__(self, other):
+        if self is other:
+            return True
+        if not (isinstance(other, self.__class__) or self.symbol_like(other)):
+            return False
+        return self.key == other.key and self.is_exception == other.is_exception
+
+    def __ne__(self, other):
+        if self is other:
+            return False
+        if not (isinstance(other, self.__class__) or self.symbol_like(other)):
+            return True
+        return (self.key != other.key or self.is_exception != other.is_exception)
+
+    def __lt__(self, other):
+        if isinstance(
+            other, (LicenseSymbol, LicenseWithExceptionSymbol, LicenseSymbolLike)):
+            return str(self) < str(other)
+        else:
+            return NotImplemented
+
 
 #FIXME: we need to implement comparison!!!!
 @total_ordering
@@ -786,8 +813,6 @@ class LicenseWithExceptionSymbol(BaseSymbol):
                 'exception_symbol must be an exception with "is_exception" set to True: %(exception_symbol)r' % locals())
 
         self.license_symbol = license_symbol
-
-        exception_symbol.as_exception = True
         self.exception_symbol = exception_symbol
 
         super(LicenseWithExceptionSymbol, self).__init__(str(self))
@@ -808,10 +833,27 @@ class LicenseWithExceptionSymbol(BaseSymbol):
         return hash((self.license_symbol, self.exception_symbol,))
 
     def __eq__(self, other):
-        return self is other  or (
-                isinstance(other, self.__class__)
-            and self.license_symbol == other.license_symbol
+        if self is other:
+            return True
+        if not isinstance(other, self.__class__):
+            return False
+        return (self.license_symbol == other.license_symbol
             and self.exception_symbol == other.exception_symbol)
+
+    def __ne__(self, other):
+        if self is other:
+            return False
+        if not isinstance(other, self.__class__):
+            return True
+        return not (self.license_symbol == other.license_symbol
+            and self.exception_symbol == other.exception_symbol)
+
+    def __lt__(self, other):
+        if isinstance(
+            other, (LicenseSymbol, LicenseWithExceptionSymbol, LicenseSymbolLike)):
+            return str(self) < str(other)
+        else:
+            return NotImplemented
 
     __nonzero__ = __bool__ = lambda s: True
 

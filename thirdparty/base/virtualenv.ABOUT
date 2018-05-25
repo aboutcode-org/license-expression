@@ -1,6 +1,6 @@
-about_resource: virtualenv-15.1.0-py2.py3-none-any.whl
-version: 15.1.0
-download_url: https://pypi.python.org/packages/6f/86/3dc328ee7b1a6419ebfac7896d882fba83c48e3561d22ddddf38294d3e83/virtualenv-15.1.0-py2.py3-none-any.whl#md5=aa7e5b86cc8cdb99794c4b99e8d670f3
+about_resource: virtualenv-16.0-py2.py3-none-any.whl
+version: 16.0
+download_url: https://files.pythonhosted.org/packages/b6/30/96a02b2287098b23b875bc8c2f58071c35d2efe84f747b64d523721dc2b5/virtualenv-16.0.0-py2.py3-none-any.whl
 
 vcs_tool: git
 vcs_repository: https://github.com/pypa/virtualenv.git
@@ -14,4 +14,4 @@ license_file: virtualenv.LICENSE
 license_expression: mit
 copyright: Copyright (c) 2007 Ian Bicking and Contributors
  Copyright (c) 2009 Ian Bicking, The Open Planning Project
- Copyright (c) 2011-2015 The virtualenv developers
+ Copyright (c) The virtualenv developers

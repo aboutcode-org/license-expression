@@ -3,4 +3,4 @@ py
 colorama
 pytest
 pluggy
-tox
+aboutcode-toolkit

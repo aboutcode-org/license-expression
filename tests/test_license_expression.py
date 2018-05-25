@@ -34,6 +34,7 @@ from license_expression import Keyword
 from license_expression import Licensing
 from license_expression import LicenseExpression
 from license_expression import LicenseSymbol
+from license_expression import LicenseSymbolLike
 from license_expression import LicenseWithExceptionSymbol
 from license_expression import ParseError
 from license_expression import Result
@@ -1624,3 +1625,39 @@ class LicensingExpression(TestCase):
         assert not licensing1.is_equivalent(parsed1, parsed3)
         assert not licensing2.is_equivalent(parsed1, parsed3)
         assert not licensing_no_sym.is_equivalent(parsed1, parsed3)
+
+    def test_all_symbol_classes_can_compare_and_sort(self):
+        l1 = LicenseSymbol('a')
+        l2 = LicenseSymbol('b')
+        lx = LicenseWithExceptionSymbol(l1, l2)
+        lx2 = LicenseWithExceptionSymbol(l1, l2)
+        assert not (lx < lx2)
+        assert not (lx2 < lx)
+        assert lx2 == lx
+        assert not (lx2 != lx)
+        assert l1 < l2
+        assert l2 > l1
+        assert not (l2 == l1)
+        assert l2 != l1
+
+        class SymLike(object):
+
+            def __init__(self, key, is_exception=False):
+                self.key = key
+                self.is_exception = is_exception
+
+        l3 = LicenseSymbolLike(SymLike('b'))
+        lx3 = LicenseWithExceptionSymbol(l1, l3)
+        assert not (lx < lx3)
+        assert not (lx3 < lx)
+        assert lx3 == lx
+        assert hash(lx3) == hash(lx)
+        assert not (lx3 != lx)
+
+        assert l2 == l3
+        assert hash(l2) == hash(l3)
+
+        l4 = LicenseSymbolLike(SymLike('c'))
+
+        expected = [l1, lx, lx2, lx3, l3, l2, l4]
+        assert expected == sorted([l4, l3, l2, l1, lx , lx2, lx3])
