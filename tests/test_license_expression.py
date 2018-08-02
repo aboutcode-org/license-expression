@@ -250,6 +250,40 @@ class LicensingTokenizeWithSymbolsTest(TestCase):
         ]
         assert expected == result
 
+    def test_tokenize_with_unknown_symbol_containing_known_symbol_leading(self):
+        l = Licensing(['gpl-2.0'])
+        result = list(l.tokenize('gpl-2.0 AND gpl-2.0-plus', strict=False))
+        result = [s for s, _, _ in result]
+        expected = [
+            LicenseSymbol(key='gpl-2.0'),
+            TOKEN_AND,
+            LicenseSymbol(key='gpl-2.0-plus'),
+        ]
+        assert expected == result
+
+    def test_tokenize_with_unknown_symbol_containing_known_symbol_contained(self):
+        l = Licensing(['gpl-2.0'])
+        result = list(l.tokenize('gpl-2.0 WITH exception-gpl-2.0-plus', strict=False))
+        result = [s for s, _, _ in result]
+        expected = [
+            LicenseWithExceptionSymbol(
+                LicenseSymbol(u'gpl-2.0'),
+                LicenseSymbol(u'exception-gpl-2.0-plus')
+            )
+        ]
+        assert expected == result
+
+    def test_tokenize_with_unknown_symbol_containing_known_symbol_trailing(self):
+        l = Licensing(['gpl-2.0'])
+        result = list(l.tokenize('gpl-2.0 AND exception-gpl-2.0', strict=False))
+        result = [s for s, _, _ in result]
+        expected = [
+            LicenseSymbol(u'gpl-2.0'),
+            TOKEN_AND,
+            LicenseSymbol(u'exception-gpl-2.0')
+        ]
+        assert expected == result
+
 
 class LicensingParseTest(TestCase):
 
@@ -278,6 +312,7 @@ class LicensingParseTest(TestCase):
         licensing = Licensing()
         try:
             licensing.parse(expression, validate=True)
+            self.fail('Exception not raised')
         except ExpressionError as ee:
             assert 'Unknown license key(s): gpl, bsd, lgpl, exception' == str(ee)
 
@@ -286,6 +321,7 @@ class LicensingParseTest(TestCase):
         licensing = Licensing()
         try:
             licensing.parse(expression, validate=True, strict=True)
+            self.fail('Exception not raised')
         except ExpressionError as ee:
             assert str(ee).startswith('exception_symbol must be an exception with "is_exception" set to True:')
 
@@ -687,6 +723,38 @@ class LicensingParseTest(TestCase):
 
         assert expected == result
 
+    def test_Licensing_can_split_valid_expressions_with_symbols_that_contain_and_with_or(self):
+        expression = 'orgpl or withbsd with orclasspath and andmit or andlgpl and ormit or withme'
+        result = [r.string for r in splitter(expression)]
+        expected = [
+            'orgpl',
+            ' ',
+            'or',
+            ' ',
+            'withbsd',
+            ' ',
+            'with',
+            ' ',
+            'orclasspath',
+            ' ',
+            'and',
+            ' ',
+            'andmit',
+            ' ',
+            'or',
+            ' ',
+            'andlgpl',
+            ' ',
+            'and',
+            ' ',
+            'ormit',
+            ' ',
+            'or',
+            ' ',
+            'withme'
+        ]
+        assert expected == result
+
     def test_Licensing_can_parse_valid_expressions_with_symbols_that_contain_and_with_or(self):
         licensing = Licensing()
         expression = 'orgpl or withbsd with orclasspath and andmit or anlgpl and ormit or withme'
@@ -708,6 +776,7 @@ class LicensingParseWithSymbolsSimpleTest(TestCase):
                 'LGPL 2.1',
                 'mit or later'
             ])
+            self.fail('Exception not raised')
         except ExpressionError as ee:
             expected = ('Invalid license key: "or later" words are reserved and '
                         'cannot be used in a key: "GPL-2.0 or LATER"')
@@ -881,6 +950,7 @@ class LicensingParseWithSymbolsTest(TestCase):
         expression = 'gpl and bsd or lgpl with exception'
         try:
             licensing.parse(expression, validate=True, strict=True)
+            self.fail('Exception not raised')
         except ParseError as pe:
             expected = {
                 'error_code': PARSE_INVALID_SYMBOL_AS_EXCEPTION,
@@ -895,6 +965,7 @@ class LicensingParseWithSymbolsTest(TestCase):
         licensing.parse('gpl with exception', validate=True, strict=True)
         try:
             licensing.parse('exception with gpl', validate=True, strict=True)
+            self.fail('Exception not raised')
         except ParseError as pe:
             expected = {
                 'error_code': PARSE_INVALID_EXCEPTION,
@@ -905,6 +976,7 @@ class LicensingParseWithSymbolsTest(TestCase):
 
         try:
             licensing.parse('gpl with gpl', validate=True, strict=True)
+            self.fail('Exception not raised')
         except ParseError as pe:
             expected = {
                 'error_code': PARSE_INVALID_SYMBOL_AS_EXCEPTION,
@@ -912,6 +984,31 @@ class LicensingParseWithSymbolsTest(TestCase):
                 'token_string': 'gpl',
                 'token_type': TOKEN_SYMBOL}
             assert expected == _parse_error_as_dict(pe)
+
+    def test_with_unknown_symbol_string_contained_in_known_symbol_does_not_crash_with(self):
+        l = Licensing(['lgpl-3.0-plus'])
+        license_expression = 'lgpl-3.0-plus WITH openssl-exception-lgpl-3.0-plus'
+        l.parse(license_expression)
+
+    def test_with_unknown_symbol_string_contained_in_known_symbol_does_not_crash_and(self):
+        l = Licensing(['lgpl-3.0-plus'])
+        license_expression = 'lgpl-3.0-plus AND openssl-exception-lgpl-3.0-plus'
+        l.parse(license_expression)
+
+    def test_with_unknown_symbol_string_contained_in_known_symbol_does_not_crash_or(self):
+        l = Licensing(['lgpl-3.0-plus'])
+        license_expression = 'lgpl-3.0-plus OR openssl-exception-lgpl-3.0-plus'
+        l.parse(license_expression)
+
+    def test_with_known_symbol_string_contained_in_known_symbol_does_not_crash_or(self):
+        l = Licensing(['lgpl-3.0-plus', 'openssl-exception-lgpl-3.0-plus'])
+        license_expression = 'lgpl-3.0-plus OR openssl-exception-lgpl-3.0-plus'
+        l.parse(license_expression)
+
+    def test_with_known_symbol_string_contained_in_known_symbol_does_not_crash_with(self):
+        l = Licensing(['lgpl-3.0-plus', 'openssl-exception-lgpl-3.0-plus'])
+        license_expression = 'lgpl-3.0-plus WITH openssl-exception-lgpl-3.0-plus'
+        l.parse(license_expression)
 
 
 class LicensingSymbolsReplacement(TestCase):
@@ -1015,6 +1112,7 @@ class LicensingParseWithSymbolsAdvancedTest(TestCase):
         _gpl2, _gpl2plus, _lgpl, _mit, _mitand2, licensing = self.get_symbols_and_licensing()
         try:
             licensing.parse('The GNU GPL 20 or LGPL-2.1 and mit2')
+            self.fail('Exception not raised')
         except ParseError as pe:
             expected = {'error_code': PARSE_INVALID_SYMBOL_SEQUENCE, 'position': 34,
                         'token_string': '2', 'token_type': LicenseSymbol('2')}
@@ -1043,6 +1141,7 @@ class LicensingParseWithSymbolsAdvancedTest(TestCase):
 
         try:
             licensing.parse('The GNU GPL 20 or later or (LGPL-2.1 and mit) or The GNU GPL 20 or mit 123')
+            self.fail('Exception not raised')
         except ParseError as pe:
             expected = {'error_code': PARSE_INVALID_SYMBOL_SEQUENCE, 'position': 70,
                         'token_string': ' 123', 'token_type': unknown}
@@ -1053,6 +1152,7 @@ class LicensingParseWithSymbolsAdvancedTest(TestCase):
         unknown = LicenseSymbol(key='123')
         try:
             licensing.parse('The GNU GPL 20 or mit 123')
+            self.fail('Exception not raised')
         except ParseError as pe:
             expected = {'error_code': PARSE_INVALID_SYMBOL_SEQUENCE, 'position': 21,
                         'token_string': ' 123', 'token_type': unknown}
