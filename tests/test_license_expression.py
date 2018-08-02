@@ -774,8 +774,7 @@ class LicensingParseWithSymbolsSimpleTest(TestCase):
             ])
             self.fail('Exception not raised')
         except ExpressionError as ee:
-            expected = ("A license key cannot contains spaces: u'GPL-2.0 or LATER'")
-
+            expected = ('A license key cannot contains spaces: "GPL-2.0 or LATER"')
             assert expected == str(ee)
 
     def get_syms_and_licensing(self):
@@ -1553,10 +1552,6 @@ class SplitAndTokenizeTest(TestCase):
 
         # fist scan
         result = list(splitter(expr, licensing.symbols_by_key))
-
-        WITH_KW = Keyword(value=' with ', type=10)
-        AND_KW = Keyword(value=' and ', type=1)
-        OR_KW = Keyword(value=' or ', type=2)
 
         expected = [
             Result(0, 0, u' ', None),

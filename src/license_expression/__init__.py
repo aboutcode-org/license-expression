@@ -608,7 +608,7 @@ class LicenseSymbol(BaseSymbol):
         no_spaces_key = ''.join(key.split())
         if key != no_spaces_key:
             raise ExpressionError(
-                'A license key cannot contains spaces: %(key)r' % locals())
+                'A license key cannot contains spaces: "%(key)s"' % locals())
 
         if not is_valid_license_key(key):
             raise ExpressionError(
