@@ -41,6 +41,7 @@ except NameError:
     unicode = str  # NOQA
 
 import collections
+from collections import OrderedDict
 from copy import copy
 from copy import deepcopy
 from functools import total_ordering
@@ -65,10 +66,6 @@ from boolean.boolean import TOKEN_AND
 from boolean.boolean import TOKEN_OR
 from boolean.boolean import TOKEN_LPAR
 from boolean.boolean import TOKEN_RPAR
-
-from license_expression._pyahocorasick import Trie as Scanner
-from license_expression._pyahocorasick import Output
-from license_expression._pyahocorasick import Result
 
 # append new error codes to PARSE_ERRORS by monkey patching
 PARSE_EXPRESSION_NOT_UNICODE = 100
@@ -179,12 +176,21 @@ class Licensing(boolean.BooleanAlgebra):
                 raise ValueError('\n'.join(warns + errors))
 
         # mapping of known symbol used for parsing and resolution as (key, symbol)
-        # TODO: inject lpar, rpar and spaces sourround, before and after
-        # e.g "(sym)" "(sym " "sym)" " sym "
-        self.known_symbols = {symbol.key: symbol for symbol in symbols}
+        self.known_symbols = known_symbols = {}
+        # mapping of {key or alias all lowercase -> known symbol} used for
+        # parsing and resolution
+        self.symbols_by_key = symbols_by_key = {}
 
-        # Aho-Corasick automaton-based Scanner used for expression tokenizing
-        self.scanner = None
+        for symbol in symbols:
+            known_symbols[symbol.key] = symbol
+            symbols_by_key[symbol.key.lower()] = symbol
+            aliases = getattr(symbol, 'aliases', [])
+            for alias in aliases:
+                # normalize spaces for each alias: we ignore aliases with spaces
+                alias = ' '.join(alias.split())
+                if ' ' in alias:
+                    continue
+                symbols_by_key[alias.lower()] = symbol
 
     def is_equivalent(self, expression1, expression2, **kwargs):
         """
@@ -415,14 +421,8 @@ class Licensing(boolean.BooleanAlgebra):
         such as "XXX with ZZZ" if the XXX symbol has is_exception` set to True or the
         ZZZ symbol has `is_exception` set to False.
         """
-        if self.known_symbols:
-            # scan with an automaton, recognize whole symbols+keywords or only keywords
-            scanner = self.get_scanner()
-            results = scanner.scan(expression)
-        else:
-            # scan with a simple regex-based splitter
-            results = splitter(expression)
-
+        # scan with a simple regex-based splitter and lookup keys and aliases in a table
+        results = splitter(expression, self.symbols_by_key)
         results = strip_and_skip_spaces(results)
         result_groups = group_results_for_with_subexpression(results)
 
@@ -527,38 +527,6 @@ class Licensing(boolean.BooleanAlgebra):
 
             yield token, token_string, pos
 
-    def get_scanner(self):
-        """
-        Return a scanner either cached or created as needed. If symbols were provided
-        when this Licensing object was created, the scanner will recognize known
-        symbols when tokenizing expressions. Otherwise, only keywords are recognized
-        and a license symbol is anything in between keywords.
-        """
-        if self.scanner is not None:
-            return self.scanner
-
-        self.scanner = scanner = Scanner(ignore_case=True)
-
-        for keyword in _KEYWORDS:
-            scanner.add(keyword.value, keyword, priority=0)
-
-        # self.known_symbols has been created at Licensing initialization time and is
-        # already validated and trusted here
-        for key, symbol in self.known_symbols.items():
-            # always use the key even if there are no aliases.
-            scanner.add(key, symbol, priority=1)
-            aliases = getattr(symbol, 'aliases', [])
-            for alias in aliases:
-                # normalize spaces for each alias. The Scanner will lowercase them
-                # since we created it with ignore_case=True
-                if alias:
-                    alias = ' '.join(alias.split())
-                if alias:
-                    scanner.add(alias, symbol, priority=2)
-
-        scanner.make_automaton()
-        return scanner
-
 
 class Renderable(object):
     """
@@ -632,16 +600,20 @@ class LicenseSymbol(BaseSymbol):
                     'A license key must be a unicode string: %(key)r' % locals())
 
         key = key.strip()
-
         if not key:
             raise ExpressionError(
                 'A license key cannot be blank: "%(key)s"' % locals())
 
-        # note: key can contain spaces
+        # note: key CANNOT contain spaces
+        no_spaces_key = ''.join(key.split())
+        if key != no_spaces_key:
+            raise ExpressionError(
+                'A license key cannot contains spaces: "%(key)s"' % locals())
+
         if not is_valid_license_key(key):
             raise ExpressionError(
                 'Invalid license key: the valid characters are: letters and numbers, '
-                'underscore, dot or hyphen signs and spaces: "%(key)s"' % locals())
+                'underscore, dot/period ant hyphen signs: "%(key)s"' % locals())
 
         # normalize for spaces
         key = ' '.join(key.split())
@@ -1184,14 +1156,15 @@ _splitter = re.compile('''
 ).finditer
 
 
-def splitter(expression):
+def splitter(expression, known_symbols=None):
     """
-    Return an iterable of Result describing each token given an
+    Return an iterable of Result describing each keyword given an
     expression unicode string.
 
-    This is a simpler tokenizer used when the Licensing does not have
-    known symbols. The split is done on spaces and parens. Anything else
-    is either a token or a symbol.
+    This is a simpler tokenizer used when the Licensing does not have known
+    symbols. The split is done on spaces and parens. Anything else is either a
+    keyword or a symbol. Symbols matched to a `known_symbols` mapping key
+    (ignoring case) are returned. Otherwise a new symbol ob ject is created.
     """
     if not expression:
         return
@@ -1199,12 +1172,14 @@ def splitter(expression):
     if not isinstance(expression, str):
         raise ParseError(error_code=PARSE_EXPRESSION_NOT_UNICODE)
 
-    # mapping of lowercase token strings to a token type id
-    TOKENS = {
+    # mapping of lowercase keyword strings to a keywords type id
+    KEYWORDS = {
         'and': Keyword(value='and', type=TOKEN_AND),
         'or': Keyword(value='or', type=TOKEN_OR),
         'with': Keyword(value='with', type=TOKEN_WITH),
     }
+
+    known_symbols = known_symbols or {}
 
     for match in _splitter(expression):
         if not match:
@@ -1226,18 +1201,91 @@ def splitter(expression):
         if rpar:
             yield Result(start, end, rpar, Output(rpar, KW_RPAR))
 
-        token_or_sym = mgd.get('symbol')
-        if not token_or_sym:
+        keyword_or_symbol = mgd.get('symbol')
+        if not keyword_or_symbol:
             continue
 
-        token = TOKENS.get(token_or_sym.lower())
-        if token:
-            yield Result(start, end, token_or_sym, Output(token_or_sym, token))
-#         elif token_or_sym.endswith('+') and token_or_sym != '+':
-#             val = token_or_sym[:-1]
-#             sym = LicenseSymbol(key=val)
-#             yield Result(start, end - 1, val, Output(val, sym))
-#             yield Result(end, end, '+', Output('+', KW_PLUS))
+        kos_lower = keyword_or_symbol.lower()
+        keyword = KEYWORDS.get(kos_lower)
+        if keyword:
+            yield Result(start, end, keyword_or_symbol, Output(keyword_or_symbol, keyword))
         else:
-            sym = LicenseSymbol(key=token_or_sym)
-            yield Result(start, end, token_or_sym, Output(token_or_sym, sym))
+            # fetch a known symbol or build a new one
+            symbol = known_symbols.get(kos_lower)
+            if not symbol:
+                symbol = LicenseSymbol(key=keyword_or_symbol)
+            yield Result(start, end, keyword_or_symbol, Output(keyword_or_symbol, symbol))
+
+
+# FIXME: this needs to be simplified with no aho corasick in play
+class Output(object):
+    """
+    An Output is used to track a key added to the Trie as a TrieNode and any
+    arbitrary value object corresponding to that key.
+
+    - `key` is the original key unmodified unicode string.
+    - `value` is the associated value for this key as provided when adding this key.
+    """
+    __slots__ = 'key', 'value',
+
+    def __init__(self, key, value=None):
+        self.key = key
+        self.value = value
+
+    def __repr__(self):
+        return self.__class__.__name__ + '(%(key)r, %(value)r)' % self.as_dict()
+
+    def __eq__(self, other):
+        return (
+            isinstance(other, Output)
+            and self.key == other.key
+            and self.value == other.value)
+
+    def __hash__(self):
+        return hash((self.key, self.value,))
+
+    def as_dict(self):
+        return OrderedDict([(s, getattr(self, s)) for s in self.__slots__])
+
+
+class Result(object):
+    """
+    A Result is used to track the result of a search with its start and end as
+    index position in the original string and other attributes:
+
+    - `start` and `end` are zero-based index in the original string S such that
+         S[start:end+1] will yield `string`.
+    - `string` is the sub-string from the original searched string for this Result.
+    - `output` is the Output object for a matched string and is a marker that this is a
+       matched string. None otherwise for a Result for unmatched text.
+    """
+
+    __slots__ = 'start', 'end', 'string', 'output'
+
+    def __init__(self, start, end, string='', output=None):
+        self.start = start
+        self.end = end
+        self.string = string
+        self.output = output
+
+    def __repr__(self):
+        return self.__class__.__name__ + '(%(start)r, %(end)r, %(string)r, %(output)r)' % self.as_dict()
+
+    def as_dict(self):
+        return OrderedDict([(s, getattr(self, s)) for s in self.__slots__])
+
+    def __len__(self):
+        return self.end + 1 - self.start
+
+    def __eq__(self, other):
+        return isinstance(other, Result) and (
+            self.start == other.start and
+            self.end == other.end and
+            self.string == other.string and
+            self.output == other.output
+        )
+
+    def __hash__(self):
+        tup = self.start, self.end, self.string, self.output
+        return hash(tup)
+

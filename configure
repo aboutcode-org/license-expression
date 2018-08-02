@@ -16,17 +16,15 @@ CONF_DEFAULT="etc/conf/dev"
 
 CFG_CMD_LINE_ARGS="$@"
 
-if [ "$1" == "--init" ]; then
-    CFG_CMD_LINE_ARGS=$CONF_INIT
-fi
-
-if [ "$1" == "" ]; then
+if [[ "$1" == "" ]]; then
     # default for dev conf if not argument is provided
     CFG_CMD_LINE_ARGS=$CONF_DEFAULT
 fi
 
-if [ "$PYTHON_EXE" == "" ]; then
+CONFIGURE_ROOT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+if [[ "$PYTHON_EXE" == "" ]]; then
     PYTHON_EXE=python
 fi
 
-$PYTHON_EXE etc/configure.py $CFG_CMD_LINE_ARGS
+$PYTHON_EXE "$CONFIGURE_ROOT_DIR/etc/configure.py" $CFG_CMD_LINE_ARGS

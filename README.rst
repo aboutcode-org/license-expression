@@ -4,7 +4,7 @@ license-expression
 
 license-expression is a small utility library to parse, compare, simplify and normalize
 license expressions (e.g. SPDX license expressions) using boolean logic such as:
-`GPL-2.0 or later WITH Classpath Exception AND MIT`.
+`GPL-2.0-or-later WITH Classpath-Exception AND MIT`.
 
 See also for details:
 https://spdx.org/sites/cpstandard/files/pages/files/spdxversion2.1.pdf#page=95&zoom=auto
@@ -102,27 +102,27 @@ And expression can be simplified:
 
 .. code-block:: python
 
-    >>> expression2 = ' GPL-2.0 or (mit and LGPL 2.1) or bsd Or GPL-2.0  or (mit and LGPL 2.1)'
+    >>> expression2 = ' GPL-2.0 or (mit and LGPL-2.1) or bsd Or GPL-2.0  or (mit and LGPL-2.1)'
     >>> parsed2 = licensing.parse(expression2)
-    >>> assert str(parsed2.simplify()) == 'BSD OR GPL-2.0 OR (LGPL 2.1 AND mit)'
+    >>> assert str(parsed2.simplify()) == 'BSD OR GPL-2.0 OR (LGPL-2.1 AND mit)'
 
 Two expressions can be compared for equivalence and containment:
 
 .. code-block:: python
 
-    >>> expr1 = licensing.parse(' GPL-2.0 or (LGPL 2.1 and mit) ')
-    >>> expr2 = licensing.parse(' (mit and LGPL 2.1)  or GPL-2.0 ')
+    >>> expr1 = licensing.parse(' GPL-2.0 or (LGPL-2.1 and mit) ')
+    >>> expr2 = licensing.parse(' (mit and LGPL-2.1)  or GPL-2.0 ')
     >>> licensing.is_equivalent(expr1, expr2)
     True
-    >>> licensing.is_equivalent(' GPL-2.0 or (LGPL 2.1 and mit) ',
-    ...                         ' (mit and LGPL 2.1)  or GPL-2.0 ')
+    >>> licensing.is_equivalent(' GPL-2.0 or (LGPL-2.1 and mit) ',
+    ...                         ' (mit and LGPL-2.1)  or GPL-2.0 ')
     True
     >>> expr1.simplify() == expr2.simplify()
     True
-    >>> expr3 = licensing.parse(' GPL-2.0 or mit or LGPL 2.1')
+    >>> expr3 = licensing.parse(' GPL-2.0 or mit or LGPL-2.1')
     >>> licensing.is_equivalent(expr2, expr3)
     False
-    >>> expr4 = licensing.parse('mit and LGPL 2.1')
+    >>> expr4 = licensing.parse('mit and LGPL-2.1')
     >>> expr4.simplify() in expr2.simplify()
     True
     >>> licensing.contains(expr2, expr4)
