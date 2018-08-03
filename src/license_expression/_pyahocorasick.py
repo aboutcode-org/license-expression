@@ -13,14 +13,23 @@ Modified for use in the license_expression library:
  - support returning non-matched parts of a string
 """
 
-from __future__ import unicode_literals
 from __future__ import absolute_import
 from __future__ import print_function
+from __future__ import unicode_literals
 
 from collections import deque
 from collections import OrderedDict
 import logging
 import re
+
+# Python 2 and 3 support
+try:
+    # Python 2
+    unicode
+    str = unicode  # NOQA
+except NameError:
+    # Python 3
+    unicode = str  # NOQA
 
 TRACE = False
 
@@ -107,7 +116,7 @@ class Trie(object):
             raise Exception('This Trie has been converted to an Aho-Corasick '
                             'automaton and cannot be modified.')
 
-        if not tokens_string or not isinstance(tokens_string, basestring):
+        if not tokens_string or not isinstance(tokens_string, str):
             return
 
         tokens = [t for t in get_tokens(tokens_string) if t.strip()]
@@ -135,7 +144,7 @@ class Trie(object):
         contain the tokens_string. Private function retrieving a final node of
         the Trie for a given tokens_string.
         """
-        if not tokens_string or not isinstance(tokens_string, basestring):
+        if not tokens_string or not isinstance(tokens_string, str):
             return
 
         tokens = [t for t in get_tokens(tokens_string) if t.strip()]
