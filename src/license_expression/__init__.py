@@ -40,11 +40,16 @@ except NameError:
     # Python 3
     unicode = str  # NOQA
 
-import collections
+from collections import defaultdict
+from collections import deque
+from collections import namedtuple
+from collections import OrderedDict
 from copy import copy
 from copy import deepcopy
 from functools import total_ordering
 import itertools
+import logging
+from pprint import pprint
 import re
 import string
 
@@ -67,8 +72,25 @@ from boolean.boolean import TOKEN_LPAR
 from boolean.boolean import TOKEN_RPAR
 
 from license_expression._pyahocorasick import Trie as Scanner
-from license_expression._pyahocorasick import Output
-from license_expression._pyahocorasick import Result
+from license_expression._pyahocorasick import Token
+
+TRACE = False
+
+logger = logging.getLogger(__name__)
+
+
+def logger_debug(*args):
+    pass
+
+
+if TRACE:
+
+    def logger_debug(*args):
+        return logger.debug(' '.join(isinstance(a, str) and a or repr(a) for a in args))
+
+    import sys
+    logging.basicConfig(stream=sys.stdout)
+    logger.setLevel(logging.DEBUG)
 
 # append new error codes to PARSE_ERRORS by monkey patching
 PARSE_EXPRESSION_NOT_UNICODE = 100
@@ -98,24 +120,25 @@ class ExpressionError(Exception):
 
 
 # Used for tokenizing
-Keyword = collections.namedtuple('Keyword', 'value type')
+Keyword = namedtuple('Keyword', 'value type')
+Keyword.__len__ = lambda self: len(self.value)
 
 # id for "with" token which is not a proper boolean symbol but an expression symbol
 TOKEN_WITH = 10
 
-# actual keyword types
+# keyword types that include operators and parens
+
 KW_LPAR = Keyword('(', TOKEN_LPAR)
 KW_RPAR = Keyword(')', TOKEN_RPAR)
-_KEYWORDS = [
-    Keyword(' and ', TOKEN_AND),
-    Keyword(' or ', TOKEN_OR),
-    KW_LPAR,
-    KW_RPAR,
-    Keyword(' with ', TOKEN_WITH),
-]
+KW_AND = Keyword('and', TOKEN_AND)
+KW_OR = Keyword('or', TOKEN_OR)
+KW_WITH = Keyword('with', TOKEN_WITH)
 
-KEYWORDS = tuple(kw.value for kw in _KEYWORDS)
-KEYWORDS_STRIPPED = tuple(k.strip() for k in KEYWORDS)
+KEYWORDS = (KW_AND, KW_OR, KW_LPAR, KW_RPAR, KW_WITH,)
+KEYWORDS_STRINGS = set(kw.value for kw in KEYWORDS)
+
+# mapping of lowercase operator strings to an operator object
+OPERATORS = {'and': KW_AND, 'or': KW_OR, 'with': KW_WITH}
 
 
 class Licensing(boolean.BooleanAlgebra):
@@ -178,10 +201,11 @@ class Licensing(boolean.BooleanAlgebra):
             if errors:
                 raise ValueError('\n'.join(warns + errors))
 
-        # mapping of known symbol used for parsing and resolution as (key, symbol)
-        # TODO: inject lpar, rpar and spaces sourround, before and after
-        # e.g "(sym)" "(sym " "sym)" " sym "
+        # mapping of known symbol key to symbol for reference
         self.known_symbols = {symbol.key: symbol for symbol in symbols}
+
+        # mapping of lowercase key and aliaes to symbol used to resolve symbols
+        self.symbol_by_key = get_symbols_by_key(symbols)
 
         # Aho-Corasick automaton-based Scanner used for expression tokenizing
         self.scanner = None
@@ -337,7 +361,7 @@ class Licensing(boolean.BooleanAlgebra):
         string. Check that the expression syntax is valid and raise an Exception,
         ExpressionError or ParseError on errors. Return None for empty expressions.
         `expression` is either a string or a LicenseExpression object. If this is a
-        LicenseExpression it is retruned as-si.
+        LicenseExpression it is retruned as-is.
 
         Symbols are always recognized from known symbols if `symbols` were provided
         Licensing creation time: each license and exception is recognized from known
@@ -415,30 +439,61 @@ class Licensing(boolean.BooleanAlgebra):
         such as "XXX with ZZZ" if the XXX symbol has is_exception` set to True or the
         ZZZ symbol has `is_exception` set to False.
         """
-        if self.known_symbols:
-            # scan with an automaton, recognize whole symbols+keywords or only keywords
-            scanner = self.get_scanner()
-            results = scanner.scan(expression)
-        else:
-            # scan with a simple regex-based splitter
-            results = splitter(expression)
 
-        results = strip_and_skip_spaces(results)
-        result_groups = group_results_for_with_subexpression(results)
+#         if self.known_symbols:
+        if TRACE:
+            logger_debug('tokenize, using known_symbols')
+        # scan with an automaton, recognize whole symbols+keywords or only keywords
+        scanner = self.get_scanner()
+        tokens = scanner.scan(expression)
+#         else:
+#             if TRACE:
+#                 logger_debug('tokenize, using plain splitter')
+#             tokens = splitter(expression)
 
-        for group in result_groups:
-            len_group = len(group)
+        tokens = list(tokens)
+        if TRACE:
+            logger_debug('tokenize: tokens')
+            pprint(tokens)
+
+        # Assign symbol for unknown tokens
+        tokens = list(build_symbols_from_unmatched_tokens(tokens))
+        if TRACE:
+            logger_debug('tokenize: token with symbols')
+            pprint(tokens)
+
+        # skip whitespace-only tokens
+        tokens = [t for t in tokens if t.string and t.string.strip()]
+        if TRACE:
+            logger_debug('tokenize: token NO spaces')
+            pprint(tokens)
+
+        # group Symbols or operators tokens separated only by spaces
+        # attempt to look this token_group of symbols in a table.
+        # use symbol if available
+        # otherwise ....?
+
+        token_groups = build_token_groups_for_with_subexpression(tokens)
+
+        if TRACE:
+            token_groups = list(token_groups)
+            logger_debug('tokenize: token_groups')
+            pprint(token_groups)
+
+        for token_group in token_groups:
+            len_group = len(token_group)
+
             if not len_group:
                 # This should never happen
                 continue
+
             if len_group == 1:
                 # a single token
-                result = group[0]
+                result = token_group[0]
                 pos = result.start
                 token_string = result.string
-                output = result.output
-                if output:
-                    val = output.value
+                val = result.value
+                if val:
                     if isinstance(val, Keyword):
                         # keyword
                         token = val.type
@@ -470,40 +525,38 @@ class Licensing(boolean.BooleanAlgebra):
             else:
                 if len_group != 3:
                     # this should never happen
-                    string = ' '.join([res.string for res in group])
-                    start = group[0].start
+                    string = ' '.join([tok.string for tok in token_group])
+                    start = token_group[0].start
                     raise ParseError(
                         TOKEN_SYMBOL, string, start, PARSE_INVALID_EXPRESSION)
 
-                # this is a A with B seq of three results
-                lic_res, WITH , exc_res = group
-                pos = lic_res.start
-                WITHs = ' ' + WITH.string.strip() + ' '
-                token_string = ''.join([lic_res.string, WITHs, exc_res.string])
+                # this is a A with B seq of three tokens
+                lic_token, WITH , exc_token = token_group
+                pos = lic_token.start
+                WITHs = WITH.string.strip()
+                token_string = ' '.join([lic_token.string, WITHs, exc_token.string])
 
                 # licenses
-                lic_out = lic_res.output
-                lic_sym = lic_out and lic_out.value
+                lic_sym = lic_token.value
 
                 # this should not happen
                 if lic_sym and not isinstance(lic_sym, LicenseSymbol):
-                    raise ParseError(TOKEN_SYMBOL, lic_res.string, lic_res.start,
+                    raise ParseError(TOKEN_SYMBOL, lic_token.string, lic_token.start,
                                      PARSE_INVALID_SYMBOL)
 
                 if not lic_sym:
-                    lic_sym = LicenseSymbol(lic_res.string, is_exception=False)
+                    lic_sym = LicenseSymbol(lic_token.string, is_exception=False)
 
                 if not isinstance(lic_sym, LicenseSymbol):
-                    raise ParseError(TOKEN_SYMBOL, lic_res.string, lic_res.start,
+                    raise ParseError(TOKEN_SYMBOL, lic_token.string, lic_token.start,
                                      PARSE_INVALID_SYMBOL)
 
                 if strict and lic_sym.is_exception:
-                    raise ParseError(TOKEN_SYMBOL, lic_res.string, lic_res.start,
+                    raise ParseError(TOKEN_SYMBOL, lic_token.string, lic_token.start,
                                      PARSE_INVALID_EXCEPTION)
 
                 # exception
-                exc_out = exc_res.output
-                exc_sym = exc_out and exc_out.value
+                exc_sym = exc_token.value
 
                 # this should not happen
                 if exc_sym and not isinstance(exc_sym, LicenseSymbol):
@@ -513,14 +566,14 @@ class Licensing(boolean.BooleanAlgebra):
                     exc_sym = copy(exc_sym)
 
                 if not exc_sym:
-                    exc_sym = LicenseSymbol(exc_res.string)
+                    exc_sym = LicenseSymbol(exc_token.string)
 
                 if not isinstance(exc_sym, LicenseSymbol):
-                    raise ParseError(TOKEN_SYMBOL, exc_res.string, exc_res.start,
+                    raise ParseError(TOKEN_SYMBOL, exc_token.string, exc_token.start,
                                      PARSE_INVALID_SYMBOL)
 
                 if strict and self.known_symbols and not exc_sym.is_exception:
-                    raise ParseError(TOKEN_SYMBOL, exc_res.string, exc_res.start,
+                    raise ParseError(TOKEN_SYMBOL, exc_token.string, exc_token.start,
                                      PARSE_INVALID_SYMBOL_AS_EXCEPTION)
 
                 token = LicenseWithExceptionSymbol(lic_sym, exc_sym, strict)
@@ -537,27 +590,41 @@ class Licensing(boolean.BooleanAlgebra):
         if self.scanner is not None:
             return self.scanner
 
-        self.scanner = scanner = Scanner(ignore_case=True)
+        self.scanner = scanner = Scanner()
 
-        for keyword in _KEYWORDS:
-            scanner.add(keyword.value, keyword, priority=0)
+        for keyword in KEYWORDS:
+            scanner.add(keyword.value, keyword)
 
         # self.known_symbols has been created at Licensing initialization time and is
         # already validated and trusted here
         for key, symbol in self.known_symbols.items():
             # always use the key even if there are no aliases.
-            scanner.add(key, symbol, priority=1)
+            scanner.add(key, symbol)
             aliases = getattr(symbol, 'aliases', [])
             for alias in aliases:
                 # normalize spaces for each alias. The Scanner will lowercase them
-                # since we created it with ignore_case=True
                 if alias:
                     alias = ' '.join(alias.split())
-                if alias:
-                    scanner.add(alias, symbol, priority=2)
+                    scanner.add(alias, symbol)
 
         scanner.make_automaton()
         return scanner
+
+
+def get_symbols_by_key(symbols):
+    """
+    Return a mapping of key->symbol given an iterable of symbols
+    """
+    by_key = {}
+    for symbol in symbols:
+        by_key[symbol.key.lower()] = symbol
+        aliases = getattr(symbol, 'aliases', [])
+        for alias in aliases:
+            if alias:
+                alias = ' '.join(alias.split())
+            if alias:
+                by_key[alias.lower()] = symbol
+    return by_key
 
 
 class Renderable(object):
@@ -646,7 +713,7 @@ class LicenseSymbol(BaseSymbol):
         # normalize for spaces
         key = ' '.join(key.split())
 
-        if key.lower() in KEYWORDS_STRIPPED:
+        if key.lower() in KEYWORDS_STRINGS:
             raise ExpressionError(
                 'Invalid license key: a key cannot be a reserved keyword: "or", "and" or "with: "%(key)s"' % locals())
 
@@ -662,7 +729,7 @@ class LicenseSymbol(BaseSymbol):
 
     def decompose(self):
         """
-        Return an iterable the underlying symbols for this symbol
+        Return an iterable of the underlying symbols for this symbol.
         """
         yield self
 
@@ -697,6 +764,9 @@ class LicenseSymbol(BaseSymbol):
 
     def __str__(self):
         return self.key
+
+    def __len__(self):
+        return len(self.key)
 
     def __repr__(self):
         cls = self.__class__.__name__
@@ -949,75 +1019,109 @@ def ordered_unique(seq):
     return uniques
 
 
-def strip_and_skip_spaces(results):
+def build_symbols_from_unmatched_tokens(tokens):
     """
-    Yield results given a sequence of Result skipping whitespace-only results
+    Yield Token given a sequence of Token replacing unmatched contiguous Tokens
+    by a single token with a LicenseSymbol.
     """
-    for result in results:
-        if result.string.strip():
-            yield result
+    tokens = list(tokens)
+
+    unmatched = deque()
+
+    def build_token_with_symbol():
+        """
+        Build and return a new Token from accumulated unmatched tokens or None.
+        """
+        if not unmatched:
+            return
+        # strip trailing spaces
+        trailing_spaces = []
+        while unmatched and not unmatched[-1].string.strip():
+            trailing_spaces.append(unmatched.pop())
+
+        if unmatched:
+            string = ' '.join(t.string for t in unmatched if t.string.strip())
+            start = unmatched[0].start
+            end = unmatched[-1].end
+            toksym = LicenseSymbol(string)
+            unmatched.clear()
+            yield Token(start, end, string, toksym)
+
+        for ts in trailing_spaces:
+            yield ts
+
+    for tok in tokens:
+        if tok.value:
+            for symtok in build_token_with_symbol():
+                yield symtok
+            yield tok
+        else:
+            if not unmatched and not tok.string.strip():
+                # skip leading spaces
+                yield tok
+            else:
+                unmatched.append(tok)
+
+    # end remainders
+    for symtok in build_token_with_symbol():
+        yield symtok
 
 
-def group_results_for_with_subexpression(results):
+def build_token_groups_for_with_subexpression(tokens):
     """
-    Yield tuples of (Result) given a sequence of Result such that:
-     - all symbol-with-symbol subsequences of three results are grouped in a three-tuple
-     - other results are the single result in a tuple.
+    Yield tuples of Token given a sequence of Token such that:
+     - all symbol-with-symbol sequences of 3 tokens are grouped in a three-tuple
+     - other tokens are a single token wrapped in a tuple.
     """
 
-    # if n-1 is sym, n is with and n+1 is sym: yield this as a group for a with exp
-    # otherwise: yield each single result as a group
+    # if n-1 is sym, n is with and n+1 is sym: yield this as a group for a with
+    # exp otherwise: yield each single token as a group
 
-    results = list(results)
+    tokens = list(tokens)
 
-    # check three contiguous result from scanning at a time
+    # check three contiguous token from scanning at a time
     triple_len = 3
 
     # shortcut if there are no grouping possible
-    if len(results) < triple_len:
-        for res in results:
-            yield (res,)
+    if len(tokens) < triple_len:
+        for tok in tokens:
+            yield (tok,)
         return
 
-    # accumulate three contiguous results
-    triple = collections.deque()
+    # accumulate three contiguous tokens
+    triple = deque()
     triple_popleft = triple.popleft
     triple_clear = triple.clear
     tripple_append = triple.append
 
-    for res in results:
+    for tok in tokens:
         if len(triple) == triple_len:
             if is_with_subexpression(triple):
                 yield tuple(triple)
                 triple_clear()
             else:
-                prev_res = triple_popleft()
-                yield (prev_res,)
-        tripple_append(res)
+                prev_tok = triple_popleft()
+                yield (prev_tok,)
+        tripple_append(tok)
 
     # end remainders
     if triple:
         if len(triple) == triple_len and is_with_subexpression(triple):
             yield tuple(triple)
         else:
-            for res in triple:
-                yield (res,)
+            for tok in triple:
+                yield (tok,)
 
 
-def is_symbol(result):
-    # either the output value is a known sym, or we have no output for unknown sym
-    return result.output and isinstance(result.output.value, LicenseSymbol) or not result.output
-
-
-def is_with_keyword(result):
-    return (result.output
-            and isinstance(result.output.value, Keyword)
-            and result.output.value.type == TOKEN_WITH)
-
-
-def is_with_subexpression(results):
-    lic, wit, exc = results
-    return (is_symbol(lic) and is_with_keyword(wit) and is_symbol(exc))
+def is_with_subexpression(tokens_tripple):
+    """
+    Return True if a Token tripple is a WITH license sub-expression.
+    """
+    lic, wit, exc = tokens_tripple
+    return (isinstance(lic.value, LicenseSymbol)
+        and wit.value == KW_WITH
+        and isinstance(exc.value, LicenseSymbol)
+    )
 
 
 def as_symbols(symbols):
@@ -1053,7 +1157,7 @@ def as_symbols(symbols):
                                 'or a LicenseSymbol-like instance.' % locals())
 
 
-def validate_symbols(symbols, validate_keys=False, _keywords=KEYWORDS):
+def validate_symbols(symbols, validate_keys=False):
     """
     Return a tuple of (`warnings`, `errors`) given a sequence of `symbols`
     LicenseSymbol-like objects.
@@ -1075,9 +1179,9 @@ def validate_symbols(symbols, validate_keys=False, _keywords=KEYWORDS):
     not_symbol_classes = []
     dupe_keys = set()
     dupe_exceptions = set()
-    dupe_aliases = collections.defaultdict(list)
+    dupe_aliases = defaultdict(list)
     invalid_keys_as_kw = set()
-    invalid_alias_as_kw = collections.defaultdict(list)
+    invalid_alias_as_kw = defaultdict(list)
 
     # warning
     warning_dupe_aliases = set()
@@ -1096,7 +1200,7 @@ def validate_symbols(symbols, validate_keys=False, _keywords=KEYWORDS):
             dupe_keys.add(key)
 
         # key cannot be an expression keyword
-        if keyl in _keywords:
+        if keyl in KEYWORDS_STRINGS:
             invalid_keys_as_kw.add(key)
 
         # keep a set of unique seen keys
@@ -1129,7 +1233,7 @@ def validate_symbols(symbols, validate_keys=False, _keywords=KEYWORDS):
                 dupe_aliases[alias].append(key)
 
             # an alias cannot be an expression keyword
-            if alias in _keywords:
+            if alias in KEYWORDS_STRINGS:
                 invalid_alias_as_kw[key].append(alias)
 
             seen_aliases[alias] = keyl
@@ -1171,7 +1275,7 @@ def validate_symbols(symbols, validate_keys=False, _keywords=KEYWORDS):
     return warnings, errors
 
 
-_splitter = re.compile('''
+_tokenizer = re.compile('''
     (?P<symbol>[^\s\(\)]+)
      |
     (?P<space>\s+)
@@ -1181,17 +1285,16 @@ _splitter = re.compile('''
     (?P<rpar>\))
     ''',
     re.VERBOSE | re.MULTILINE | re.UNICODE
-).finditer
+)
 
 
 def splitter(expression):
     """
-    Return an iterable of Result describing each token given an
-    expression unicode string.
+    Return an iterable of Tokens describing each token given an expression
+    unicode string.
 
-    This is a simpler tokenizer used when the Licensing does not have
-    known symbols. The split is done on spaces and parens. Anything else
-    is either a token or a symbol.
+    The split is done on spaces and parens. Anything else is either a token or a
+    symbol.
     """
     if not expression:
         return
@@ -1199,45 +1302,33 @@ def splitter(expression):
     if not isinstance(expression, str):
         raise ParseError(error_code=PARSE_EXPRESSION_NOT_UNICODE)
 
-    # mapping of lowercase token strings to a token type id
-    TOKENS = {
-        'and': Keyword(value='and', type=TOKEN_AND),
-        'or': Keyword(value='or', type=TOKEN_OR),
-        'with': Keyword(value='with', type=TOKEN_WITH),
-    }
-
-    for match in _splitter(expression):
+    for match in _tokenizer.finditer(expression):
         if not match:
             continue
-
+        # set start and end as string indexes
         start, end = match.span()
         end = end - 1
-        mgd = match.groupdict()
+        match_getter = match.groupdict().get
 
-        space = mgd.get('space')
+        space = match_getter('space')
         if space:
-            yield Result(start, end, space, None)
+            yield Token(start, end, space, None)
 
-        lpar = mgd.get('lpar')
+        lpar = match_getter('lpar')
         if lpar:
-            yield Result(start, end, lpar, Output(lpar, KW_LPAR))
+            yield Token(start, end, lpar, KW_LPAR)
 
-        rpar = mgd.get('rpar')
+        rpar = match_getter('rpar')
         if rpar:
-            yield Result(start, end, rpar, Output(rpar, KW_RPAR))
+            yield Token(start, end, rpar, KW_RPAR)
 
-        token_or_sym = mgd.get('symbol')
-        if not token_or_sym:
+        operator_or_sym = match_getter('symbol')
+        if not operator_or_sym:
             continue
 
-        token = TOKENS.get(token_or_sym.lower())
-        if token:
-            yield Result(start, end, token_or_sym, Output(token_or_sym, token))
-#         elif token_or_sym.endswith('+') and token_or_sym != '+':
-#             val = token_or_sym[:-1]
-#             sym = LicenseSymbol(key=val)
-#             yield Result(start, end - 1, val, Output(val, sym))
-#             yield Result(end, end, '+', Output('+', KW_PLUS))
+        operator = OPERATORS.get(operator_or_sym.lower())
+        if operator:
+            yield Token(start, end, operator_or_sym, operator)
         else:
-            sym = LicenseSymbol(key=token_or_sym)
-            yield Result(start, end, token_or_sym, Output(token_or_sym, sym))
+            sym = LicenseSymbol(key=operator_or_sym)
+            yield Token(start, end, operator_or_sym, sym)

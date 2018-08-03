@@ -104,6 +104,8 @@ And expression can be simplified:
 
     >>> expression2 = ' GPL-2.0 or (mit and LGPL 2.1) or bsd Or GPL-2.0  or (mit and LGPL 2.1)'
     >>> parsed2 = licensing.parse(expression2)
+    >>> str(parsed2)
+    'GPL-2.0 OR (mit AND LGPL 2.1) OR BSD OR GPL-2.0 OR (mit AND LGPL 2.1)'
     >>> assert str(parsed2.simplify()) == 'BSD OR GPL-2.0 OR (LGPL 2.1 AND mit)'
 
 Two expressions can be compared for equivalence and containment:

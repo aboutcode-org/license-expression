@@ -6,10 +6,9 @@ Original Author: Wojciech Muła, wojciech_mula@poczta.onet.pl
 WWW            : http://0x80.pl
 License        : public domain
 
-Modified for use in the license_expression library and in particular:
- - add support for unicode key strinsg.
- - rename word to key and output to value (to be more like a mapping/dict)
- - case insensitive search
+Modified for use in the license_expression library:
+ - add support for unicode strings.
+ - case insensitive search using sequence of words and not characters
  - improve returned results with the actual start,end and matched string.
  - support returning non-matched parts of a string
 """
@@ -21,21 +20,57 @@ from __future__ import print_function
 from collections import deque
 from collections import OrderedDict
 import logging
+import re
+
+TRACE = False
 
 logger = logging.getLogger(__name__)
 
 
 def logger_debug(*args):
-    return logger.debug(' '.join(isinstance(a, str) and a or repr(a) for a in args))
+    pass
 
-# uncomment for local debug logging
-# import sys
-# logging.basicConfig(stream=sys.stdout)
-# logger.setLevel(logging.DEBUG)
 
+if TRACE:
+
+    def logger_debug(*args):
+        return logger.debug(' '.join(isinstance(a, str) and a or repr(a) for a in args))
+
+    import sys
+    logging.basicConfig(stream=sys.stdout)
+    logger.setLevel(logging.DEBUG)
 
 # used to distinguish from None
 nil = object()
+
+
+class TrieNode(object):
+    """
+    Node of the Trie/Aho-Corasick automaton.
+    """
+    __slots__ = ['token', 'output', 'fail', 'children']
+
+    def __init__(self, token, output=nil):
+        # token of a tokens string added to the Trie as a string
+        self.token = token
+
+        # an output function (in the Aho-Corasick meaning) for this node: this
+        # is an object that contains the original key string and any
+        # additional value data associated to that key. Or "nil" for a node that
+        # is not a terminal leave for a key. It will be returned with a match.
+        self.output = output
+
+        # failure link used by the Aho-Corasick automaton and its search procedure
+        self.fail = nil
+
+        # children of this node as a mapping of char->node
+        self.children = {}
+
+    def __repr__(self):
+        if self.output is not nil:
+            return 'TrieNode(%r, %r)' % (self.token, self.output)
+        else:
+            return 'TrieNode(%r)' % self.token
 
 
 class Trie(object):
@@ -44,81 +79,89 @@ class Trie(object):
     key->value. This is the main entry point.
     """
 
-    def __init__(self, ignore_case=True):
+    def __init__(self):
         """
         Initialize a new Trie.
-
-        If `ignore_case` is True, searches in the Trie will be case insensitive.
         """
         self.root = TrieNode('')
-        self.ignore_case = ignore_case
 
-        # set of any unique character in the trie, updated on each addition
-        # we keep track of the set of chars added to the trie to build the automaton
+        # set of any unique tokens in the trie, updated on each addition we keep
+        # track of the set of tokens added to the trie to build the automaton
         # these are needed to created the first level children failure links
-        self._known_chars = set()
+        self._known_tokens = set()
 
         # Flag set to True once a Trie has been converted to an Aho-Corasick automaton
         self._converted = False
 
-    def add(self, key, value=None, priority=0):
+    def add(self, tokens_string, value=None):
         """
-        Add a new (key string, value) pair to the trie. If the key already exists in
-        the Trie, its value is replaced with the provided value.
-        A key is any unicode string.
+        Add a new tokens_string and its associated value to the trie. If the
+        tokens_string already exists in the Trie, its value is replaced with the
+        provided value, typically a Token object. If a value is not provided,
+        the tokens_string is used as value.
+
+        A tokens_string is any unicode string. It will be tokenized when added
+        to the Trie.
         """
         if self._converted:
             raise Exception('This Trie has been converted to an Aho-Corasick '
-                            'automaton and cannot be further modified.')
-        if not key:
+                            'automaton and cannot be modified.')
+
+        if not tokens_string or not isinstance(tokens_string, basestring):
             return
 
-        stored_key = self.ignore_case and key.lower() or key
+        tokens = [t for t in get_tokens(tokens_string) if t.strip()]
 
-        # we keep track of the set of chars added to the trie to build the automaton
-        # these are needed to created the first level children failure links
-        self._known_chars.update(stored_key)
+        # we keep track of the set of tokens added to the trie to build the
+        # automaton these are needed to created the first level children failure
+        # links
+
+        self._known_tokens.update(tokens)
 
         node = self.root
-        for char in stored_key:
+        for token in tokens:
             try:
-                node = node.children[char]
+                node = node.children[token]
             except KeyError:
-                child = TrieNode(char)
-                node.children[char] = child
+                child = TrieNode(token)
+                node.children[token] = child
                 node = child
 
-        # we always store the original key, not a possibly lowercased version
-        node.output = Output(key, value, priority)
+        node.output = (tokens_string, value or tokens_string)
 
-    def __get_node(self, key):
+    def __get_node(self, tokens_string):
         """
-        Return a node for this key or None if the trie does not contain the key.
-        Private function retrieving a final node of trie for given key.
+        Return a node for this tokens_string or None if the trie does not
+        contain the tokens_string. Private function retrieving a final node of
+        the Trie for a given tokens_string.
         """
-        key = self.ignore_case and key.lower() or key
+        if not tokens_string or not isinstance(tokens_string, basestring):
+            return
+
+        tokens = [t for t in get_tokens(tokens_string) if t.strip()]
         node = self.root
-        for char in key:
+        for token in tokens:
             try:
-                node = node.children[char]
+                node = node.children[token]
             except KeyError:
                 return None
         return node
 
-    def get(self, key, default=nil):
+    def get(self, tokens_string, default=nil):
         """
-        Return the Output tuple associated with a `key`.
-        If there is no such key in the Trie, return the default value (other
-        than nil): if default is not given or nil, raise a KeyError exception.
+        Return the output value found associated with a `tokens_string`. If
+        there is no such tokens_string in the Trie, return the default value
+        (other than nil). If `default` is not provided or is `nil`, raise a
+        KeyError.
         """
-        node = self.__get_node(key)
+        node = self.__get_node(tokens_string)
         output = nil
         if node:
             output = node.output
 
         if output is nil:
             if default is nil:
-                raise KeyError(key)
+                raise KeyError(tokens_string)
             else:
                 return default
         else:
@@ -142,37 +185,36 @@ class Trie(object):
         """
         items = []
 
-        def walk(node, key):
+        def walk(node, tokens):
             """
             Walk the trie, depth first.
             """
-            key = key + node.char
+            tokens = [t for t in tokens + [node.token] if t]
             if node.output is not nil:
-                items.append((node.output.key, node.output.value))
+                items.append((node.output[0], node.output[1],))
 
             for child in node.children.values():
                 if child is not node:
-                    walk(child, key)
+                    walk(child, tokens)
 
-        walk(self.root, key='')
+        walk(self.root, tokens=[])
 
         return iter(items)
 
-    def exists(self, key):
+    def exists(self, tokens_string):
         """
         Return True if the key is present in this trie.
         """
-        # TODO: add __contains__ magic for this
-        node = self.__get_node(key)
+        node = self.__get_node(tokens_string)
         if node:
             return bool(node.output != nil)
         return False
 
-    def is_prefix(self, key):
+    def is_prefix(self, tokens_string):
         """
-        Return True if key is a prefix of any existing key in the trie.
+        Return True if tokens_string is a prefix of any existing tokens_string in the trie.
         """
-        return (self.__get_node(key) is not None)
+        return bool(self.__get_node(tokens_string) is not None)
 
     def make_automaton(self):
         """
@@ -181,45 +223,45 @@ class Trie(object):
         converted to an Automaton.
         """
         queue = deque()
-        queue_append = queue.append
-        queue_popleft = queue.popleft
 
         # 1. create root children for each known items range (e.g. all unique
-        # characters from all the added keys), failing to root.
+        # characters from all the added tokens), failing to root.
         # And build a queue of these
-        for char in self._known_chars:
-            if char in self.root.children:
-                node = self.root.children[char]
+        for token in self._known_tokens:
+            if token in self.root.children:
+                node = self.root.children[token]
                 # e.g. f(s) = 0, Aho-Corasick-wise
                 node.fail = self.root
-                queue_append(node)
+                queue.append(node)
             else:
-                self.root.children[char] = self.root
+                self.root.children[token] = self.root
 
         # 2. using the queue of all possible top level items/chars, walk the trie and
         # add failure links to nodes as needed
         while queue:
-            current_node = queue_popleft()
+            current_node = queue.popleft()
             for node in current_node.children.values():
-                queue_append(node)
+                queue.append(node)
                 state = current_node.fail
-                while node.char not in state.children:
+                while node.token not in state.children:
                     state = state.fail
-                node.fail = state.children.get(node.char, self.root)
+                node.fail = state.children.get(node.token, self.root)
 
         # Mark the trie as converted so it cannot be modified anymore
         self._converted = True
 
-    def iter(self, string):
+    def iter(self, tokens_string, include_unmatched=False, include_space=False):
         """
-        Yield Result objects for matched strings by performing the Aho-Corasick search procedure.
+        Yield Token objects for matched strings by performing the Aho-Corasick
+        search procedure.
 
-        The Result start and end positions in the searched string are such that the
-        matched string is "search_string[start:end+1]". And the start is computed
-        from the end_index collected by the Aho-Corasick search procedure such that
-        "start=end_index - n + 1" where n is the length of a matched key.
+        The Token start and end positions in the searched string are such that
+        the matched string is "tokens_string[start:end+1]". And the start is
+        computed from the end_index collected by the Aho-Corasick search
+        procedure such that
+        "start=end_index - n + 1" where n is the length of a matched string.
 
-        The Result.output is an Output object for a matched key.
+        The Token.value is an object associated with a matched string.
 
         For example:
         >>> a = Trie()
@@ -229,17 +271,14 @@ class Trie(object):
         >>> a.add('EFGH')
         >>> a.add('KL')
         >>> a.make_automaton()
-        >>> string = 'abcdefghijklm'
-        >>> results = Result.sort(a.iter(string))
-
+        >>> tokens_string = 'a bcdef ghij kl m'
+        >>> strings = Token.sort(a.iter(tokens_string))
         >>> expected = [
-        ...     Result(1, 5, 'bcdef', Output('BCDEF')),
-        ...     Result(2, 4, 'cde', Output('CDE')),
-        ...     Result(3, 7, 'defgh', Output('DEFGH')),
-        ...     Result(4, 7, 'efgh', Output('EFGH')),
-        ...     Result(10, 11, 'kl', Output('KL')),
+        ...     Token(2, 6, u'bcdef', u'BCDEF'),
+        ...     Token(13, 14, u'kl', u'KL')
         ... ]
-        >>> results == expected
+
+        >>> strings == expected
         True
 
         >>> list(a.iter('')) == []
@@ -248,38 +287,78 @@ class Trie(object):
         >>> list(a.iter(' ')) == []
         True
         """
-        if not string:
+        if not tokens_string:
             return
 
-        # keep a copy for results
-        original_string = string
-        string = self.ignore_case and string.lower() or string
-
-        known_chars = self._known_chars
+        tokens = get_tokens(tokens_string)
         state = self.root
-        for end, char in enumerate(string):
-            if char not in known_chars:
-                state = self.root
+
+        if TRACE:
+            logger_debug('Trie.iter() with:', repr(tokens_string))
+            logger_debug(' tokens:', tokens)
+
+        end_pos = -1
+        for token_string in tokens:
+            end_pos += len(token_string)
+            if TRACE:
+                logger_debug()
+                logger_debug('token_string', repr(token_string))
+                logger_debug(' end_pos', end_pos)
+
+            if not include_space and not token_string.strip():
+                if TRACE:
+                    logger_debug('  include_space skipped')
                 continue
 
-            # search for a matching character in the children, starting at root
-            while char not in state.children:
+            if token_string not in self._known_tokens:
+                state = self.root
+                if TRACE:
+                    logger_debug('  unmatched')
+                if include_unmatched:
+                    n = len(token_string)
+                    start_pos = end_pos - n + 1
+                    tok = Token(start_pos, end_pos, tokens_string[start_pos: end_pos + 1], None)
+                    if TRACE:
+                        logger_debug('  unmatched tok:', tok)
+                    yield tok
+                continue
+
+            yielded = False
+
+            # search for a matching token_string in the children, starting at root
+            while token_string not in state.children:
                 state = state.fail
-            # we have a matching starting character
-            state = state.children.get(char, self.root)
+
+            # we have a matching starting token_string
+            state = state.children.get(token_string, self.root)
             match = state
             while match is not nil:
                 if match.output is not nil:
-                    # TODO: this could be precomputed or cached
-                    n = len(match.output.key)
-                    start = end - n + 1
-                    yield Result(start, end, original_string[start:end + 1], match.output)
+                    matched_string, output_value = match.output
+                    if TRACE:
+                        logger_debug(' type output', repr(output_value), type(matched_string))
+                    n = len(matched_string)
+                    start_pos = end_pos - n + 1
+                    if TRACE: logger_debug('   start_pos', start_pos)
+                    yield Token(start_pos, end_pos, tokens_string[start_pos: end_pos + 1], output_value)
+                    yielded = True
                 match = match.fail
+            if not yielded and include_unmatched:
+                if TRACE:
+                    logger_debug('  unmatched but known token')
+                n = len(token_string)
+                start_pos = end_pos - n + 1
+                tok = Token(start_pos, end_pos, tokens_string[start_pos: end_pos + 1], None)
+                if TRACE:
+                    logger_debug('  unmatched tok 2:', tok)
+                yield tok
 
-    def scan(self, string):
+        logger_debug()
+
+    def scan(self, string, include_unmatched=True, include_space=False):
         """
         Scan a string for matched and unmatched sub-sequences and yield non-
-        overlapping Result objects performing a modified Aho-Corasick search
+        overlapping Token objects performing a modified Aho-Corasick search
         procedure:
 
         - return both matched and unmatched sub-sequences.
@@ -293,10 +372,8 @@ class Trie(object):
                return the non-overlapping portion of the other discarded match as a
                non-match.
 
-        Each Result contains the start and end position, the corresponding string and
-        an Output object (with original key and any associated associated value). The
-        string and key are in their original case even if the automaton has the
-        `ignore_case` attribute.
+        Each Token contains the start and end position, the corresponding string
+        and an associated value object.
 
         For example:
         >>> a = Trie()
@@ -306,144 +383,175 @@ class Trie(object):
         >>> a.add('EFGH')
         >>> a.add('KL')
         >>> a.make_automaton()
-        >>> string = 'abcdefghijkl'
-        >>> results = list(a.scan(string))
+        >>> string = 'a bcdef ghij kl'
+        >>> tokens = list(a.scan(string, include_space=True))
 
         >>> expected = [
-        ...     Result(start=0, end=0, string='a', output=None),
-        ...     Result(start=1, end=5, string='bcdef', output=Output('BCDEF')),
-        ...     Result(start=6, end=9, string='ghij', output=None),
-        ...     Result(start=10, end=11, string='kl', output=Output('KL')),
+        ...     Token(0, 0, u'a', None),
+        ...     Token(1, 1, u' ', None),
+        ...     Token(2, 6, u'bcdef', u'BCDEF'),
+        ...     Token(7, 7, u' ', None),
+        ...     Token(8, 11, u'ghij', None),
+        ...     Token(12, 12, u' ', None),
+        ...     Token(13, 14, u'kl', u'KL')
         ... ]
-
-        >>> results == expected
+        >>> tokens == expected
         True
         """
-        results = self.iter(string)
-        results = filter_overlapping(results)
-        results = add_unmatched(string, results)
-        return results
+        tokens = self.iter(string,
+            include_unmatched=include_unmatched, include_space=include_space)
+        tokens = list(tokens)
+        if TRACE:
+            logger_debug('scan.tokens:', tokens)
+        if not include_space:
+            tokens = [t for t in tokens if t.string.strip()]
+        tokens = filter_overlapping(tokens)
+        return tokens
 
 
-class TrieNode(object):
+def filter_overlapping(tokens):
     """
-    Node of the Trie/Aho-Corasick automaton.
+    Return a new list from an iterable of `tokens` discarding contained and
+    overlaping Tokens using these rules:
+
+    - skip a token fully contained in another token.
+    - keep the biggest, left-most token of two overlapping tokens and skip the other
+
+    For example:
+    >>> tokens = [
+    ...     Token(0, 0, 'a'),
+    ...     Token(1, 5, 'bcdef'),
+    ...     Token(2, 4, 'cde'),
+    ...     Token(3, 7, 'defgh'),
+    ...     Token(4, 7, 'efgh'),
+    ...     Token(8, 9, 'ij'),
+    ...     Token(10, 13, 'klmn'),
+    ...     Token(11, 15, 'lmnop'),
+    ...     Token(16, 16, 'q'),
+    ... ]
+
+    >>> expected = [
+    ...     Token(0, 0, 'a'),
+    ...     Token(1, 5, 'bcdef'),
+    ...     Token(8, 9, 'ij'),
+    ...     Token(11, 15, 'lmnop'),
+    ...     Token(16, 16, 'q'),
+    ... ]
+
+    >>> filtered = list(filter_overlapping(tokens))
+    >>> filtered == expected
+    True
     """
-    __slots__ = ['char', 'output', 'fail', 'children']
+    tokens = Token.sort(tokens)
 
-    def __init__(self, char, output=nil):
-        # character of a key string added to the Trie
-        self.char = char
+    # compare pair of tokens in the sorted sequence: current and next
+    i = 0
+    while i < len(tokens) - 1:
+        j = i + 1
+        while j < len(tokens):
+            curr_tok = tokens[i]
+            next_tok = tokens[j]
 
-        # an output function (in the Aho-Corasick meaning) for this node: this is an
-        # Output object that contains the original key string and any additional
-        # value data associated to that key. Or "nil" for a node that is not a
-        # terminal leave for a key. It will be returned with a match.
-        self.output = output
+            logger_debug('curr_tok, i, next_tok, j:', curr_tok, i, next_tok, j)
+            # disjoint tokens: break, there is nothing to do
+            if next_tok.is_after(curr_tok):
+                logger_debug('  break to next', curr_tok)
+                break
 
-        # failure link used by the Aho-Corasick automaton and its search procedure
-        self.fail = nil
+            # contained token: discard the contained token
+            if next_tok in curr_tok:
+                logger_debug('  del next_tok contained:', next_tok)
+                del tokens[j]
+                continue
 
-        # children of this node as a mapping of char->node
-        self.children = {}
+            # overlap: Keep the longest token and skip the smallest overlapping
+            # tokens. In case of length tie: keep the left most
+            if curr_tok.overlap(next_tok):
+                if len(curr_tok) >= len(next_tok):
+                    logger_debug('  del next_tok smaller overlap:', next_tok)
+                    del tokens[j]
+                    continue
+                else:
+                    logger_debug('  del curr_tok smaller overlap:', curr_tok)
+                    del tokens[i]
+                    break
+            j += 1
+        i += 1
+    return tokens
 
-    def __repr__(self):
-        if self.output is not nil:
-            return 'TrieNode(%r, %r)' % (self.char, self.output)
-        else:
-            return 'TrieNode(%r)' % self.char
 
-
-class Output(object):
+class Token(object):
     """
-    An Output is used to track a key added to the Trie as a TrieNode and any
-    arbitrary value object corresponding to that key.
-
-    - `key` is the original key unmodified unicode string.
-    - `value` is the associated value for this key as provided when adding this key.
-    - `priority` is an optional priority for this key used to disambiguate overalpping matches.
-    """
-    __slots__ = 'key', 'value', 'priority'
-
-    def __init__(self, key, value=None, priority=0):
-        self.key = key
-        self.value = value
-        self.priority = priority
-
-    def __repr__(self):
-        return self.__class__.__name__ + '(%(key)r, %(value)r, %(priority)r)' % self.as_dict()
-
-    def __eq__(self, other):
-        return (
-            isinstance(other, Output)
-            and self.key == other.key
-            and self.value == other.value
-            and self.priority == other.priority)
-
-    def __hash__(self):
-        return hash((self.key, self.value, self.priority,))
-
-    def as_dict(self):
-        return OrderedDict([(s, getattr(self, s)) for s in self.__slots__])
-
-
-class Result(object):
-    """
-    A Result is used to track the result of a search with its start and end as
-    index position in the original string and other attributes:
+    A Token is used to track the tokenization an expression with its
+    start and end as index position in the original string and other attributes:
 
     - `start` and `end` are zero-based index in the original string S such that
          S[start:end+1] will yield `string`.
-    - `string` is the sub-string from the original searched string for this Result.
-    - `output` is the Output object for a matched string and is a marker that this is a
-       matched string. None otherwise for a Result for unmatched text.
+    - `string` is the matched substring from the original string for this Token.
+    - `value` is the corresponding object for this token as one of:
+      - a LicenseSymbol object
+      - a "Keyword" object (and, or, with, left and right parens)
+      - None if this is a space.
     """
 
-    __slots__ = 'start', 'end', 'string', 'output'
+    __slots__ = 'start', 'end', 'string', 'value',
 
-    def __init__(self, start, end, string='', output=None):
+    def __init__(self, start, end, string='', value=None):
         self.start = start
         self.end = end
         self.string = string
-        self.output = output
+        self.value = value
 
     def __repr__(self):
-        return self.__class__.__name__ + '(%(start)r, %(end)r, %(string)r, %(output)r)' % self.as_dict()
+        return self.__class__.__name__ + '(%(start)r, %(end)r, %(string)r, %(value)r)' % self.as_dict()
 
     def as_dict(self):
         return OrderedDict([(s, getattr(self, s)) for s in self.__slots__])
 
     def __len__(self):
-        return self.end + 1 - self.start
+        return self.end - self.start + 1
 
     def __eq__(self, other):
-        return isinstance(other, Result) and (
+        return isinstance(other, Token) and (
             self.start == other.start and
             self.end == other.end and
             self.string == other.string and
-            self.output == other.output
+            self.value == other.value
         )
 
     def __hash__(self):
-        tup = self.start, self.end, self.string, self.output
+        tup = self.start, self.end, self.string, self.value
         return hash(tup)
 
-    @property
-    def priority(self):
-        return getattr(self.output, 'priority', 0)
+    @classmethod
+    def sort(cls, tokens):
+        """
+        Return a new sorted sequence of tokens given a sequence of tokens. The
+        primary sort is on start and the secondary sort is on longer lengths.
+        Therefore if two tokens have the same start, the longer token will sort
+        first.
+
+        For example:
+        >>> tokens = [Token(0, 0), Token(5, 5), Token(1, 1), Token(2, 4), Token(2, 5)]
+        >>> expected = [Token(0, 0), Token(1, 1), Token(2, 5), Token(2, 4), Token(5, 5)]
+        >>> expected == Token.sort(tokens)
+        True
+        """
+        key = lambda s: (s.start, -len(s),)
+        return sorted(tokens, key=key)
 
     def is_after(self, other):
         """
-        Return True if this result is after the other result.
+        Return True if this token is after the other token.
 
         For example:
-        >>> Result(1, 2).is_after(Result(5, 6))
+        >>> Token(1, 2).is_after(Token(5, 6))
         False
-        >>> Result(5, 6).is_after(Result(5, 6))
+        >>> Token(5, 6).is_after(Token(5, 6))
         False
-        >>> Result(2, 3).is_after(Result(1, 2))
+        >>> Token(2, 3).is_after(Token(1, 2))
         False
-        >>> Result(5, 6).is_after(Result(3, 4))
+        >>> Token(5, 6).is_after(Token(3, 4))
         True
         """
         return self.start > other.end
@@ -453,188 +561,57 @@ class Result(object):
 
     def __contains__(self, other):
         """
-        Return True if this result contains the other result.
+        Return True if this token contains the other token.
 
         For example:
-        >>> Result(5, 7) in Result(5, 7)
+        >>> Token(5, 7) in Token(5, 7)
         True
-        >>> Result(6, 8) in Result(5, 7)
+        >>> Token(6, 8) in Token(5, 7)
         False
-        >>> Result(6, 6) in Result(4, 8)
+        >>> Token(6, 6) in Token(4, 8)
         True
-        >>> Result(3, 9) in Result(4, 8)
+        >>> Token(3, 9) in Token(4, 8)
         False
-        >>> Result(4, 8) in Result(3, 9)
+        >>> Token(4, 8) in Token(3, 9)
         True
         """
         return self.start <= other.start and other.end <= self.end
 
     def overlap(self, other):
         """
-        Return True if this result and the other result overlap.
+        Return True if this token and the other token overlap.
 
         For example:
-        >>> Result(1, 2).overlap(Result(5, 6))
+        >>> Token(1, 2).overlap(Token(5, 6))
         False
-        >>> Result(5, 6).overlap(Result(5, 6))
+        >>> Token(5, 6).overlap(Token(5, 6))
         True
-        >>> Result(4, 5).overlap(Result(5, 6))
+        >>> Token(4, 5).overlap(Token(5, 6))
         True
-        >>> Result(4, 5).overlap(Result(5, 7))
+        >>> Token(4, 5).overlap(Token(5, 7))
         True
-        >>> Result(4, 5).overlap(Result(6, 7))
+        >>> Token(4, 5).overlap(Token(6, 7))
         False
         """
         start = self.start
         end = self.end
         return (start <= other.start <= end) or (start <= other.end <= end)
 
-    @classmethod
-    def sort(cls, results):
-        """
-        Return a new sorted sequence of results given a sequence of results. The
-        primary sort is on start and the secondary sort is on longer lengths.
-        Therefore if two results have the same start, the longer result will sort
-        first.
 
-        For example:
-        >>> results = [Result(0, 0), Result(5, 5), Result(1, 1), Result(2, 4), Result(2, 5)]
-        >>> expected = [Result(0, 0), Result(1, 1), Result(2, 5), Result(2, 4), Result(5, 5)]
-        >>> expected == Result.sort(results)
-        True
-        """
-        key = lambda s: (s.start, -len(s),)
-        return sorted(results, key=key)
+# tokenize to separate text from parens
+_tokenizer = re.compile('''
+    (?P<text>[^\s\(\)]+)
+     |
+    (?P<space>\s+)
+     |
+    (?P<parens>[\(\)])
+    ''',
+    re.VERBOSE | re.MULTILINE | re.UNICODE
+)
 
 
-def filter_overlapping(results):
+def get_tokens(tokens_string):
     """
-    Return a new list from an iterable of `results` discarding contained and
-    overlaping Results using these rules:
-
-    - skip a result fully contained in another result.
-    - keep the biggest, left-most result of two overlapping results and skip the other
-
-    For example:
-    >>> results = [
-    ...     Result(0, 0, 'a'),
-    ...     Result(1, 5, 'bcdef'),
-    ...     Result(2, 4, 'cde'),
-    ...     Result(3, 7, 'defgh'),
-    ...     Result(4, 7, 'efgh'),
-    ...     Result(8, 9, 'ij'),
-    ...     Result(10, 13, 'klmn'),
-    ...     Result(11, 15, 'lmnop'),
-    ...     Result(16, 16, 'q'),
-    ... ]
-
-    >>> expected = [
-    ...     Result(0, 0, 'a'),
-    ...     Result(1, 5, 'bcdef'),
-    ...     Result(8, 9, 'ij'),
-    ...     Result(11, 15, 'lmnop'),
-    ...     Result(16, 16, 'q'),
-    ... ]
-
-    >>> filtered = list(filter_overlapping(results))
-    >>> filtered == expected
-    True
+    Return an iterable of strings splitting on spaces and parens.
     """
-    results = Result.sort(results)
-
-    # compare pair of results in the sorted sequence: current and next
-    i = 0
-    while i < len(results) - 1:
-        j = i + 1
-        while j < len(results):
-            curr_res = results[i]
-            next_res = results[j]
-
-            logger_debug('curr_res, i, next_res, j:', curr_res, i, next_res, j)
-            # disjoint results: break, there is nothing to do
-            if next_res.is_after(curr_res):
-                logger_debug('  break to next', curr_res)
-                break
-
-            # contained result: discard the contained result
-            if next_res in curr_res:
-                logger_debug('  del next_res contained:', next_res)
-                del results[j]
-                continue
-
-            # overlap: keep the biggest result and skip the smallest overlapping results
-            # in case of length tie: keep the left most
-            if curr_res.overlap(next_res):
-                if curr_res.priority < next_res.priority:
-                    logger_debug('  del next_res lower priority:', next_res)
-                    del results[j]
-                    continue
-                elif curr_res.priority > next_res.priority:
-                    logger_debug('  del curr_res lower priority:', curr_res)
-                    del results[i]
-                    break
-                else:
-                    if len(curr_res) >= len(next_res):
-                        logger_debug('  del next_res smaller overlap:', next_res)
-                        del results[j]
-                        continue
-                    else:
-                        logger_debug('  del curr_res smaller overlap:', curr_res)
-                        del results[i]
-                        break
-            j += 1
-        i += 1
-    return results
-
-
-def add_unmatched(string, results):
-    """
-    Yield Result object from the original `string` and the search `results` iterable
-    of non-overlapping matched substring Result object. New unmatched Results are
-    added to the stream for unmatched parts.
-
-    For example:
-    >>> string ='abcdefghijklmn'
-    >>> results = [
-    ...   Result(2, 3, 'cd'),
-    ...   Result(7, 7, 'h', None),
-    ...   Result(9, 10, 'jk', None),
-    ... ]
-    >>> expected = [
-    ...   Result(0, 1, 'ab'),
-    ...   Result(2, 3, 'cd'),
-    ...   Result(4, 6, 'efg'),
-    ...   Result(7, 7, 'h'),
-    ...   Result(8, 8, 'i'),
-    ...   Result(9, 10, 'jk'),
-    ...   Result(11, 13, 'lmn')
-    ... ]
-    >>> expected == list(add_unmatched(string, results))
-    True
-
-    >>> string ='abc2'
-    >>> results = [
-    ...   Result(0, 2, 'abc'),
-    ... ]
-    >>> expected = [
-    ...   Result(0, 2, 'abc'),
-    ...   Result(3, 3, '2', None),
-    ... ]
-    >>> expected == list(add_unmatched(string, results))
-    True
-
-    """
-    string_pos = 0
-    for result in Result.sort(results):
-        if result.start > string_pos:
-            start = string_pos
-            end = result.start - 1
-            yield Result(start, end, string[start:end + 1])
-        yield result
-        string_pos = result.end + 1
-
-    len_string = len(string)
-    if string_pos < len_string:
-        start = string_pos
-        end = len_string - 1
-        yield Result(start, end, string[start:end + 1])
+    return [match for match in _tokenizer.split(tokens_string.lower()) if match]
