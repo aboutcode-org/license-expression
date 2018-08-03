@@ -1,4 +1,4 @@
-language: python
+language: generic
 
 env:
   matrix:
@@ -37,6 +37,8 @@ matrix:
 
 install:
   - pyenv install --list
+  - echo $PYTHON_EXE
+  - python --version
   - ./configure
 
 before_script:
