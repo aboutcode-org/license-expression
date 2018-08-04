@@ -364,9 +364,9 @@ class Trie(object):
 
         logger_debug()
 
-    def scan(self, string, include_unmatched=True, include_space=False):
+    def tokenize(self, string, include_unmatched=True, include_space=False):
         """
-        Scan a string for matched and unmatched sub-sequences and yield non-
+        tokenize a string for matched and unmatched sub-sequences and yield non-
         overlapping Token objects performing a modified Aho-Corasick search
         procedure:
 
@@ -393,7 +393,7 @@ class Trie(object):
         >>> a.add('KL')
         >>> a.make_automaton()
         >>> string = 'a bcdef ghij kl'
-        >>> tokens = list(a.scan(string, include_space=True))
+        >>> tokens = list(a.tokenize(string, include_space=True))
 
         >>> expected = [
         ...     Token(0, 0, u'a', None),
@@ -411,7 +411,7 @@ class Trie(object):
             include_unmatched=include_unmatched, include_space=include_space)
         tokens = list(tokens)
         if TRACE:
-            logger_debug('scan.tokens:', tokens)
+            logger_debug('tokenize.tokens:', tokens)
         if not include_space:
             tokens = [t for t in tokens if t.string.strip()]
         tokens = filter_overlapping(tokens)
