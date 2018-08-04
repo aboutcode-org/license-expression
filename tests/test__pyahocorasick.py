@@ -177,7 +177,7 @@ class TestTrie(unittest.TestCase):
 
         assert expected == result
 
-    def test_iter_vs_scan(self):
+    def test_iter_vs_tokenize(self):
 
         def get_test_automaton():
             words = '( AND ) OR'.split()
@@ -215,10 +215,10 @@ class TestTrie(unittest.TestCase):
 
         assert expected == result
 
-        result = list(t.scan(test_string, include_unmatched=True, include_space=True))
+        result = list(t.tokenize(test_string, include_unmatched=True, include_space=True))
         assert expected == result
 
-    def test_scan_with_unmatched_and_space(self):
+    def test_tokenize_with_unmatched_and_space(self):
 
         def get_test_automaton():
             words = '( AND ) OR'.split()
@@ -232,7 +232,7 @@ class TestTrie(unittest.TestCase):
         #                        111111111122222222223
         #              0123456789012345678901234567890
         t = get_test_automaton()
-        result = list(t.scan(test_string, include_unmatched=True, include_space=True))
+        result = list(t.tokenize(test_string, include_unmatched=True, include_space=True))
         expected = [
             Token(0, 0, u'(', u'('),
             Token(1, 1, u'(', u'('),
