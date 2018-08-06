@@ -1,17 +1,16 @@
-about_resource: aboutcode_toolkit-3.0.2-py2.py3-none-any.whl
-checksum_md5: 7423e283e7c50979313f225065a5fea5
-checksum_sha1: 789d5d29437a11e8119da354a77218190d597d6d
+about_resource: aboutcode_toolkit-3.1.1-py2.py3-none-any.whl
+checksum_md5: 67e1f793b8421ce60800897bb5b9446d
+checksum_sha1: 26466b098411fcce12efac48bb9098cdf4a83573
 contact: http://www.nexb.com/contactus.html
 copyright: Copyright (c) 2013-2017 nexB Inc.
 description: AboutCode Toolkit is a tool to process ABOUT files. An ABOUT file provides
   a simple way to document the provenance (origin and license) 'about' a software
   component. This is a small text file stored in the codebase side-by-side with the
   documented software component.
-download_url: https://pypi.python.org/packages/11/7c/07b565c8a66f8846dab007ad80e31078f15034981dcb7c5e26dd985e3f4a/aboutcode_toolkit-3.0.2-py2.py3-none-any.whl#md5=7423e283e7c50979313f225065a5fea5
+download_url: https://files.pythonhosted.org/packages/48/05/c9dd903c5c6e0f06ec813a9911b27b252e3803fbd97ffa375d909694e26d/aboutcode_toolkit-3.1.1-py2.py3-none-any.whl#sha256=68b2fd1d05dd0dbc8acc91e7bf1b676e43804ea631bab490d0b46ae0b65e51b5
 homepage_url: https://aboutcode.org
 license_expression: apache-2.0
 name: AboutCode toolkit
-notice_file: NOTICE
 owner: nexB
 owner_url: http://www.nexb.com/
-version: 3.0.2
+version: 3.1.1

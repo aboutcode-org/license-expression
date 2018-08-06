@@ -7,10 +7,7 @@ description: Implements boolean algebra in one module.
 download_url: https://files.pythonhosted.org/packages/9b/27/d22062a221010e17935237ba4b574cd828238ea02e0765337c238466a512/boolean.py-3.6-py2.py3-none-any.whl
 homepage_url: https://github.com/bastikr/boolean.py
 license_expression: bsd-simplified
-licenses:
--   file: bsd-simplified.LICENSE
-    key: bsd-simplified
-    name: BSD-2-Clause
+license_file: bsd-simplified.LICENSE
 name: boolean.py
 notice_file: boolean.py-3.6-py2.py3-none-any.whl.NOTICE
 notice_url: https://github.com/bastikr/boolean.py/blob/master/LICENSE.txt
