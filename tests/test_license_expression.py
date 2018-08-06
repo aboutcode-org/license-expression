@@ -20,6 +20,7 @@ from __future__ import unicode_literals
 from collections import namedtuple
 from collections import OrderedDict
 from unittest import TestCase
+from unittest.case import expectedFailure
 import sys
 
 from boolean.boolean import PARSE_UNBALANCED_CLOSING_PARENS
@@ -29,6 +30,7 @@ from license_expression import PARSE_INVALID_EXPRESSION
 from license_expression import PARSE_INVALID_NESTING
 from license_expression import PARSE_INVALID_EXCEPTION
 from license_expression import PARSE_INVALID_SYMBOL_AS_EXCEPTION
+from license_expression import PARSE_INVALID_OPERATOR_SEQUENCE
 
 from license_expression import ExpressionError
 from license_expression import Keyword
@@ -424,8 +426,15 @@ class LicensingParseTest(TestCase):
         try:
             licensing.parse(expr)
             self.fail("Exception not raised when validating '%s'" % expr)
-        except ExpressionError as ee:
-            assert 'OR requires two or more licenses as in: MIT OR BSD' == str(ee)
+            self.fail('Exception not raised')
+        except ParseError as pe:
+            expected = {
+                'error_code': PARSE_INVALID_OPERATOR_SEQUENCE,
+                'position': 0,
+                'token_string': 'OR',
+                'token_type': TOKEN_OR
+            }
+            assert expected == _parse_error_as_dict(pe)
 
     def test_parse_not_invalid_expression_raise_no_exception2(self):
         licensing = Licensing()
@@ -466,18 +475,28 @@ class LicensingParseTest(TestCase):
         try:
             licensing.parse('and')
             self.fail('Exception not raised')
-        except ExpressionError as pe:
-            expected = 'AND requires two or more licenses as in: MIT AND BSD'
-            assert expected == str(pe)
+        except ParseError as pe:
+            expected = {
+                'error_code': PARSE_INVALID_OPERATOR_SEQUENCE,
+                'position': 0,
+                'token_string': 'and',
+                'token_type': TOKEN_AND
+            }
+            assert expected == _parse_error_as_dict(pe)
 
     def test_parse_errors_catch_invalid_expression_with_or_and_no_other(self):
         licensing = Licensing()
         try:
             licensing.parse('or that')
             self.fail('Exception not raised')
-        except ExpressionError as pe:
-            expected = 'OR requires two or more licenses as in: MIT OR BSD'
-            assert expected == str(pe)
+        except ParseError as pe:
+            expected = {
+                'error_code': PARSE_INVALID_OPERATOR_SEQUENCE,
+                'position': 0,
+                'token_string': 'or',
+                'token_type': TOKEN_OR
+            }
+            assert expected == _parse_error_as_dict(pe)
 
     def test_parse_errors_catch_invalid_expression_with_empty_parens(self):
         licensing = Licensing()
@@ -827,6 +846,78 @@ class LicensingParseTest(TestCase):
         parsed = licensing.parse(expression)
         expected = 'GPL-2.0 OR (mit AND LGPL 2.1) OR bsd OR GPL-2.0 OR (mit AND LGPL 2.1)'
         assert expected == str(parsed)
+
+    def test_parse_invalid_expression_with_trailing_or(self):
+        licensing = Licensing()
+        expr = 'mit or'
+        try:
+            licensing.parse(expr)
+            self.fail("Exception not raised when validating '%s'" % expr)
+        except ExpressionError as ee:
+            assert 'OR requires two or more licenses as in: MIT OR BSD' == str(ee)
+
+    def test_parse_invalid_expression_with_trailing_or_and_valid_start_does_not_raise_exception(self):
+        licensing = Licensing()
+        expression = ' mit or mit or '
+        parsed = licensing.parse(expression)
+        # ExpressionError: OR requires two or more licenses as in: MIT OR BSD
+        expected = 'mit OR mit'
+        assert expected == str(parsed)
+
+    def test_parse_invalid_expression_with_repeated_trailing_or_raise_exception(self):
+        licensing = Licensing()
+        expression = 'mit or mit or or'
+        try:
+            licensing.parse(expression, simple=False)
+            self.fail('Exception not raised')
+        except ParseError as pe:
+            expected = {
+                'error_code': PARSE_INVALID_OPERATOR_SEQUENCE,
+                'position': 14,
+                'token_string': 'or',
+                'token_type': TOKEN_OR
+            }
+            assert expected == _parse_error_as_dict(pe)
+
+    @expectedFailure
+    def test_parse_invalid_expression_with_single_trailing_or_raise_exception(self):
+        licensing = Licensing()
+        expression = 'mit or mit or'
+        try:
+            licensing.parse(expression, simple=False)
+            self.fail('Exception not raised')
+        except ParseError as pe:
+            expected = {
+                'error_code': PARSE_INVALID_OPERATOR_SEQUENCE,
+                'position': 14,
+                'token_string': 'or',
+                'token_type': TOKEN_OR
+            }
+            assert expected == _parse_error_as_dict(pe)
+
+    def test_parse_invalid_expression_with_single_trailing_and_raise_exception(self):
+        licensing = Licensing()
+        expression = 'mit or mit and'
+        try:
+            licensing.parse(expression, simple=False)
+            self.fail('Exception not raised')
+        except ExpressionError as ee:
+            assert 'AND requires two or more licenses as in: MIT AND BSD' == str(ee)
+
+    def test_parse_invalid_expression_with_single_leading_or_raise_exception(self):
+        licensing = Licensing()
+        expression = 'or mit or mit'
+        try:
+            licensing.parse(expression, simple=False)
+            self.fail('Exception not raised')
+        except ParseError as pe:
+            expected = {
+                'error_code': PARSE_INVALID_OPERATOR_SEQUENCE,
+                'position': 0,
+                'token_string': 'or',
+                'token_type': TOKEN_OR
+            }
+            assert expected == _parse_error_as_dict(pe)
 
 
 class LicensingParseWithSymbolsSimpleTest(TestCase):
@@ -1950,17 +2041,29 @@ class MockLicensesTest(TestCase):
         try:
             licensing.parse(expression)
             self.fail('Exception not raised')
-        except ExpressionError as e:
-            assert 'AND requires two or more licenses as in: MIT AND BSD' == str(e)
+        except ParseError as pe:
+            expected = {
+                'error_code': PARSE_INVALID_OPERATOR_SEQUENCE,
+                'position': 27,
+                'token_string': 'and',
+                'token_type': TOKEN_AND}
+            assert expected == _parse_error_as_dict(pe)
 
-    def test_or_or_is_not_invalid(self):
+    def test_or_or_is_invalid(self):
         expression = 'gpl-2.0 with classpath or or or or gpl-2.0-plus'
         licensing = Licensing()
-        result = str(licensing.parse(expression))
-        assert 'gpl-2.0 WITH classpath OR gpl-2.0-plus' == result
+        try:
+            licensing.parse(expression)
+        except ParseError as pe:
+            expected = {
+                'error_code': PARSE_INVALID_OPERATOR_SEQUENCE,
+                'position': 26,
+                'token_string': 'or',
+                'token_type': TOKEN_OR}
+            assert expected == _parse_error_as_dict(pe)
 
     def test_tokenize_or_or(self):
-        expression = 'gpl-2.0 with classpath or or gpl-2.0-plus'
+        expression = 'gpl-2.0 with classpath or or or gpl-2.0-plus'
         licensing = Licensing()
         results = list(licensing.tokenize(expression))
         expected = [
@@ -1969,7 +2072,8 @@ class MockLicensesTest(TestCase):
                 exception_symbol=LicenseSymbol(u'classpath')), 'gpl-2.0 with classpath', 0),
             (2, 'or', 23),
             (2, 'or', 26),
-            (LicenseSymbol(u'gpl-2.0-plus'), 'gpl-2.0-plus', 29)
+            (2, 'or', 29),
+            (LicenseSymbol(u'gpl-2.0-plus'), 'gpl-2.0-plus', 32)
         ]
 
         assert expected == results

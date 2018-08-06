@@ -30,7 +30,7 @@ setup(
     include_package_data=True,
     zip_safe=False,
     classifiers=[
-        'Development Status :: 4 - Beta',
+        'Development Status :: 5 - Production/Stable',
         'License :: OSI Approved :: Apache Software License',
         'Intended Audience :: Developers',
         'Operating System :: OS Independent',
@@ -48,6 +48,6 @@ setup(
         'licence'
     ],
     install_requires=[
-        'boolean.py >= 3.5, < 4.0.0',
+        'boolean.py >= 3.6, < 4.0.0',
     ]
 )

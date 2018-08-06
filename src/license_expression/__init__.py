@@ -39,8 +39,6 @@ from copy import copy
 from copy import deepcopy
 from functools import total_ordering
 import itertools
-import logging
-from pprint import pprint
 import re
 import string
 
@@ -52,9 +50,11 @@ from boolean import Expression as LicenseExpression
 from boolean.boolean import PARSE_ERRORS
 from boolean.boolean import PARSE_INVALID_EXPRESSION
 from boolean.boolean import PARSE_INVALID_NESTING
+from boolean.boolean import PARSE_INVALID_OPERATOR_SEQUENCE
 from boolean.boolean import PARSE_INVALID_SYMBOL_SEQUENCE
 from boolean.boolean import PARSE_UNBALANCED_CLOSING_PARENS
 from boolean.boolean import PARSE_UNKNOWN_TOKEN
+
 from boolean.boolean import ParseError
 from boolean.boolean import TOKEN_SYMBOL
 from boolean.boolean import TOKEN_AND
@@ -65,6 +65,7 @@ from boolean.boolean import TOKEN_RPAR
 from license_expression._pyahocorasick import Trie as AdvancedTokenizer
 from license_expression._pyahocorasick import Token
 
+
 # Python 2 and 3 support
 try:
     # Python 2
@@ -74,23 +75,6 @@ except NameError:
     # Python 3
     unicode = str  # NOQA
 
-TRACE = False
-
-logger = logging.getLogger(__name__)
-
-
-def logger_debug(*args):
-    pass
-
-
-if TRACE:
-
-    def logger_debug(*args):
-        return logger.debug(' '.join(isinstance(a, str) and a or repr(a) for a in args))
-
-    import sys
-    logging.basicConfig(stream=sys.stdout)
-    logger.setLevel(logging.DEBUG)
 
 # append new error codes to PARSE_ERRORS by monkey patching
 PARSE_EXPRESSION_NOT_UNICODE = 100
@@ -239,10 +223,10 @@ class Licensing(boolean.BooleanAlgebra):
                 raise ValueError('\n'.join(warns + errors))
 
         # mapping of known symbol key to symbol for reference
-        self.known_symbols_by_key = {symbol.key: symbol for symbol in symbols}
+        self.known_symbols = {symbol.key: symbol for symbol in symbols}
 
         # mapping of known symbol lowercase key to symbol for reference
-        self.known_symbols_by_keylow = {symbol.key.lower(): symbol for symbol in symbols}
+        self.known_symbols_lowercase = {symbol.key.lower(): symbol for symbol in symbols}
 
         # Aho-Corasick automaton-based Advanced Tokenizer
         self.advanced_tokenizer = None
@@ -375,7 +359,7 @@ class Licensing(boolean.BooleanAlgebra):
         Extra kwargs are passed down to the parse() function.
         """
         return [ls for ls in self.license_symbols(expression, unique=unique, decompose=True, **kwargs)
-                if not ls.key in self.known_symbols_by_key]
+                if not ls.key in self.known_symbols]
 
     def unknown_license_keys(self, expression, unique=True, **kwargs):
         """
@@ -447,7 +431,7 @@ class Licensing(boolean.BooleanAlgebra):
             return
         try:
             # this will raise a ParseError on errors
-            tokens = list(self.tokenize(expression, strict=strict))
+            tokens = list(self.tokenize(expression, strict=strict, simple=simple))
             expression = super(Licensing, self).parse(tokens)
         except TypeError as e:
             msg = 'Invalid expression syntax: ' + repr(e)
@@ -488,39 +472,19 @@ class Licensing(boolean.BooleanAlgebra):
             raise ParseError(error_code=PARSE_EXPRESSION_NOT_UNICODE)
 
         if simple:
-            if TRACE: logger_debug('using simple tokenizer')
             tokens = self.simple_tokenizer(expression)
         else:
-            if TRACE: logger_debug('using advanced tokenizer')
             advanced_tokenizer = self.get_advanced_tokenizer()
             tokens = advanced_tokenizer.tokenize(expression)
 
-        if TRACE:
-            tokens = list(tokens)
-            logger_debug('tokenize: tokens')
-            pprint(tokens)
-
         # Assign symbol for unknown tokens
         tokens = build_symbols_from_unknown_tokens(tokens)
-        if TRACE:
-            tokens = list(tokens)
-            logger_debug('tokenize: token with symbols')
-            pprint(tokens)
 
         # skip whitespace-only tokens
         tokens = (t for t in tokens if t.string and t.string.strip())
-        if TRACE:
-            tokens = list(tokens)
-            logger_debug('tokenize: token NO spaces')
-            pprint(tokens)
 
         # create atomic LicenseWithExceptionSymbol from WITH subexpressions
         tokens = replace_with_subexpression_by_license_symbol(tokens, strict)
-
-        if TRACE:
-            tokens = list(tokens)
-            logger_debug('tokenize: LicenseWithExceptionSymbol replaced')
-            pprint(tokens)
 
         # finally yield the actual args expected by the boolean parser
         for token in tokens:
@@ -557,9 +521,9 @@ class Licensing(boolean.BooleanAlgebra):
         for keyword in KEYWORDS:
             add_item(keyword.value, keyword)
 
-        # self.known_symbols_by_key has been created at Licensing initialization time and is
+        # self.known_symbols has been created at Licensing initialization time and is
         # already validated and trusted here
-        for key, symbol in self.known_symbols_by_key.items():
+        for key, symbol in self.known_symbols.items():
             # always use the key even if there are no aliases.
             add_item(key, symbol)
             aliases = getattr(symbol, 'aliases', [])
@@ -594,7 +558,7 @@ class Licensing(boolean.BooleanAlgebra):
         tokenizing expressions.
         """
 
-        symbols = self.known_symbols_by_keylow or {}
+        symbols = self.known_symbols_lowercase or {}
 
         for match in _simple_tokenizer(expression):
             if not match:
