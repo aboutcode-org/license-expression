@@ -1,24 +1,48 @@
-# This deliberately is not "python" as a work-around to support
-# multi-os builds with custom Python versions in Travis CI.
-language: cpp
-
-os: 
-  - osx
-  - linux 
+language: generic
 
 env:
   matrix:
-    - PYTHON_EXE="`pyenv install -s 2.7.13 && pyenv local 2.7.13`"
-    - PYTHON_EXE="`pyenv install -s 3.5.3 && pyenv local 3.5.3`"
+    - PYTHON_EXE="`pyenv install -s 2.7.14 && pyenv local 2.7.14`"
     - PYTHON_EXE="`pyenv install -s 3.6.1 && pyenv local 3.6.1`"
+
+
+# Travis does not offer OSX with arbitrary python versions (like 2.7.13 above)
+# So, you cannot simply have the following section in your build matrix:
+# os:
+#   - linux
+#   - osx
+# Instead, you have to include OSX entries into the build matrix manually.
+# In particular, this means specifying the environment variables again.
+
+# The following was adapted from here:
+#   https://docs.travis-ci.com/user/multi-os/
+# Set `language: generic` to clear `language: python` from above
+# Set `python:` (to empty) to clear it from the travis-ci web interface
+# Set `osx_image: xcode7.3` to pin OSX version see here:
+#   https://docs.travis-ci.com/user/osx-ci-environment/
+
+matrix:
+  include:
+    - os: osx
+      language: generic
+      python:
+      osx_image: xcode7.3
+      env: PYTHON_EXE="`pyenv install -s 2.7.14 && pyenv local 2.7.14`"
+    - os: osx
+      language: generic
+      python:
+      osx_image: xcode7.3
+      env: PYTHON_EXE="`pyenv install -s 3.6.1 && pyenv local 3.6.1`"
+
 
 install:
   - pyenv install --list
+  - echo $PYTHON_EXE
+  - python --version
   - ./configure
 
 before_script:
-  - bin/pip install aboutcode-toolkit
-  - bin/about-code check --show-all .
+  - bin/about-code check --verbose .
 
 script:
   - "bin/py.test -vvs"
@@ -32,4 +56,4 @@ notifications:
   use_notice: true
   skip_join: true
   template:
-    - "%{repository_slug}#%{build_number} (%{branch} - %{commit} : %{author}): %{message} : %{build_url}"
+    - "%{repository_slug}#%{build_number} (%{branch}-%{commit}:%{author})-%{message}- %{build_url}"

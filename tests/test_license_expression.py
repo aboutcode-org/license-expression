@@ -17,8 +17,10 @@ from __future__ import absolute_import
 from __future__ import print_function
 from __future__ import unicode_literals
 
+from collections import namedtuple
 from collections import OrderedDict
 from unittest import TestCase
+from unittest.case import expectedFailure
 import sys
 
 from boolean.boolean import PARSE_UNBALANCED_CLOSING_PARENS
@@ -28,6 +30,7 @@ from license_expression import PARSE_INVALID_EXPRESSION
 from license_expression import PARSE_INVALID_NESTING
 from license_expression import PARSE_INVALID_EXCEPTION
 from license_expression import PARSE_INVALID_SYMBOL_AS_EXCEPTION
+from license_expression import PARSE_INVALID_OPERATOR_SEQUENCE
 
 from license_expression import ExpressionError
 from license_expression import Keyword
@@ -37,12 +40,9 @@ from license_expression import LicenseSymbol
 from license_expression import LicenseSymbolLike
 from license_expression import LicenseWithExceptionSymbol
 from license_expression import ParseError
-from license_expression import Result
-from license_expression import Output
+from license_expression import Token
 
-from license_expression import group_results_for_with_subexpression
-from license_expression import splitter
-from license_expression import strip_and_skip_spaces
+from license_expression import build_token_groups_for_with_subexpression
 from license_expression import validate_symbols
 
 from license_expression import TOKEN_AND
@@ -150,9 +150,9 @@ class LicensingTokenizeWithoutSymbolsTest(TestCase):
         expected = [
             (TOKEN_LPAR, '(', 0),
             (TOKEN_LPAR, '(', 1),
-            (LicenseSymbol(key=u'l-a+'), u'l-a+', 2),
+            (LicenseSymbol(key=u'l-a+'), 'l-a+', 2),
             (TOKEN_AND, 'AND', 7),
-            (LicenseSymbol(key=u'l-b'), u'l-b', 11),
+            (LicenseSymbol(key=u'l-b'), 'l-b', 11),
             (TOKEN_RPAR, ')', 14),
             (TOKEN_OR, 'OR', 16),
             (TOKEN_LPAR, '(', 19),
@@ -198,27 +198,46 @@ class LicensingTokenizeWithSymbolsTest(TestCase):
         licensing = Licensing(symbols)
         return gpl_20, gpl_20_plus, lgpl_21, mit, licensing
 
-    def test_tokenize_1(self):
+    def test_tokenize_1_with_symbols(self):
         gpl_20, _gpl_20_plus, lgpl_21, mit, licensing = self.get_symbols_and_licensing()
-        result = licensing.tokenize('The GNU GPL 20 or LGPL-2.1 and mit')
+
+        result = licensing.tokenize('The GNU GPL 20 or LGPL v2.1 AND MIT license ')
+        #                                      111111111122222222223333333333444
+        #                            0123456789012345678901234567890123456789012
+
         expected = [
             (gpl_20, 'The GNU GPL 20', 0),
-            (TOKEN_OR, ' or ', 14),
-            (lgpl_21, 'LGPL-2.1', 18),
-            (TOKEN_AND, ' and ', 26),
-            (mit, 'mit', 31)]
+            (TOKEN_OR, 'or', 15),
+            (lgpl_21, 'LGPL v2.1', 18),
+            (TOKEN_AND, 'AND', 28),
+            (mit, 'MIT license', 32)
+        ]
+        assert expected == list(result)
+
+    def test_tokenize_1_no_symbols(self):
+        licensing = Licensing()
+
+        result = licensing.tokenize('The GNU GPL 20 or LGPL v2.1 AND MIT license')
+
+        expected = [
+            (LicenseSymbol(u'The GNU GPL 20'), 'The GNU GPL 20', 0),
+            (TOKEN_OR, 'or', 15),
+            (LicenseSymbol(u'LGPL v2.1'), 'LGPL v2.1', 18),
+            (TOKEN_AND, 'AND', 28),
+            (LicenseSymbol(u'MIT license'), 'MIT license', 32)
+        ]
+
         assert expected == list(result)
 
     def test_tokenize_with_trailing_unknown(self):
-        gpl_20, _gpl_20_plus, lgpl_21, mit, licensing = self.get_symbols_and_licensing()
+        gpl_20, _gpl_20_plus, lgpl_21, _mit, licensing = self.get_symbols_and_licensing()
         result = licensing.tokenize('The GNU GPL 20 or LGPL-2.1 and mit2')
         expected = [
             (gpl_20, 'The GNU GPL 20', 0),
-            (TOKEN_OR, ' or ', 14),
+            (TOKEN_OR, 'or', 15),
             (lgpl_21, 'LGPL-2.1', 18),
-            (TOKEN_AND, ' and ', 26),
-            (mit, 'mit', 31),
-            (LicenseSymbol(key='2'), '2', 34)
+            (TOKEN_AND, 'and', 27),
+            (LicenseSymbol(key='mit2'), 'mit2', 31),
         ]
         assert expected == list(result)
 
@@ -228,14 +247,15 @@ class LicensingTokenizeWithSymbolsTest(TestCase):
         result = licensing.tokenize('The GNU GPL 20 or later or (LGPL-2.1 and mit) or The GNU GPL 20 or mit')
         expected = [
             (gpl_20_plus, 'The GNU GPL 20 or later', 0),
-            (TOKEN_OR, ' or ', 23),
+            (TOKEN_OR, 'or', 24),
             (TOKEN_LPAR, '(', 27),
             (lgpl_21, 'LGPL-2.1', 28),
-            (TOKEN_AND, ' and ', 36),
+            (TOKEN_AND, 'and', 37),
             (mit, 'mit', 41),
             (TOKEN_RPAR, ')', 44),
-            (TOKEN_OR, ' or ', 45),
-            (gpl_20, 'The GNU GPL 20', 49), (2, ' or ', 63),
+            (TOKEN_OR, 'or', 46),
+            (gpl_20, 'The GNU GPL 20', 49),
+            (2, 'or', 64),
             (mit, 'mit', 67)
         ]
         assert expected == list(result)
@@ -245,8 +265,41 @@ class LicensingTokenizeWithSymbolsTest(TestCase):
         l = Licensing(symbols)
         result = list(l.tokenize('mit2'))
         expected = [
-            (LicenseSymbol(key='MIT', aliases=('MIT license',)), 'mit', 0),
-            (LicenseSymbol(key='2'), '2', 3),
+            (LicenseSymbol(u'mit2'), 'mit2', 0),
+        ]
+        assert expected == result
+
+    def test_tokenize_with_unknown_symbol_containing_known_symbol_leading(self):
+        l = Licensing(['gpl-2.0'])
+        result = list(l.tokenize('gpl-2.0 AND gpl-2.0-plus', strict=False))
+        result = [s for s, _, _ in result]
+        expected = [
+            LicenseSymbol(key='gpl-2.0'),
+            TOKEN_AND,
+            LicenseSymbol(key='gpl-2.0-plus'),
+        ]
+        assert expected == result
+
+    def test_tokenize_with_unknown_symbol_containing_known_symbol_contained(self):
+        l = Licensing(['gpl-2.0'])
+        result = list(l.tokenize('gpl-2.0 WITH exception-gpl-2.0-plus', strict=False))
+        result = [s for s, _, _ in result]
+        expected = [
+            LicenseWithExceptionSymbol(
+                LicenseSymbol(u'gpl-2.0'),
+                LicenseSymbol(u'exception-gpl-2.0-plus')
+            )
+        ]
+        assert expected == result
+
+    def test_tokenize_with_unknown_symbol_containing_known_symbol_trailing(self):
+        l = Licensing(['gpl-2.0'])
+        result = list(l.tokenize('gpl-2.0 AND exception-gpl-2.0', strict=False))
+        result = [s for s, _, _ in result]
+        expected = [
+            LicenseSymbol(u'gpl-2.0'),
+            TOKEN_AND,
+            LicenseSymbol(u'exception-gpl-2.0')
         ]
         assert expected == result
 
@@ -270,7 +323,12 @@ class LicensingParseTest(TestCase):
             licensing.parse(expression)
             self.fail('ParseError should be raised')
         except ParseError as pe:
-            expected = {'error_code': PARSE_UNBALANCED_CLOSING_PARENS, 'position': 48, 'token_string': ')', 'token_type': TOKEN_RPAR}
+            expected = {
+                'error_code': PARSE_UNBALANCED_CLOSING_PARENS,
+                'position': 48,
+                'token_string': ')',
+                'token_type': TOKEN_RPAR
+            }
             assert expected == _parse_error_as_dict(pe)
 
     def test_parse_raise_ExpressionError_when_validating(self):
@@ -278,31 +336,65 @@ class LicensingParseTest(TestCase):
         licensing = Licensing()
         try:
             licensing.parse(expression, validate=True)
+            self.fail('Exception not raised')
         except ExpressionError as ee:
             assert 'Unknown license key(s): gpl, bsd, lgpl, exception' == str(ee)
 
-    def test_parse_raise_ExpressionError_when_validating_strict(self):
+    def test_parse_raise_ParseError_when_validating_strict(self):
         expression = 'gpl and bsd or lgpl with exception'
         licensing = Licensing()
         try:
             licensing.parse(expression, validate=True, strict=True)
+            self.fail('Exception not raised')
+        except ParseError as pe:
+            expected = {
+                'error_code': PARSE_INVALID_SYMBOL_AS_EXCEPTION,
+                'position': 25,
+                'token_string': 'exception',
+                'token_type': TOKEN_SYMBOL
+            }
+            assert expected == _parse_error_as_dict(pe)
+
+    def test_parse_raise_ParseError_when_strict_no_validate(self):
+        expression = 'gpl and bsd or lgpl with exception'
+        licensing = Licensing()
+        try:
+            licensing.parse(expression, validate=False, strict=True)
+            self.fail('Exception not raised')
+        except ParseError as pe:
+            expected = {
+                'error_code': PARSE_INVALID_SYMBOL_AS_EXCEPTION,
+                'position': 25,
+                'token_string': 'exception',
+                'token_type': TOKEN_SYMBOL
+            }
+            assert expected == _parse_error_as_dict(pe)
+
+    def test_parse_raise_ExpressionError_when_validating_strict_with_unknown(self):
+        expression = 'gpl and bsd or lgpl with exception'
+        licensing = Licensing(symbols=[LicenseSymbol('exception', is_exception=True)])
+        try:
+            licensing.parse(expression, validate=True, strict=True)
         except ExpressionError as ee:
-            assert str(ee).startswith('exception_symbol must be an exception with "is_exception" set to True:')
+            assert 'Unknown license key(s): gpl, bsd, lgpl' == str(ee)
 
     def test_parse_in_strict_mode_for_solo_symbol(self):
         expression = 'lgpl'
         licensing = Licensing()
         licensing.parse(expression, strict=True)
 
-    def test_parse_invalid_expression_raise_expression(self):
+    def test_parse_invalid_expression_raise_exception(self):
         licensing = Licensing()
-
         expr = 'wrong'
         licensing.parse(expr)
 
+    def test_parse_not_invalid_expression_rais_not_exception(self):
+        licensing = Licensing()
         expr = 'l-a AND none'
         licensing.parse(expr)
 
+    def test_parse_invalid_expression_raise_exception3(self):
+        licensing = Licensing()
         expr = '(l-a + AND l-b'
         try:
             licensing.parse(expr)
@@ -310,6 +402,8 @@ class LicensingParseTest(TestCase):
         except ParseError:
             pass
 
+    def test_parse_invalid_expression_raise_exception4(self):
+        licensing = Licensing()
         expr = '(l-a + AND l-b))'
         try:
             licensing.parse(expr)
@@ -317,20 +411,33 @@ class LicensingParseTest(TestCase):
         except ParseError:
             pass
 
+    def test_parse_invalid_expression_raise_exception5(self):
+        licensing = Licensing()
         expr = 'l-a AND'
         try:
             licensing.parse(expr)
             self.fail("Exception not raised when validating '%s'" % expr)
-        except ParseError:
-            pass
+        except ExpressionError as ee:
+            assert 'AND requires two or more licenses as in: MIT AND BSD' == str(ee)
 
+    def test_parse_invalid_expression_raise_exception6(self):
+        licensing = Licensing()
         expr = 'OR l-a'
         try:
             licensing.parse(expr)
             self.fail("Exception not raised when validating '%s'" % expr)
-        except ParseError:
-            pass
+            self.fail('Exception not raised')
+        except ParseError as pe:
+            expected = {
+                'error_code': PARSE_INVALID_OPERATOR_SEQUENCE,
+                'position': 0,
+                'token_string': 'OR',
+                'token_type': TOKEN_OR
+            }
+            assert expected == _parse_error_as_dict(pe)
 
+    def test_parse_not_invalid_expression_raise_no_exception2(self):
+        licensing = Licensing()
         expr = '+l-a'
         licensing.parse(expr)
 
@@ -355,7 +462,12 @@ class LicensingParseTest(TestCase):
             licensing.parse('mit (and LGPL 2.1)')
             self.fail('Exception not raised')
         except ParseError as pe:
-            expected = {'error_code': PARSE_INVALID_NESTING, 'position': 4, 'token_string': '(', 'token_type': TOKEN_LPAR}
+            expected = {
+                'error_code': PARSE_INVALID_NESTING,
+                'position': 4,
+                'token_string': '(',
+                'token_type': TOKEN_LPAR
+            }
             assert expected == _parse_error_as_dict(pe)
 
     def test_parse_errors_catch_invalid_expression_with_bare_and(self):
@@ -364,7 +476,12 @@ class LicensingParseTest(TestCase):
             licensing.parse('and')
             self.fail('Exception not raised')
         except ParseError as pe:
-            expected = {'error_code': PARSE_INVALID_EXPRESSION, 'position':-1, 'token_string': '', 'token_type': None}
+            expected = {
+                'error_code': PARSE_INVALID_OPERATOR_SEQUENCE,
+                'position': 0,
+                'token_string': 'and',
+                'token_type': TOKEN_AND
+            }
             assert expected == _parse_error_as_dict(pe)
 
     def test_parse_errors_catch_invalid_expression_with_or_and_no_other(self):
@@ -373,7 +490,12 @@ class LicensingParseTest(TestCase):
             licensing.parse('or that')
             self.fail('Exception not raised')
         except ParseError as pe:
-            expected = {'error_code': PARSE_INVALID_EXPRESSION, 'position':-1, 'token_string': '', 'token_type': None}
+            expected = {
+                'error_code': PARSE_INVALID_OPERATOR_SEQUENCE,
+                'position': 0,
+                'token_string': 'or',
+                'token_type': TOKEN_OR
+            }
             assert expected == _parse_error_as_dict(pe)
 
     def test_parse_errors_catch_invalid_expression_with_empty_parens(self):
@@ -382,7 +504,12 @@ class LicensingParseTest(TestCase):
             licensing.parse('with ( )this')
             self.fail('Exception not raised')
         except ParseError as pe:
-            expected = {'error_code': PARSE_INVALID_EXPRESSION, 'position': 0, 'token_string':  'with', 'token_type': TOKEN_WITH}
+            expected = {
+                'error_code': PARSE_INVALID_EXPRESSION,
+                'position': 0,
+                'token_string': 'with',
+                'token_type': TOKEN_WITH
+            }
             assert expected == _parse_error_as_dict(pe)
 
     def test_parse_errors_catch_invalid_non_unicode_byte_strings_on_python3(self):
@@ -580,15 +707,11 @@ class LicensingParseTest(TestCase):
             )
         assert a == b
 
-    def test_parse_with_repeated_or_later_raise_parse_error(self):
+    def test_parse_with_repeated_or_later_does_not_raise_parse_error(self):
         l = Licensing()
         expr = 'LGPL2.1+ + and mit'
-        try:
-            l.parse(expr)
-            self.fail('Exception not raised')
-        except ParseError as ee:
-            expected = 'Invalid symbols sequence such as (A B) for token: "+" at position: 9'
-            assert expected == str(ee)
+        parsed = l.parse(expr)
+        assert 'LGPL2.1+ + AND mit' == str(parsed)
 
     def test_render_complex(self):
         licensing = Licensing()
@@ -651,18 +774,6 @@ class LicensingParseTest(TestCase):
         expected = 'GPL-2.0 OR (LGPL-2.1 AND mit)'
         assert expected == expr.render('{symbol.key}')
 
-    def test_Licensing_can_scan_valid_expressions_with_symbols_that_contain_and_with_or(self):
-        licensing = Licensing()
-        expression = 'orgpl or withbsd with orclasspath and andmit or andlgpl and ormit or withme'
-        result = [r.string for r in licensing.get_scanner().scan(expression)]
-        expected = [
-            'orgpl', ' or ', 'withbsd', ' with ', 'orclasspath',
-            ' and ', 'andmit', ' or ', 'andlgpl', ' and ', 'ormit',
-            ' or ', 'withme'
-        ]
-
-        assert expected == result
-
     def test_Licensing_can_tokenize_valid_expressions_with_symbols_that_contain_and_with_or(self):
         licensing = Licensing()
         expression = 'orgpl or withbsd with orclasspath and andmit or anlgpl and ormit or withme'
@@ -687,6 +798,40 @@ class LicensingParseTest(TestCase):
 
         assert expected == result
 
+    def test_Licensing_can_simple_tokenize_valid_expressions_with_symbols_that_contain_and_with_or(self):
+        licensing = Licensing()
+        expression = 'orgpl or withbsd with orclasspath and andmit or andlgpl and ormit or withme'
+
+        result = [r.string for r in licensing.simple_tokenizer(expression)]
+        expected = [
+            'orgpl',
+            ' ',
+            'or',
+            ' ',
+            'withbsd',
+            ' ',
+            'with',
+            ' ',
+            'orclasspath',
+            ' ',
+            'and',
+            ' ',
+            'andmit',
+            ' ',
+            'or',
+            ' ',
+            'andlgpl',
+            ' ',
+            'and',
+            ' ',
+            'ormit',
+            ' ',
+            'or',
+            ' ',
+            'withme'
+        ]
+        assert expected == result
+
     def test_Licensing_can_parse_valid_expressions_with_symbols_that_contain_and_with_or(self):
         licensing = Licensing()
         expression = 'orgpl or withbsd with orclasspath and andmit or anlgpl and ormit or withme'
@@ -695,24 +840,97 @@ class LicensingParseTest(TestCase):
         expected = 'orgpl OR (withbsd WITH orclasspath AND andmit) OR (anlgpl AND ormit) OR withme'
         assert expected == result.render('{symbol.key}')
 
+    def test_Licensing_can_parse_valid_expressions_with_symbols_that_contain_spaces(self):
+        licensing = Licensing()
+        expression = ' GPL-2.0 or (mit and LGPL 2.1) or bsd Or GPL-2.0  or (mit and LGPL 2.1)'
+        parsed = licensing.parse(expression)
+        expected = 'GPL-2.0 OR (mit AND LGPL 2.1) OR bsd OR GPL-2.0 OR (mit AND LGPL 2.1)'
+        assert expected == str(parsed)
+
+    def test_parse_invalid_expression_with_trailing_or(self):
+        licensing = Licensing()
+        expr = 'mit or'
+        try:
+            licensing.parse(expr)
+            self.fail("Exception not raised when validating '%s'" % expr)
+        except ExpressionError as ee:
+            assert 'OR requires two or more licenses as in: MIT OR BSD' == str(ee)
+
+    def test_parse_invalid_expression_with_trailing_or_and_valid_start_does_not_raise_exception(self):
+        licensing = Licensing()
+        expression = ' mit or mit or '
+        parsed = licensing.parse(expression)
+        # ExpressionError: OR requires two or more licenses as in: MIT OR BSD
+        expected = 'mit OR mit'
+        assert expected == str(parsed)
+
+    def test_parse_invalid_expression_with_repeated_trailing_or_raise_exception(self):
+        licensing = Licensing()
+        expression = 'mit or mit or or'
+        try:
+            licensing.parse(expression, simple=False)
+            self.fail('Exception not raised')
+        except ParseError as pe:
+            expected = {
+                'error_code': PARSE_INVALID_OPERATOR_SEQUENCE,
+                'position': 14,
+                'token_string': 'or',
+                'token_type': TOKEN_OR
+            }
+            assert expected == _parse_error_as_dict(pe)
+
+    @expectedFailure
+    def test_parse_invalid_expression_with_single_trailing_or_raise_exception(self):
+        licensing = Licensing()
+        expression = 'mit or mit or'
+        try:
+            licensing.parse(expression, simple=False)
+            self.fail('Exception not raised')
+        except ParseError as pe:
+            expected = {
+                'error_code': PARSE_INVALID_OPERATOR_SEQUENCE,
+                'position': 14,
+                'token_string': 'or',
+                'token_type': TOKEN_OR
+            }
+            assert expected == _parse_error_as_dict(pe)
+
+    def test_parse_invalid_expression_with_single_trailing_and_raise_exception(self):
+        licensing = Licensing()
+        expression = 'mit or mit and'
+        try:
+            licensing.parse(expression, simple=False)
+            self.fail('Exception not raised')
+        except ExpressionError as ee:
+            assert 'AND requires two or more licenses as in: MIT AND BSD' == str(ee)
+
+    def test_parse_invalid_expression_with_single_leading_or_raise_exception(self):
+        licensing = Licensing()
+        expression = 'or mit or mit'
+        try:
+            licensing.parse(expression, simple=False)
+            self.fail('Exception not raised')
+        except ParseError as pe:
+            expected = {
+                'error_code': PARSE_INVALID_OPERATOR_SEQUENCE,
+                'position': 0,
+                'token_string': 'or',
+                'token_type': TOKEN_OR
+            }
+            assert expected == _parse_error_as_dict(pe)
+
 
 class LicensingParseWithSymbolsSimpleTest(TestCase):
 
-    def test_Licensing_with_illegal_symbols_raise_Exception(self):
-        try:
-            Licensing([
-                'GPL-2.0 or LATER',
-                'classpath Exception',
-                'something with else+',
-                'mit',
-                'LGPL 2.1',
-                'mit or later'
-            ])
-        except ExpressionError as ee:
-            expected = ('Invalid license key: "or later" words are reserved and '
-                        'cannot be used in a key: "GPL-2.0 or LATER"')
-
-            assert expected == str(ee)
+    def test_Licensing_with_overlapping_symbols_with_keywords_does_not_raise_Exception(self):
+        Licensing([
+            'GPL-2.0 or LATER',
+            'classpath Exception',
+            'something with else+',
+            'mit',
+            'LGPL 2.1',
+            'mit or later'
+        ])
 
     def get_syms_and_licensing(self):
         a = LicenseSymbol('l-a')
@@ -881,6 +1099,7 @@ class LicensingParseWithSymbolsTest(TestCase):
         expression = 'gpl and bsd or lgpl with exception'
         try:
             licensing.parse(expression, validate=True, strict=True)
+            self.fail('Exception not raised')
         except ParseError as pe:
             expected = {
                 'error_code': PARSE_INVALID_SYMBOL_AS_EXCEPTION,
@@ -895,6 +1114,7 @@ class LicensingParseWithSymbolsTest(TestCase):
         licensing.parse('gpl with exception', validate=True, strict=True)
         try:
             licensing.parse('exception with gpl', validate=True, strict=True)
+            self.fail('Exception not raised')
         except ParseError as pe:
             expected = {
                 'error_code': PARSE_INVALID_EXCEPTION,
@@ -905,6 +1125,7 @@ class LicensingParseWithSymbolsTest(TestCase):
 
         try:
             licensing.parse('gpl with gpl', validate=True, strict=True)
+            self.fail('Exception not raised')
         except ParseError as pe:
             expected = {
                 'error_code': PARSE_INVALID_SYMBOL_AS_EXCEPTION,
@@ -912,6 +1133,31 @@ class LicensingParseWithSymbolsTest(TestCase):
                 'token_string': 'gpl',
                 'token_type': TOKEN_SYMBOL}
             assert expected == _parse_error_as_dict(pe)
+
+    def test_with_unknown_symbol_string_contained_in_known_symbol_does_not_crash_with(self):
+        l = Licensing(['lgpl-3.0-plus'])
+        license_expression = 'lgpl-3.0-plus WITH openssl-exception-lgpl-3.0-plus'
+        l.parse(license_expression)
+
+    def test_with_unknown_symbol_string_contained_in_known_symbol_does_not_crash_and(self):
+        l = Licensing(['lgpl-3.0-plus'])
+        license_expression = 'lgpl-3.0-plus AND openssl-exception-lgpl-3.0-plus'
+        l.parse(license_expression)
+
+    def test_with_unknown_symbol_string_contained_in_known_symbol_does_not_crash_or(self):
+        l = Licensing(['lgpl-3.0-plus'])
+        license_expression = 'lgpl-3.0-plus OR openssl-exception-lgpl-3.0-plus'
+        l.parse(license_expression)
+
+    def test_with_known_symbol_string_contained_in_known_symbol_does_not_crash_or(self):
+        l = Licensing(['lgpl-3.0-plus', 'openssl-exception-lgpl-3.0-plus'])
+        license_expression = 'lgpl-3.0-plus OR openssl-exception-lgpl-3.0-plus'
+        l.parse(license_expression)
+
+    def test_with_known_symbol_string_contained_in_known_symbol_does_not_crash_with(self):
+        l = Licensing(['lgpl-3.0-plus', 'openssl-exception-lgpl-3.0-plus'])
+        license_expression = 'lgpl-3.0-plus WITH openssl-exception-lgpl-3.0-plus'
+        l.parse(license_expression)
 
 
 class LicensingSymbolsReplacement(TestCase):
@@ -1011,14 +1257,18 @@ class LicensingParseWithSymbolsAdvancedTest(TestCase):
         licensing = Licensing(symbols)
         return gpl2, gpl2plus, lgpl, mit, mitand2, licensing
 
-    def test_parse_trailing_char_raise_exception(self):
+    def test_parse_trailing_char_does_not_raise_exception_without_validate(self):
+        _gpl2, _gpl2plus, _lgpl, _mit, _mitand2, licensing = self.get_symbols_and_licensing()
+        e = licensing.parse('The GNU GPL 20 or LGPL-2.1 and mit2', validate=False)
+        assert 'gpl-2.0 OR (LGPL-2.1 AND mit2)' == str(e)
+
+    def test_parse_trailing_char_raise_exception_with_validate(self):
         _gpl2, _gpl2plus, _lgpl, _mit, _mitand2, licensing = self.get_symbols_and_licensing()
         try:
-            licensing.parse('The GNU GPL 20 or LGPL-2.1 and mit2')
-        except ParseError as pe:
-            expected = {'error_code': PARSE_INVALID_SYMBOL_SEQUENCE, 'position': 34,
-                        'token_string': '2', 'token_type': LicenseSymbol('2')}
-            assert expected == _parse_error_as_dict(pe)
+            licensing.parse('The GNU GPL 20 or LGPL-2.1 and mit2', validate=True)
+            self.fail('Exception not raised')
+        except ExpressionError as ee:
+            assert 'Unknown license key(s): mit2' == str(ee)
 
     def test_parse_expression_with_trailing_unknown_should_raise_exception(self):
         gpl2, gpl2plus, lgpl, mit, _mitand2, licensing = self.get_symbols_and_licensing()
@@ -1027,25 +1277,26 @@ class LicensingParseWithSymbolsAdvancedTest(TestCase):
         tokens = list(licensing.tokenize('The GNU GPL 20 or later or (LGPL-2.1 and mit) or The GNU GPL 20 or mit 123'))
         expected = [
             (gpl2plus, 'The GNU GPL 20 or later', 0),
-            (TOKEN_OR, ' or ', 23),
+            (TOKEN_OR, 'or', 24),
             (TOKEN_LPAR, '(', 27),
             (lgpl, 'LGPL-2.1', 28),
-            (TOKEN_AND, ' and ', 36),
+            (TOKEN_AND, 'and', 37),
             (mit, 'mit', 41),
             (TOKEN_RPAR, ')', 44),
-            (TOKEN_OR, ' or ', 45),
+            (TOKEN_OR, 'or', 46),
             (gpl2, 'The GNU GPL 20', 49),
-            (TOKEN_OR, ' or ', 63),
+            (TOKEN_OR, 'or', 64),
             (mit, 'mit', 67),
-            (unknown, ' 123', 70)
+            (unknown, '123', 71)
         ]
         assert expected == tokens
 
         try:
             licensing.parse('The GNU GPL 20 or later or (LGPL-2.1 and mit) or The GNU GPL 20 or mit 123')
+            self.fail('Exception not raised')
         except ParseError as pe:
-            expected = {'error_code': PARSE_INVALID_SYMBOL_SEQUENCE, 'position': 70,
-                        'token_string': ' 123', 'token_type': unknown}
+            expected = {'error_code': PARSE_INVALID_SYMBOL_SEQUENCE, 'position': 71,
+                        'token_string': '123', 'token_type': unknown}
             assert expected == _parse_error_as_dict(pe)
 
     def test_parse_expression_with_trailing_unknown_should_raise_exception2(self):
@@ -1053,9 +1304,11 @@ class LicensingParseWithSymbolsAdvancedTest(TestCase):
         unknown = LicenseSymbol(key='123')
         try:
             licensing.parse('The GNU GPL 20 or mit 123')
+            #                01234567890123456789012345
+            self.fail('Exception not raised')
         except ParseError as pe:
-            expected = {'error_code': PARSE_INVALID_SYMBOL_SEQUENCE, 'position': 21,
-                        'token_string': ' 123', 'token_type': unknown}
+            expected = {'error_code': PARSE_INVALID_SYMBOL_SEQUENCE, 'position': 22,
+                        'token_string': '123', 'token_type': unknown}
             assert expected == _parse_error_as_dict(pe)
 
     def test_parse_expression_with_WITH(self):
@@ -1069,15 +1322,15 @@ class LicensingParseWithSymbolsAdvancedTest(TestCase):
         tokens = list(licensing.tokenize(expr))
         expected = [
             (gpl_20_or_later, 'The GNU GPL 20 or later', 0),
-            (TOKEN_OR, ' or ', 23),
+            (TOKEN_OR, 'or', 24),
             (TOKEN_LPAR, '(', 27),
             (lgpl, 'LGPL-2.1', 28),
-            (TOKEN_AND, ' and ', 36),
+            (TOKEN_AND, 'and', 37),
             (mit, 'mit', 41),
             (TOKEN_RPAR, ')', 44),
-            (TOKEN_OR, ' or ', 45),
+            (TOKEN_OR, 'or', 46),
             (gpl2, 'The GNU GPL 20', 49),
-            (TOKEN_OR, ' or ', 63),
+            (TOKEN_OR, 'or', 64),
             (LicenseWithExceptionSymbol(mit, mitexp), 'mit with mit exp', 67)
         ]
 
@@ -1123,19 +1376,113 @@ class LicensingParseWithSymbolsAdvancedTest(TestCase):
         assert [] == licensing.unknown_license_keys(parsed)
         assert [] == licensing.unknown_license_keys(expr)
 
-    def test_unknown_keys_with_trailing_char_2(self):
+    def test_unknown_keys_with_trailing_char_2_with_validate(self):
         _gpl2, _gpl2plus, _lgpl, _mit, _mitand2, licensing = self.get_symbols_and_licensing()
         expr = 'The GNU GPL 20 or LGPL-2.1 and mitand3'
 
         try:
-            licensing.parse(expr)
-            self.fail('ParseError should be raised')
-        except ParseError as pe:
-            expected = {'error_code': 5, 'position': 34, 'token_string': u'and3', 'token_type': LicenseSymbol(key=u'and3')}
+            licensing.parse(expr, validate=True)
+            self.fail('Exception should be raised')
+        except ExpressionError as ee:
+            assert 'Unknown license key(s): mitand3' == str(ee)
 
-            assert expected == _parse_error_as_dict(pe)
+    def test_unknown_keys_with_trailing_char_2_without_validate(self):
+        _gpl2, _gpl2plus, _lgpl, _mit, _mitand2, licensing = self.get_symbols_and_licensing()
+        expr = 'The GNU GPL 20 or LGPL-2.1 and mitand3'
+        parsed = licensing.parse(expr, validate=False)
+        assert 'gpl-2.0 OR (LGPL-2.1 AND mitand3)' == str(parsed)
 
-    def test_parse_with_overlapping_key_with_licensing(self):
+    def test_parse_with_overlapping_key_without_symbols(self):
+        expression = 'mit or mit AND zlib or mit or mit with verylonglicense'
+        #             1111111111222222222233333333334444444444555555555566666
+        #             0123456789012345678901234567890123456789012345678901234
+
+        licensing = Licensing()
+        results = str(licensing.parse(expression))
+        expected = 'mit OR (mit AND zlib) OR mit OR mit WITH verylonglicense'
+        assert expected == results
+
+    def test_advanced_tokenizer_tokenize_with_overlapping_key_with_symbols_and_trailing_unknown(self):
+        expression = 'mit or mit AND zlib or mit or mit with verylonglicense'
+        #                       111111111122222222223333333333444444444455555
+        #             0123456789012345678901234567890123456789012345678901234
+
+        symbols = [
+            LicenseSymbol('MIT', ['MIT license']),
+            LicenseSymbol('LGPL-2.1', ['LGPL v2.1']),
+            LicenseSymbol('zlib', ['zlib']),
+            LicenseSymbol('d-zlib', ['D zlib']),
+            LicenseSymbol('mito', ['mit o']),
+            LicenseSymbol('hmit', ['h verylonglicense']),
+        ]
+        licensing = Licensing(symbols)
+        results = list(licensing.get_advanced_tokenizer().tokenize(expression))
+        expected = [
+            Token(0, 2, 'mit', LicenseSymbol(u'MIT', aliases=(u'MIT license',))),
+            Token(4, 5, 'or', Keyword(value=u'or', type=2)),
+            Token(7, 9, 'mit', LicenseSymbol(u'MIT', aliases=(u'MIT license',))),
+            Token(11, 13, 'AND', Keyword(value=u'and', type=1)),
+            Token(15, 18, 'zlib', LicenseSymbol(u'zlib', aliases=(u'zlib',))),
+            Token(20, 21, 'or', Keyword(value=u'or', type=2)),
+            Token(23, 25, 'mit', LicenseSymbol(u'MIT', aliases=(u'MIT license',))),
+            Token(27, 28, 'or', Keyword(value=u'or', type=2)),
+            Token(30, 32, 'mit', LicenseSymbol(u'MIT', aliases=(u'MIT license',))),
+            Token(34, 37, 'with', Keyword(value=u'with', type=10)),
+            Token(39, 53, 'verylonglicense', None),
+        ]
+
+        assert expected == results
+
+    def test_advanced_tokenizer_iter_with_overlapping_key_with_symbols_and_trailing_unknown(self):
+        expression = 'mit or mit AND zlib or mit or mit with verylonglicense'
+        #                       111111111122222222223333333333444444444455555
+        #             0123456789012345678901234567890123456789012345678901234
+
+        symbols = [
+            LicenseSymbol('MIT', ['MIT license']),
+            LicenseSymbol('LGPL-2.1', ['LGPL v2.1']),
+            LicenseSymbol('zlib', ['zlib']),
+            LicenseSymbol('d-zlib', ['D zlib']),
+            LicenseSymbol('mito', ['mit o']),
+            LicenseSymbol('hmit', ['h verylonglicense']),
+        ]
+        licensing = Licensing(symbols)
+        results = list(licensing.get_advanced_tokenizer().iter(expression, include_unmatched=True))
+        expected = [
+            Token(0, 2, 'mit', LicenseSymbol(u'MIT', aliases=(u'MIT license',))),
+            Token(4, 5, 'or', Keyword(value=u'or', type=2)),
+            Token(7, 9, 'mit', LicenseSymbol(u'MIT', aliases=(u'MIT license',))),
+            Token(11, 13, 'AND', Keyword(value=u'and', type=1)),
+            Token(15, 18, 'zlib', LicenseSymbol(u'zlib', aliases=(u'zlib',))),
+            Token(20, 21, 'or', Keyword(value=u'or', type=2)),
+            Token(23, 25, 'mit', LicenseSymbol(u'MIT', aliases=(u'MIT license',))),
+            Token(27, 28, 'or', Keyword(value=u'or', type=2)),
+            Token(30, 32, 'mit', LicenseSymbol(u'MIT', aliases=(u'MIT license',))),
+            Token(34, 37, 'with', Keyword(value=u'with', type=10)),
+            Token(39, 53, 'verylonglicense', None),
+        ]
+        assert expected == results
+
+    def test_advanced_tokenizer_iter_with_overlapping_key_with_symbols_and_trailing_unknown2(self):
+        expression = 'mit with verylonglicense'
+        symbols = [
+            LicenseSymbol('MIT', ['MIT license']),
+            LicenseSymbol('hmit', ['h verylonglicense']),
+        ]
+        licensing = Licensing(symbols)
+        results = list(licensing.get_advanced_tokenizer().iter(expression, include_unmatched=True))
+        expected = [
+            Token(0, 2, 'mit', LicenseSymbol(u'MIT', aliases=(u'MIT license',))),
+            Token(4, 7, 'with', Keyword(value=u'with', type=10)),
+            Token(9, 23, 'verylonglicense', None),
+        ]
+        assert expected == results
+
+    def test_tokenize_with_overlapping_key_with_symbols_and_trailing_unknown(self):
+        expression = 'mit or mit AND zlib or mit or mit with verylonglicense'
+        #             1111111111222222222233333333334444444444555555555566666
+        #             0123456789012345678901234567890123456789012345678901234
+
         symbols = [
             LicenseSymbol('MIT', ['MIT license']),
             LicenseSymbol('LGPL-2.1', ['LGPL v2.1']),
@@ -1146,10 +1493,27 @@ class LicensingParseWithSymbolsAdvancedTest(TestCase):
         ]
         licensing = Licensing(symbols)
 
-        expression = 'mit or mit AND zlib or mit or mit with verylonglicense'
+        results = list(licensing.tokenize(expression))
+        expected = [
+            (LicenseSymbol(u'MIT', aliases=(u'MIT license',)), 'mit', 0),
+            (2, 'or', 4),
+            (LicenseSymbol(u'MIT', aliases=(u'MIT license',)), 'mit', 7),
+            (1, 'AND', 11),
+            (LicenseSymbol(u'zlib', aliases=(u'zlib',)), 'zlib', 15),
+            (2, 'or', 20),
+            (LicenseSymbol(u'MIT', aliases=(u'MIT license',)), 'mit', 23),
+            (2, 'or', 27),
+            (LicenseWithExceptionSymbol(
+                license_symbol=LicenseSymbol(u'MIT', aliases=(u'MIT license',)),
+                exception_symbol=LicenseSymbol(u'verylonglicense')), 'mit with verylonglicense',
+             30)
+        ]
+
+        assert expected == results
+
         results = str(licensing.parse(expression))
-        expected = 'mit OR (MIT AND zlib) OR mit OR MIT WITH verylonglicense'
-        self.assertEqual(expected, results)
+        expected = 'MIT OR (MIT AND zlib) OR MIT OR MIT WITH verylonglicense'
+        assert expected == results
 
 
 class LicensingSymbolsTest(TestCase):
@@ -1286,104 +1650,105 @@ class LicensingSymbolsTest(TestCase):
 
 class SplitAndTokenizeTest(TestCase):
 
-    def test_splitter(self):
+    def test_simple_tokenizer(self):
         expr = (' GPL-2.0 or later with classpath Exception and mit and '
                 'mit with SOMETHING with ELSE+ or LGPL 2.1 and '
                 'GPL-2.0 or LATER with (Classpath Exception and '
                 'mit or later) or LGPL 2.1 or mit or GPL-2.0 or LATER '
                 'with SOMETHING with ELSE+ and lgpl 2.1')
-        results = list(splitter(expr))
+        licensing = Licensing()
+        results = list(licensing.simple_tokenizer(expr))
         expected = [
-            Result(0, 0, ' ', None),
-            Result(1, 7, 'GPL-2.0', Output('GPL-2.0', LicenseSymbol(key='GPL-2.0',))),
-            Result(8, 8, ' ', None),
-            Result(9, 10, 'or', Output('or', Keyword(value='or', type=TOKEN_OR))),
-            Result(11, 11, ' ', None),
-            Result(12, 16, 'later', Output('later', LicenseSymbol(key='later',))),
-            Result(17, 17, ' ', None),
-            Result(18, 21, 'with', Output('with', Keyword(value='with', type=TOKEN_WITH))),
-            Result(22, 22, ' ', None),
-            Result(23, 31, 'classpath', Output('classpath', LicenseSymbol(key='classpath',))),
-            Result(32, 32, ' ', None),
-            Result(33, 41, 'Exception', Output('Exception', LicenseSymbol(key='Exception',))),
-            Result(42, 42, ' ', None),
-            Result(43, 45, 'and', Output('and', Keyword(value='and', type=TOKEN_AND))),
-            Result(46, 46, ' ', None),
-            Result(47, 49, 'mit', Output('mit', LicenseSymbol(key='mit',))),
-            Result(50, 50, ' ', None),
-            Result(51, 53, 'and', Output('and', Keyword(value='and', type=TOKEN_AND))),
-            Result(54, 54, ' ', None),
-            Result(55, 57, 'mit', Output('mit', LicenseSymbol(key='mit',))),
-            Result(58, 58, ' ', None),
-            Result(59, 62, 'with', Output('with', Keyword(value='with', type=TOKEN_WITH))),
-            Result(63, 63, ' ', None),
-            Result(64, 72, 'SOMETHING', Output('SOMETHING', LicenseSymbol(key='SOMETHING',))),
-            Result(73, 73, ' ', None),
-            Result(74, 77, 'with', Output('with', Keyword(value='with', type=TOKEN_WITH))),
-            Result(78, 78, ' ', None),
-            Result(79, 83, 'ELSE+', Output('ELSE+', LicenseSymbol(key='ELSE+',))),
-            Result(84, 84, ' ', None),
-            Result(85, 86, 'or', Output('or', Keyword(value='or', type=TOKEN_OR))),
-            Result(87, 87, ' ', None),
-            Result(88, 91, 'LGPL', Output('LGPL', LicenseSymbol(key='LGPL',))),
-            Result(92, 92, ' ', None),
-            Result(93, 95, '2.1', Output('2.1', LicenseSymbol(key='2.1',))),
-            Result(96, 96, ' ', None),
-            Result(97, 99, 'and', Output('and', Keyword(value='and', type=TOKEN_AND))),
-            Result(100, 100, ' ', None),
-            Result(101, 107, 'GPL-2.0', Output('GPL-2.0', LicenseSymbol(key='GPL-2.0',))),
-            Result(108, 108, ' ', None),
-            Result(109, 110, 'or', Output('or', Keyword(value='or', type=TOKEN_OR))),
-            Result(111, 111, ' ', None),
-            Result(112, 116, 'LATER', Output('LATER', LicenseSymbol(key='LATER',))),
-            Result(117, 117, ' ', None),
-            Result(118, 121, 'with', Output('with', Keyword(value='with', type=TOKEN_WITH))),
-            Result(122, 122, ' ', None),
-            Result(123, 123, '(', Output('(', Keyword(value='(', type=TOKEN_LPAR))),
-            Result(124, 132, 'Classpath', Output('Classpath', LicenseSymbol(key='Classpath',))),
-            Result(133, 133, ' ', None),
-            Result(134, 142, 'Exception', Output('Exception', LicenseSymbol(key='Exception',))),
-            Result(143, 143, ' ', None),
-            Result(144, 146, 'and', Output('and', Keyword(value='and', type=TOKEN_AND))),
-            Result(147, 147, ' ', None),
-            Result(148, 150, 'mit', Output('mit', LicenseSymbol(key='mit',))),
-            Result(151, 151, ' ', None),
-            Result(152, 153, 'or', Output('or', Keyword(value='or', type=TOKEN_OR))),
-            Result(154, 154, ' ', None),
-            Result(155, 159, 'later', Output('later', LicenseSymbol(key='later',))),
-            Result(160, 160, ')', Output(')', Keyword(value=')', type=TOKEN_RPAR))),
-            Result(161, 161, ' ', None),
-            Result(162, 163, 'or', Output('or', Keyword(value='or', type=TOKEN_OR))),
-            Result(164, 164, ' ', None),
-            Result(165, 168, 'LGPL', Output('LGPL', LicenseSymbol(key='LGPL',))),
-            Result(169, 169, ' ', None),
-            Result(170, 172, '2.1', Output('2.1', LicenseSymbol(key='2.1',))),
-            Result(173, 173, ' ', None),
-            Result(174, 175, 'or', Output('or', Keyword(value='or', type=TOKEN_OR))),
-            Result(176, 176, ' ', None),
-            Result(177, 179, 'mit', Output('mit', LicenseSymbol(key='mit',))),
-            Result(180, 180, ' ', None),
-            Result(181, 182, 'or', Output('or', Keyword(value='or', type=TOKEN_OR))),
-            Result(183, 183, ' ', None),
-            Result(184, 190, 'GPL-2.0', Output('GPL-2.0', LicenseSymbol(key='GPL-2.0',))),
-            Result(191, 191, ' ', None),
-            Result(192, 193, 'or', Output('or', Keyword(value='or', type=TOKEN_OR))),
-            Result(194, 194, ' ', None),
-            Result(195, 199, 'LATER', Output('LATER', LicenseSymbol(key='LATER',))),
-            Result(200, 200, ' ', None),
-            Result(201, 204, 'with', Output('with', Keyword(value='with', type=TOKEN_WITH))),
-            Result(205, 205, ' ', None),
-            Result(206, 214, 'SOMETHING', Output('SOMETHING', LicenseSymbol(key='SOMETHING',))),
-            Result(215, 215, ' ', None),
-            Result(216, 219, 'with', Output('with', Keyword(value='with', type=TOKEN_WITH))),
-            Result(220, 220, ' ', None),
-            Result(221, 225, 'ELSE+', Output('ELSE+', LicenseSymbol(key='ELSE+',))),
-            Result(226, 226, ' ', None),
-            Result(227, 229, 'and', Output('and', Keyword(value='and', type=TOKEN_AND))),
-            Result(230, 230, ' ', None),
-            Result(231, 234, 'lgpl', Output('lgpl', LicenseSymbol(key='lgpl',))),
-            Result(235, 235, ' ', None),
-            Result(236, 238, '2.1', Output('2.1', LicenseSymbol(key='2.1',)))
+            Token(0, 0, ' ', None),
+            Token(1, 7, 'GPL-2.0', LicenseSymbol(key='GPL-2.0')),
+            Token(8, 8, ' ', None),
+            Token(9, 10, 'or', Keyword(value='or', type=TOKEN_OR)),
+            Token(11, 11, ' ', None),
+            Token(12, 16, 'later', LicenseSymbol(key='later')),
+            Token(17, 17, ' ', None),
+            Token(18, 21, 'with', Keyword(value='with', type=TOKEN_WITH)),
+            Token(22, 22, ' ', None),
+            Token(23, 31, 'classpath', LicenseSymbol(key='classpath')),
+            Token(32, 32, ' ', None),
+            Token(33, 41, 'Exception', LicenseSymbol(key='Exception')),
+            Token(42, 42, ' ', None),
+            Token(43, 45, 'and', Keyword(value='and', type=TOKEN_AND)),
+            Token(46, 46, ' ', None),
+            Token(47, 49, 'mit', LicenseSymbol(key='mit')),
+            Token(50, 50, ' ', None),
+            Token(51, 53, 'and', Keyword(value='and', type=TOKEN_AND)),
+            Token(54, 54, ' ', None),
+            Token(55, 57, 'mit', LicenseSymbol(key='mit')),
+            Token(58, 58, ' ', None),
+            Token(59, 62, 'with', Keyword(value='with', type=TOKEN_WITH)),
+            Token(63, 63, ' ', None),
+            Token(64, 72, 'SOMETHING', LicenseSymbol(key='SOMETHING')),
+            Token(73, 73, ' ', None),
+            Token(74, 77, 'with', Keyword(value='with', type=TOKEN_WITH)),
+            Token(78, 78, ' ', None),
+            Token(79, 83, 'ELSE+', LicenseSymbol(key='ELSE+')),
+            Token(84, 84, ' ', None),
+            Token(85, 86, 'or', Keyword(value='or', type=TOKEN_OR)),
+            Token(87, 87, ' ', None),
+            Token(88, 91, 'LGPL', LicenseSymbol(key='LGPL')),
+            Token(92, 92, ' ', None),
+            Token(93, 95, '2.1', LicenseSymbol(key='2.1')),
+            Token(96, 96, ' ', None),
+            Token(97, 99, 'and', Keyword(value='and', type=TOKEN_AND)),
+            Token(100, 100, ' ', None),
+            Token(101, 107, 'GPL-2.0', LicenseSymbol(key='GPL-2.0')),
+            Token(108, 108, ' ', None),
+            Token(109, 110, 'or', Keyword(value='or', type=TOKEN_OR)),
+            Token(111, 111, ' ', None),
+            Token(112, 116, 'LATER', LicenseSymbol(key='LATER')),
+            Token(117, 117, ' ', None),
+            Token(118, 121, 'with', Keyword(value='with', type=TOKEN_WITH)),
+            Token(122, 122, ' ', None),
+            Token(123, 123, '(', Keyword(value='(', type=TOKEN_LPAR)),
+            Token(124, 132, 'Classpath', LicenseSymbol(key='Classpath')),
+            Token(133, 133, ' ', None),
+            Token(134, 142, 'Exception', LicenseSymbol(key='Exception')),
+            Token(143, 143, ' ', None),
+            Token(144, 146, 'and', Keyword(value='and', type=TOKEN_AND)),
+            Token(147, 147, ' ', None),
+            Token(148, 150, 'mit', LicenseSymbol(key='mit')),
+            Token(151, 151, ' ', None),
+            Token(152, 153, 'or', Keyword(value='or', type=TOKEN_OR)),
+            Token(154, 154, ' ', None),
+            Token(155, 159, 'later', LicenseSymbol(key='later')),
+            Token(160, 160, ')', Keyword(value=')', type=TOKEN_RPAR)),
+            Token(161, 161, ' ', None),
+            Token(162, 163, 'or', Keyword(value='or', type=TOKEN_OR)),
+            Token(164, 164, ' ', None),
+            Token(165, 168, 'LGPL', LicenseSymbol(key='LGPL')),
+            Token(169, 169, ' ', None),
+            Token(170, 172, '2.1', LicenseSymbol(key='2.1')),
+            Token(173, 173, ' ', None),
+            Token(174, 175, 'or', Keyword(value='or', type=TOKEN_OR)),
+            Token(176, 176, ' ', None),
+            Token(177, 179, 'mit', LicenseSymbol(key='mit')),
+            Token(180, 180, ' ', None),
+            Token(181, 182, 'or', Keyword(value='or', type=TOKEN_OR)),
+            Token(183, 183, ' ', None),
+            Token(184, 190, 'GPL-2.0', LicenseSymbol(key='GPL-2.0')),
+            Token(191, 191, ' ', None),
+            Token(192, 193, 'or', Keyword(value='or', type=TOKEN_OR)),
+            Token(194, 194, ' ', None),
+            Token(195, 199, 'LATER', LicenseSymbol(key='LATER')),
+            Token(200, 200, ' ', None),
+            Token(201, 204, 'with', Keyword(value='with', type=TOKEN_WITH)),
+            Token(205, 205, ' ', None),
+            Token(206, 214, 'SOMETHING', LicenseSymbol(key='SOMETHING')),
+            Token(215, 215, ' ', None),
+            Token(216, 219, 'with', Keyword(value='with', type=TOKEN_WITH)),
+            Token(220, 220, ' ', None),
+            Token(221, 225, 'ELSE+', LicenseSymbol(key='ELSE+')),
+            Token(226, 226, ' ', None),
+            Token(227, 229, 'and', Keyword(value='and', type=TOKEN_AND)),
+            Token(230, 230, ' ', None),
+            Token(231, 234, 'lgpl', LicenseSymbol(key='lgpl')),
+            Token(235, 235, ' ', None),
+            Token(236, 238, '2.1', LicenseSymbol(key='2.1',))
         ]
         assert expected == results
 
@@ -1422,103 +1787,82 @@ class SplitAndTokenizeTest(TestCase):
                 'mit or later or LGPL 2.1 or mit or GPL-2.0 or LATER '
                 'with mitthing with ELSE+ and lgpl 2.1 or gpl-2.0')
 
-        # fist scan
-        scanner = licensing.get_scanner()
-        result = list(scanner.scan(expr))
-
-        WITH_KW = Keyword(value=' with ', type=10)
-        AND_KW = Keyword(value=' and ', type=1)
-        OR_KW = Keyword(value=' or ', type=2)
-
+        # fist tokenize
+        tokenizer = licensing.get_advanced_tokenizer()
+        result = list(tokenizer.tokenize(expr))
         expected = [
-            Result(0, 0, ' ', None),
-            Result(1, 16, 'GPL-2.0 or later', Output('GPL-2.0 or LATER', gpl2plus, 1)),
-            Result(17, 22, ' with ', Output(' with ', WITH_KW, 0)),
-            Result(23, 41, 'classpath Exception', Output('classpath Exception', cpex, 1)),
-            Result(42, 46, ' and ', Output(' and ', AND_KW, 0)),
-            Result(47, 49, 'mit', Output('mit', mit, 1)),
-            Result(50, 54, ' and ', Output(' and ', AND_KW, 0)),
-            Result(55, 57, 'mit', Output('mit', mit, 1)),
-            Result(58, 63, ' with ', Output(' with ', WITH_KW, 0)),
-            Result(64, 82, 'mitthing with ELSE+', Output('mitthing with else+', mitthing_with_else, 1)),
-            Result(83, 86, ' or ', Output(' or ', OR_KW, 0)),
-            Result(87, 94, 'LGPL 2.1', Output('LGPL 2.1', lgpl, 1)),
-            Result(95, 99, ' and ', Output(' and ', AND_KW, 0)),
-            Result(100, 115, 'GPL-2.0 or LATER', Output('GPL-2.0 or LATER', gpl2plus, 1)),
-            Result(116, 121, ' with ', Output(' with ', WITH_KW, 0)),
-            Result(122, 140, 'Classpath Exception', Output('classpath Exception', cpex, 1)),
-            Result(141, 145, ' and ', Output(' and ', AND_KW, 0)),
-            Result(146, 157, 'mit or later', Output('mit or later', mitplus, 1)),
-            Result(158, 161, ' or ', Output(' or ', OR_KW, 0)),
-            Result(162, 169, 'LGPL 2.1', Output('LGPL 2.1', lgpl, 1)),
-            Result(170, 173, ' or ', Output(' or ', OR_KW, 0)),
-            Result(174, 176, 'mit', Output('mit', mit, 1)),
-            Result(177, 180, ' or ', Output(' or ', OR_KW, 0)),
-            Result(181, 196, 'GPL-2.0 or LATER', Output('GPL-2.0 or LATER', gpl2plus, 1)),
-            Result(197, 202, ' with ', Output(' with ', WITH_KW, 0)),
-            Result(203, 221, 'mitthing with ELSE+', Output('mitthing with else+', mitthing_with_else, 1)),
-            Result(222, 226, ' and ', Output(' and ', AND_KW, 0)),
-            Result(227, 234, 'lgpl 2.1', Output('LGPL 2.1', lgpl, 1)),
-            Result(235, 238, ' or ', Output(' or ', OR_KW, 0)),
-            Result(239, 245, 'gpl-2.0', Output('GPL-2.0', gpl2, 1))
+            Token(1, 16, 'GPL-2.0 or later', LicenseSymbol(u'GPL-2.0 or LATER')),
+            Token(18, 21, 'with', Keyword(value=u'with', type=10)),
+            Token(23, 41, 'classpath Exception', LicenseSymbol(u'classpath Exception', is_exception=True)),
+            Token(43, 45, 'and', Keyword(value=u'and', type=1)),
+            Token(47, 49, 'mit', LicenseSymbol(u'mit')),
+            Token(51, 53, 'and', Keyword(value=u'and', type=1)),
+            Token(55, 57, 'mit', LicenseSymbol(u'mit')),
+            Token(59, 62, 'with', Keyword(value=u'with', type=10)),
+            Token(64, 82, 'mitthing with ELSE+', LicenseSymbol(u'mitthing with else+')),
+            Token(84, 85, 'or', Keyword(value=u'or', type=2)),
+            Token(87, 94, 'LGPL 2.1', LicenseSymbol(u'LGPL 2.1')),
+            Token(96, 98, 'and', Keyword(value=u'and', type=1)),
+            Token(100, 115, 'GPL-2.0 or LATER', LicenseSymbol(u'GPL-2.0 or LATER')),
+            Token(117, 120, 'with', Keyword(value=u'with', type=10)),
+            Token(122, 140, 'Classpath Exception', LicenseSymbol(u'classpath Exception', is_exception=True)),
+            Token(142, 144, 'and', Keyword(value=u'and', type=1)),
+            Token(146, 157, 'mit or later', LicenseSymbol(u'mit or later')),
+            Token(159, 160, 'or', Keyword(value=u'or', type=2)),
+            Token(162, 169, 'LGPL 2.1', LicenseSymbol(u'LGPL 2.1')),
+            Token(171, 172, 'or', Keyword(value=u'or', type=2)),
+            Token(174, 176, 'mit', LicenseSymbol(u'mit')),
+            Token(178, 179, 'or', Keyword(value=u'or', type=2)),
+            Token(181, 196, 'GPL-2.0 or LATER', LicenseSymbol(u'GPL-2.0 or LATER')),
+            Token(198, 201, 'with', Keyword(value=u'with', type=10)),
+            Token(203, 221, 'mitthing with ELSE+', LicenseSymbol(u'mitthing with else+')),
+            Token(223, 225, 'and', Keyword(value=u'and', type=1)),
+            Token(227, 234, 'lgpl 2.1', LicenseSymbol(u'LGPL 2.1')),
+            Token(236, 237, 'or', Keyword(value=u'or', type=2)),
+            Token(239, 245, 'gpl-2.0', LicenseSymbol(u'GPL-2.0'))
         ]
 
         assert expected == result
-        assert 246 == expected[-1].end + 1
-        assert 246 == sum(len(r.string) for r in result)
-
-        # skip spaces
-        result = list(strip_and_skip_spaces(result))
-        # here only the first token is a space
-        assert expected[1:] == result
-
-        # group results
-
-        gpl2pluso = Output('GPL-2.0 or LATER', LicenseSymbol('GPL-2.0 or LATER', is_exception=False), 1)
-        cpex0 = Output('classpath Exception', LicenseSymbol('classpath Exception', is_exception=True), 1)
-        mito = Output('mit', LicenseSymbol('mit', is_exception=False), 1)
-        mieo1 = Output('mitthing with else+', LicenseSymbol('mitthing with else+', is_exception=False), 1)
-        lgplo = Output('LGPL 2.1', LicenseSymbol('LGPL 2.1', is_exception=False), 1)
-        mitoo = Output('mit or later', LicenseSymbol('mit or later', is_exception=False), 1)
-        gpl202 = Output('GPL-2.0', LicenseSymbol('GPL-2.0', is_exception=False), 1)
-
-        with_kw = Output(' with ', WITH_KW, 0)
-        and_kw = Output(' and ', AND_KW, 0)
-        or_kw = Output(' or ', OR_KW, 0)
 
         expected_groups = [
-            (Result(1, 16, 'GPL-2.0 or later', gpl2pluso),
-             Result(17, 22, ' with ', with_kw),
-             Result(23, 41, 'classpath Exception', cpex0)),
-            (Result(42, 46, ' and ', and_kw),),
-            (Result(47, 49, 'mit', mito),),
-            (Result(50, 54, ' and ', and_kw),),
-            (Result(55, 57, 'mit', mito),
-             Result(58, 63, ' with ', with_kw),
-             Result(64, 82, 'mitthing with ELSE+', mieo1)),
-            (Result(83, 86, ' or ', or_kw),),
-            (Result(87, 94, 'LGPL 2.1', lgplo),),
-            (Result(95, 99, ' and ', and_kw),),
-            (Result(100, 115, 'GPL-2.0 or LATER', gpl2pluso),
-             Result(116, 121, ' with ', with_kw),
-             Result(122, 140, 'Classpath Exception', cpex0)),
-            (Result(141, 145, ' and ', and_kw),),
-            (Result(146, 157, 'mit or later', mitoo),),
-            (Result(158, 161, ' or ', or_kw),),
-            (Result(162, 169, 'LGPL 2.1', lgplo),),
-            (Result(170, 173, ' or ', or_kw),),
-            (Result(174, 176, 'mit', mito),),
-            (Result(177, 180, ' or ', or_kw),),
-            (Result(181, 196, 'GPL-2.0 or LATER', gpl2pluso),
-             Result(197, 202, ' with ', with_kw),
-             Result(203, 221, 'mitthing with ELSE+', mieo1)),
-            (Result(222, 226, ' and ', and_kw),),
-            (Result(227, 234, 'lgpl 2.1', lgplo),),
-            (Result(235, 238, ' or ', or_kw),),
-            (Result(239, 245, 'gpl-2.0', gpl202),)
-        ]
+            (Token(1, 16, 'GPL-2.0 or later', LicenseSymbol(u'GPL-2.0 or LATER')),
+             Token(18, 21, 'with', Keyword(value=u'with', type=10)),
+             Token(23, 41, 'classpath Exception', LicenseSymbol(u'classpath Exception', is_exception=True))),
 
-        result_groups = list(group_results_for_with_subexpression(result))
+            (Token(43, 45, 'and', Keyword(value=u'and', type=1)),),
+            (Token(47, 49, 'mit', LicenseSymbol(u'mit')),),
+            (Token(51, 53, 'and', Keyword(value=u'and', type=1)),),
+
+            (Token(55, 57, 'mit', LicenseSymbol(u'mit')),
+             Token(59, 62, 'with', Keyword(value=u'with', type=10)),
+             Token(64, 82, 'mitthing with ELSE+', LicenseSymbol(u'mitthing with else+'))),
+
+            (Token(84, 85, 'or', Keyword(value=u'or', type=2)),),
+            (Token(87, 94, 'LGPL 2.1', LicenseSymbol(u'LGPL 2.1')),),
+            (Token(96, 98, 'and', Keyword(value=u'and', type=1)),),
+
+            (Token(100, 115, 'GPL-2.0 or LATER', LicenseSymbol(u'GPL-2.0 or LATER')),
+             Token(117, 120, 'with', Keyword(value=u'with', type=10)),
+             Token(122, 140, 'Classpath Exception', LicenseSymbol(u'classpath Exception', is_exception=True))),
+
+            (Token(142, 144, 'and', Keyword(value=u'and', type=1)),),
+            (Token(146, 157, 'mit or later', LicenseSymbol(u'mit or later')),),
+            (Token(159, 160, 'or', Keyword(value=u'or', type=2)),),
+            (Token(162, 169, 'LGPL 2.1', LicenseSymbol(u'LGPL 2.1')),),
+            (Token(171, 172, 'or', Keyword(value=u'or', type=2)),),
+            (Token(174, 176, 'mit', LicenseSymbol(u'mit')),),
+            (Token(178, 179, 'or', Keyword(value=u'or', type=2)),),
+
+            (Token(181, 196, 'GPL-2.0 or LATER', LicenseSymbol(u'GPL-2.0 or LATER')),
+             Token(198, 201, 'with', Keyword(value=u'with', type=10)),
+             Token(203, 221, 'mitthing with ELSE+', LicenseSymbol(u'mitthing with else+'))),
+
+            (Token(223, 225, 'and', Keyword(value=u'and', type=1)),),
+            (Token(227, 234, 'lgpl 2.1', LicenseSymbol(u'LGPL 2.1')),),
+            (Token(236, 237, 'or', Keyword(value=u'or', type=2)),),
+            (Token(239, 245, 'gpl-2.0', LicenseSymbol(u'GPL-2.0')),)
+        ]
+        result_groups = list(build_token_groups_for_with_subexpression(result))
         assert expected_groups == result_groups
 
         # finally retest it all with tokenize
@@ -1530,25 +1874,25 @@ class SplitAndTokenizeTest(TestCase):
 
         expected = [
             (gpl2plus_with_cpex, 'GPL-2.0 or later with classpath Exception', 1),
-            (TOKEN_AND, ' and ', 42),
+            (TOKEN_AND, 'and', 43),
             (mit, 'mit', 47),
-            (TOKEN_AND, ' and ', 50),
+            (TOKEN_AND, 'and', 51),
             (mit_with_mitthing_with_else, 'mit with mitthing with ELSE+', 55),
-            (TOKEN_OR, ' or ', 83),
+            (TOKEN_OR, 'or', 84),
             (lgpl, 'LGPL 2.1', 87),
-            (TOKEN_AND, ' and ', 95),
+            (TOKEN_AND, 'and', 96),
             (gpl2plus_with_cpex, 'GPL-2.0 or LATER with Classpath Exception', 100),
-            (TOKEN_AND, ' and ', 141),
+            (TOKEN_AND, 'and', 142),
             (mitplus, 'mit or later', 146),
-            (TOKEN_OR, ' or ', 158),
+            (TOKEN_OR, 'or', 159),
             (lgpl, 'LGPL 2.1', 162),
-            (TOKEN_OR, ' or ', 170),
+            (TOKEN_OR, 'or', 171),
             (mit, 'mit', 174),
-            (TOKEN_OR, ' or ', 177),
+            (TOKEN_OR, 'or', 178),
             (gpl2plus_with_someplus, 'GPL-2.0 or LATER with mitthing with ELSE+', 181),
-            (TOKEN_AND, ' and ', 222),
+            (TOKEN_AND, 'and', 223),
             (lgpl, 'lgpl 2.1', 227),
-            (TOKEN_OR, ' or ', 235),
+            (TOKEN_OR, 'or', 236),
             (gpl2, 'gpl-2.0', 239),
         ]
 
@@ -1661,3 +2005,75 @@ class LicensingExpression(TestCase):
 
         expected = [l1, lx, lx2, lx3, l3, l2, l4]
         assert expected == sorted([l4, l3, l2, l1, lx , lx2, lx3])
+
+
+class MockLicensesTest(TestCase):
+
+    def test_licensing_can_use_mocklicense_tuple(self):
+        MockLicense = namedtuple('MockLicense', 'key aliases is_exception')
+
+        licenses = [
+            MockLicense('gpl-2.0', ['GPL-2.0'], False),
+            MockLicense('classpath-2.0', ['Classpath-Exception-2.0'], True),
+            MockLicense('gpl-2.0-plus', ['GPL-2.0-or-later', 'GPL-2.0 or-later'], False),
+            MockLicense('lgpl-2.1-plus', ['LGPL-2.1-or-later'], False),
+        ]
+        licensing = Licensing(licenses)
+
+        ex1 = '(GPL-2.0-or-later with Classpath-Exception-2.0 or GPL-2.0 or-later) and LGPL-2.1-or-later'
+        expression1 = licensing.parse(ex1, validate=False, strict=False)
+        assert ['gpl-2.0-plus', 'classpath-2.0', 'lgpl-2.1-plus'] == licensing.license_keys(expression1)
+
+        ex2 = 'LGPL-2.1-or-later and (GPL-2.0-or-later oR GPL-2.0-or-later with Classpath-Exception-2.0)'
+        expression2 = licensing.parse(ex2, validate=True, strict=False)
+
+        ex3 = 'LGPL-2.1-or-later and (GPL-2.0-or-later oR GPL-2.0-or-later)'
+        expression3 = licensing.parse(ex3, validate=True, strict=False)
+
+        self.assertTrue(licensing.is_equivalent(expression1, expression2))
+        self.assertTrue(licensing.is_equivalent(expression2, expression1))
+        self.assertFalse(licensing.is_equivalent(expression1, expression3))
+        self.assertFalse(licensing.is_equivalent(expression2, expression3))
+
+    def test_and_and_or_is_invalid(self):
+        expression = 'gpl-2.0 with classpath and and or gpl-2.0-plus'
+        licensing = Licensing()
+        try:
+            licensing.parse(expression)
+            self.fail('Exception not raised')
+        except ParseError as pe:
+            expected = {
+                'error_code': PARSE_INVALID_OPERATOR_SEQUENCE,
+                'position': 27,
+                'token_string': 'and',
+                'token_type': TOKEN_AND}
+            assert expected == _parse_error_as_dict(pe)
+
+    def test_or_or_is_invalid(self):
+        expression = 'gpl-2.0 with classpath or or or or gpl-2.0-plus'
+        licensing = Licensing()
+        try:
+            licensing.parse(expression)
+        except ParseError as pe:
+            expected = {
+                'error_code': PARSE_INVALID_OPERATOR_SEQUENCE,
+                'position': 26,
+                'token_string': 'or',
+                'token_type': TOKEN_OR}
+            assert expected == _parse_error_as_dict(pe)
+
+    def test_tokenize_or_or(self):
+        expression = 'gpl-2.0 with classpath or or or gpl-2.0-plus'
+        licensing = Licensing()
+        results = list(licensing.tokenize(expression))
+        expected = [
+            (LicenseWithExceptionSymbol(
+                license_symbol=LicenseSymbol(u'gpl-2.0'),
+                exception_symbol=LicenseSymbol(u'classpath')), 'gpl-2.0 with classpath', 0),
+            (2, 'or', 23),
+            (2, 'or', 26),
+            (2, 'or', 29),
+            (LicenseSymbol(u'gpl-2.0-plus'), 'gpl-2.0-plus', 32)
+        ]
+
+        assert expected == results

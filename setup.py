@@ -17,7 +17,7 @@ desc = ('license-expression is small utility library to parse, compare, '
 
 setup(
     name='license-expression',
-    version='0.98',
+    version='0.99',
     license='apache-2.0',
     description=desc,
     long_description=desc,
@@ -30,7 +30,7 @@ setup(
     include_package_data=True,
     zip_safe=False,
     classifiers=[
-        'Development Status :: 4 - Beta',
+        'Development Status :: 5 - Production/Stable',
         'License :: OSI Approved :: Apache Software License',
         'Intended Audience :: Developers',
         'Operating System :: OS Independent',
@@ -48,6 +48,6 @@ setup(
         'licence'
     ],
     install_requires=[
-        'boolean.py >= 3.5, < 4.0.0',
+        'boolean.py >= 3.6, < 4.0.0',
     ]
 )
