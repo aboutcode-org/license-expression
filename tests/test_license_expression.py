@@ -919,6 +919,14 @@ class LicensingParseTest(TestCase):
             }
             assert expected == _parse_error_as_dict(pe)
 
+    def test_Licensing_can_parse_expressions_with_symbols_that_contain_a_colon(self):
+        licensing = Licensing()
+        expression = 'DocumentRef-James-1.0:LicenseRef-Eric-2.0'
+
+        result = licensing.parse(expression)
+        expected = 'DocumentRef-James-1.0:LicenseRef-Eric-2.0'
+        assert expected == result.render('{symbol.key}')
+
 
 class LicensingParseWithSymbolsSimpleTest(TestCase):
 
@@ -1751,6 +1759,52 @@ class SplitAndTokenizeTest(TestCase):
             Token(236, 238, '2.1', LicenseSymbol(key='2.1',))
         ]
         assert expected == results
+
+    def test_tokenize_can_handle_expressions_with_symbols_that_contain_a_colon(self):
+        licensing = Licensing()
+        expression = 'DocumentRef-James-1.0:LicenseRef-Eric-2.0'
+
+        result = list(licensing.tokenize(expression))
+        expected = [
+            (LicenseSymbol(u'DocumentRef-James-1.0:LicenseRef-Eric-2.0', is_exception=False),
+             u'DocumentRef-James-1.0:LicenseRef-Eric-2.0', 0)
+        ]
+
+        assert expected == result
+
+    def test_tokenize_simple_can_handle_expressions_with_symbols_that_contain_a_colon(self):
+        licensing = Licensing()
+        expression = 'DocumentRef-James-1.0:LicenseRef-Eric-2.0'
+
+        result = list(licensing.tokenize(expression, simple=True))
+        expected = [
+            (LicenseSymbol(u'DocumentRef-James-1.0:LicenseRef-Eric-2.0', is_exception=False),
+             u'DocumentRef-James-1.0:LicenseRef-Eric-2.0', 0)
+        ]
+
+        assert expected == result
+
+    def test_tokenize_can_handle_expressions_with_tabs_and_new_lines(self):
+        licensing = Licensing()
+        expression = 'this\t \tis \n\n an expression'
+        result = list(licensing.tokenize(expression, simple=False))
+        expected = [
+            (LicenseSymbol(u'this is an expression', is_exception=False),
+            u'this is an expression', 0)
+        ]
+        assert expected == result
+
+    def test_tokenize_simple_can_handle_expressions_with_tabs_and_new_lines(self):
+        licensing = Licensing()
+        expression = 'this\t \tis \n\n an expression'
+        result = list(licensing.tokenize(expression, simple=True))
+        expected = [
+            (LicenseSymbol(u'this', is_exception=False), u'this', 0),
+            (LicenseSymbol(u'is', is_exception=False), u'is', 7),
+            (LicenseSymbol(u'an', is_exception=False), u'an', 13),
+            (LicenseSymbol(u'expression', is_exception=False), u'expression', 16)
+        ]
+        assert expected == result
 
     def test_tokenize_step_by_step_does_not_munge_trailing_symbols(self):
         gpl2 = LicenseSymbol(key='GPL-2.0')

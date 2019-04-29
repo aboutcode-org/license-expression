@@ -846,7 +846,7 @@ class BaseSymbol(Renderable, boolean.Symbol):
 
 
 # validate license keys
-is_valid_license_key = re.compile(r'^[-\w\s\.\+]+$', re.UNICODE).match
+is_valid_license_key = re.compile(r'^[-:\w\s\.\+]+$', re.UNICODE).match
 
 
 # TODO: we need to implement comparison by hand instead
@@ -882,14 +882,15 @@ class LicenseSymbol(BaseSymbol):
         if not is_valid_license_key(key):
             raise ExpressionError(
                 'Invalid license key: the valid characters are: letters and numbers, '
-                'underscore, dot or hyphen signs and spaces: "%(key)s"' % locals())
+                'underscore, dot, colon or hyphen signs and spaces: "%(key)s"' % locals())
 
         # normalize for spaces
         key = ' '.join(key.split())
 
         if key.lower() in KEYWORDS_STRINGS:
             raise ExpressionError(
-                'Invalid license key: a key cannot be a reserved keyword: "or", "and" or "with: "%(key)s"' % locals())
+                'Invalid license key: a key cannot be a reserved keyword: "or",'
+                ' "and" or "with: "%(key)s"' % locals())
 
         self.key = key
 
