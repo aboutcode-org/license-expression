@@ -441,7 +441,7 @@ class Licensing(boolean.BooleanAlgebra):
             new_error = ExpressionParseError(
                 token_type=e.token_type, token_string=e.token_string,
                 position=e.position, error_code=e.error_code)
-            raise new_error from e
+            raise new_error
 
         if not isinstance(expression, LicenseExpression):
             raise ExpressionError('expression must be a LicenseExpression once parsed.')
