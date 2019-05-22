@@ -36,6 +36,8 @@ matrix:
 
 
 install:
+  - git clone git://github.com/pyenv/pyenv-update.git $(pyenv root)/plugins/pyenv-update
+  - pyenv update
   - pyenv install --list
   - echo $PYTHON_EXE
   - python --version
