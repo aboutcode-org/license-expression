@@ -27,17 +27,16 @@ matrix:
       language: generic
       python:
       osx_image: xcode7.3
-      env: PYTHON_EXE="`pyenv install -s 2.7.14 && pyenv local 2.7.14`"
+      env: PYTHON_EXE="`brew update && brew upgrade pyenv && pyenv install -s 2.7.14 && pyenv local 2.7.14`"
     - os: osx
       language: generic
       python:
       osx_image: xcode7.3
-      env: PYTHON_EXE="`pyenv install -s 3.6.1 && pyenv local 3.6.1`"
-
+      env: PYTHON_EXE="`brew update && brew upgrade pyenv && pyenv install -s 3.6.1 && pyenv local 3.6.1`"
 
 install:
-  - git clone git://github.com/pyenv/pyenv-update.git $(pyenv root)/plugins/pyenv-update
-  - pyenv update
+#  - git clone git://github.com/pyenv/pyenv-update.git $(pyenv root)/plugins/pyenv-update
+#  - pyenv update
   - pyenv install --list
   - echo $PYTHON_EXE
   - python --version
