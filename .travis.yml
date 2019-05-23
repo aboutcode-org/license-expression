@@ -29,6 +29,7 @@ install:
     fi
   - pyenv install --list
   - python --version
+  - pyenv install "$PYENV_PYTHON"
   - pyenv local "$PYENV_PYTHON"
   - python --version
   - ./configure
