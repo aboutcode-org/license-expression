@@ -2,8 +2,8 @@ language: generic
 
 env:
   matrix:
-    - PYTHON_EXE="`pyenv install -s 2.7.14 && pyenv local 2.7.14`"
-    - PYTHON_EXE="`pyenv install -s 3.6.1 && pyenv local 3.6.1`"
+    - PYENV_PYTHON_EXE="`pyenv install -s 2.7.14 && pyenv local 2.7.14`"
+    - PYENV_PYTHON_EXE="`pyenv install -s 3.6.1 && pyenv local 3.6.1`"
 
 
 # Travis does not offer OSX with arbitrary python versions (like 2.7.13 above)
@@ -26,13 +26,13 @@ matrix:
     - os: osx
       language: generic
       python:
-      osx_image: xcode7.3
-      env: PYTHON_EXE="`brew update && brew upgrade pyenv && pyenv install -s 2.7.14 && pyenv local 2.7.14`"
+      osx_image: xcode9.0
+      env: PYENV_PYTHON_EXE="`pyenv install -s 2.7.14 && pyenv local 2.7.14`"
     - os: osx
       language: generic
       python:
-      osx_image: xcode7.3
-      env: PYTHON_EXE="`brew update && brew upgrade pyenv && pyenv install -s 3.6.1 && pyenv local 3.6.1`"
+      osx_image: xcode9.0
+      env: PYENV_PYTHON_EXE="`pyenv install -s 3.6.1 && pyenv local 3.6.1`"
 
 install:
 #  - git clone git://github.com/pyenv/pyenv-update.git $(pyenv root)/plugins/pyenv-update
