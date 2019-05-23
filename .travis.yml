@@ -1,52 +1,43 @@
-language: generic
-
-env:
-  matrix:
-    - PYENV_PYTHON_EXE="`pyenv install -s 2.7.14 && pyenv local 2.7.14`"
-    - PYENV_PYTHON_EXE="`pyenv install -s 3.6.1 && pyenv local 3.6.1`"
-
-
-# Travis does not offer OSX with arbitrary python versions (like 2.7.13 above)
-# So, you cannot simply have the following section in your build matrix:
-# os:
-#   - linux
-#   - osx
-# Instead, you have to include OSX entries into the build matrix manually.
-# In particular, this means specifying the environment variables again.
-
-# The following was adapted from here:
-#   https://docs.travis-ci.com/user/multi-os/
-# Set `language: generic` to clear `language: python` from above
-# Set `python:` (to empty) to clear it from the travis-ci web interface
-# Set `osx_image: xcode7.3` to pin OSX version see here:
-#   https://docs.travis-ci.com/user/osx-ci-environment/
-
 matrix:
   include:
     - os: osx
       language: generic
-      python:
-      osx_image: xcode9.0
-      env: PYENV_PYTHON_EXE="`pyenv install -s 2.7.14 && pyenv local 2.7.14`"
+      env:
+        - PYENV_PYTHON="2.7.14"
+
     - os: osx
       language: generic
-      python:
-      osx_image: xcode9.0
-      env: PYENV_PYTHON_EXE="`pyenv install -s 3.6.1 && pyenv local 3.6.1`"
+      env:
+        - PYENV_PYTHON="3.6.1"
+
+    - os: linux
+      language: generic
+      env:
+        - PYENV_PYTHON="2.7.14"
+
+    - os: linux
+      language: generic
+      env:
+        - PYENV_PYTHON="3.6.1"
 
 install:
-#  - git clone git://github.com/pyenv/pyenv-update.git $(pyenv root)/plugins/pyenv-update
-#  - pyenv update
+  - |
+    if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
+        brew update
+        brew install pyenv
+        brew upgrade pyenv
+    fi
   - pyenv install --list
-  - echo $PYTHON_EXE
+  - python --version
+  - pyenv local "$PYENV_PYTHON"
   - python --version
   - ./configure
 
-before_script:
-  - bin/about-code check --verbose .
 
 script:
+  - bin/about-code check --verbose .
   - "bin/py.test -vvs"
+
 
 notifications:
   irc:
