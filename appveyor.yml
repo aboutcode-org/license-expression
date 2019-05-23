@@ -4,10 +4,6 @@ environment:
     matrix:
         - PYTHON_EXE: "C:\\Python27\\python.exe"
         - PYTHON_EXE: "C:\\Python27-x64\\python.exe"
-        - PYTHON_EXE: "C:\\Python34\\python.exe"
-        - PYTHON_EXE: "C:\\Python34-x64\\python.exe"
-        - PYTHON_EXE: "C:\\Python35\\python.exe"
-        - PYTHON_EXE: "C:\\Python35-x64\\python.exe"
         - PYTHON_EXE: "C:\\Python36\\python.exe"
         - PYTHON_EXE: "C:\\Python36-x64\\python.exe"
 
@@ -20,9 +16,6 @@ test_script:
     - 'bin\activate'
     - 'bin\python -c "from __future__ import print_function;import sys;print(sys.getdefaultencoding())"'
     - 'bin\py.test -vvs'
-
-on_success:
-    - "python etc/scripts/irc-notify.py aboutcode [{project_name}:{branch}] {short_commit}: \"{message}\" ({author}) {color_green}Succeeded,Details: {build_url},Commit: {commit_url}"
 
 on_failure:
     - "python etc/scripts/irc-notify.py aboutcode [{project_name}:{branch}] {short_commit}: \"{message}\" ({author}) {color_red}Failed,Details: {build_url},Commit: {commit_url}"
