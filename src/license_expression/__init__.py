@@ -103,6 +103,10 @@ class ExpressionError(Exception):
     pass
 
 
+class ExpressionParseError(ParseError, ExpressionError):
+    pass
+
+
 # Used for tokenizing
 Keyword = namedtuple('Keyword', 'value type')
 Keyword.__len__ = lambda self: len(self.value)
@@ -380,7 +384,7 @@ class Licensing(boolean.BooleanAlgebra):
         """
         Return a new license LicenseExpression object by parsing a license
         `expression` string. Check that the expression syntax is valid and raise
-        an Exception, an ExpressionError or a ParseError on errors.
+        an ExpressionError or an ExpressionParseError on errors.
         Return None for empty expressions.
         `expression` is either a string or a LicenseExpression object. If this
         is a LicenseExpression it is returned as-is.
@@ -433,9 +437,11 @@ class Licensing(boolean.BooleanAlgebra):
             # this will raise a ParseError on errors
             tokens = list(self.tokenize(expression, strict=strict, simple=simple))
             expression = super(Licensing, self).parse(tokens)
-        except TypeError as e:
-            msg = 'Invalid expression syntax: ' + repr(e)
-            raise ExpressionError(msg)
+        except ParseError as e:
+            new_error = ExpressionParseError(
+                token_type=e.token_type, token_string=e.token_string,
+                position=e.position, error_code=e.error_code)
+            raise new_error
 
         if not isinstance(expression, LicenseExpression):
             raise ExpressionError('expression must be a LicenseExpression once parsed.')
