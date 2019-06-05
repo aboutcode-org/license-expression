@@ -1,0 +1,63 @@
+trigger:
+  branches:
+    include: ['pipeline']
+  tags:
+    include: ['*']
+
+jobs:
+  - job: tests
+    displayName: Run tests 
+    steps:
+      - script: ./configure
+      - script: ./bin/py.test -vvs tests/commoncode
+
+jobs:
+- job: Tests
+
+  strategy:
+
+    matrix:
+      Python_27_Linux:
+        imageName: 'ubuntu-16.04'
+        python.version: '2.7'
+      Python_27_Mac:
+        imageName: 'macos-10.13'
+        python.version: '2.7'
+      Python_27_Win:
+        imageName: 'vs2017-win2016'
+        python.version: '2.7'
+
+      Python_36_Linux:
+        imageName: 'ubuntu-16.04'
+        python.version: '3.6'
+      Python_36_Mac:
+        imageName: 'macos-10.13'
+        python.version: '3.6'
+      Python_36_Windows:
+        imageName: 'vs2017-win2016'
+        python.version: '3.6'
+
+      Python_37_Linux:
+        imageName: 'ubuntu-16.04'
+        python.version: '3.7'
+      Python_37_Mac:
+        imageName: 'macos-10.13'
+        python.version: '3.7'
+      Python_37_Windows:
+        imageName: 'vs2017-win2016'
+        python.version: '3.7'
+
+  pool:
+    vmImage: $(imageName)
+
+  steps:
+
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '$(python.version)'
+      architecture: 'x64'
+
+  - script: |
+      configure
+      bin/py.test -vvs
+      displayName: 'Run tests'
