@@ -45,7 +45,7 @@ if "%PYTHON_EXE%"==" " (
 
 
 :configure
-call "%PYTHON_EXE%" %LE_ROOT_DIR%etc\configure.py %CFG_CMD_LINE_ARGS%
+call python %LE_ROOT_DIR%etc\configure.py %CFG_CMD_LINE_ARGS%
 
 
 if %errorlevel% neq 0 (
