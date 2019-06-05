@@ -51,6 +51,6 @@ jobs:
       architecture: 'x64'
 
   - script: |
-    "./configure"
-    "bin/about-code check --verbose ."
-    "bin/py.test -vvs"
+    ./configure
+    bin/about-code check --verbose .
+    bin/py.test -vvs
