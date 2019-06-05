@@ -22,7 +22,7 @@ jobs:
 
     - script: configure,abt
       displayName: 'Configure'
-    - script: bin\about-code.exe check --verbose .
+    - script: dir bin && dir Scripts && dir
       displayName: 'Check ABOUT files'
     - script: bin\py.test.exe -vvs
       displayName: 'Run tests'
