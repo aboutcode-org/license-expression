@@ -5,13 +5,6 @@ trigger:
     include: ['*']
 
 jobs:
-  - job: tests
-    displayName: Run tests 
-    steps:
-      - script: ./configure
-      - script: ./bin/py.test -vvs tests/commoncode
-
-jobs:
 - job: Tests
 
   strategy:
