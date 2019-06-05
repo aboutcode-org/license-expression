@@ -4,55 +4,38 @@ trigger:
   tags:
     include: ['*']
 
-jobs:
-- job: Tests
+- template: etc/ci/azure-posix.yml
+    parameters:
+        name: Linux
+        image_name: ubuntu-16.04
+        matrix:
+          Python_27_Linux:
+            python_version: '2.7'
+          Python_36_Linux:
+            python_version: '3.6'
+          Python_37_Linux:
+            python_version: '3.7'
 
-  strategy:
+- template: etc/ci/azure-posix.yml
+    parameters:
+        name: macOS
+        image_name: macos-10.13
+        matrix:
+          Python_27_Mac:
+            python_version: '2.7'
+          Python_36_Mac:
+            python_version: '3.6'
+          Python_37_Mac:
+            python_version: '3.7'
 
-    matrix:
-      Python_27_Linux:
-        imageName: 'ubuntu-16.04'
-        python.version: '2.7'
-      Python_27_Mac:
-        imageName: 'macos-10.13'
-        python.version: '2.7'
-      Python_27_Win:
-        imageName: 'vs2017-win2016'
-        python.version: '2.7'
-
-      Python_36_Linux:
-        imageName: 'ubuntu-16.04'
-        python.version: '3.6'
-      Python_36_Mac:
-        imageName: 'macos-10.13'
-        python.version: '3.6'
-      Python_36_Windows:
-        imageName: 'vs2017-win2016'
-        python.version: '3.6'
-
-      Python_37_Linux:
-        imageName: 'ubuntu-16.04'
-        python.version: '3.7'
-      Python_37_Mac:
-        imageName: 'macos-10.13'
-        python.version: '3.7'
-      Python_37_Windows:
-        imageName: 'vs2017-win2016'
-        python.version: '3.7'
-
-  pool:
-    vmImage: $(imageName)
-
-  steps:
-
-    - task: UsePythonVersion@0
-      inputs:
-          versionSpec: '$(python.version)'
-          architecture: 'x64'
-
-    - script: ./configure
-      displayName: 'Configure'
-    - script: bin/about-code check --verbose .
-      displayName: 'Check ABOUT files'
-    - script: bin/py.test -vvs
-      displayName: 'Run tests'
+- template: etc/ci/azure-win.yml
+    parameters:
+        name: Windows
+      image_name: vs2017-win2016
+      matrix:
+        Python_27_Win:
+          python_version: '2.7'
+        Python_36_Windows:
+          python_version: '3.6'
+        Python_37_Windows:
+          python_version: '3.7'
