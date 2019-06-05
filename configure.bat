@@ -16,8 +16,12 @@ set DEFAULT_PYTHON=python
 set CONF_DEFAULT="etc/conf/dev"
 @rem #################################
 
-set DJ_ROOT_DIR=%~dp0
+set LE_ROOT_DIR=%~dp0
 
+@rem !!!!!!!!!!! ATTENTION !!!!!
+@rem there is a space at the end of the set CFG_CMD_LINE_ARGS=  line ... 
+@rem NEVER remove this!
+@rem otherwise, this script does not work.  
 set CFG_CMD_LINE_ARGS= 
 @rem Collect/Slurp all command line arguments in a variable
 :collectarg
@@ -33,22 +37,23 @@ set CFG_CMD_LINE_ARGS=
 @rem default to dev configuration when no args are passed
 if "%CFG_CMD_LINE_ARGS%"==" " (
     set CFG_CMD_LINE_ARGS="%CONF_DEFAULT%"
-    goto configure
-)
-
-if "%CFG_CMD_LINE_ARGS%"=="  --init" (
-    set CFG_CMD_LINE_ARGS="%CONF_INIT%"
-    goto configure
 )
 
 if "%PYTHON_EXE%"==" " (
     set PYTHON_EXE="%DEFAULT_PYTHON%"
-    goto configure
 )
 
 
 :configure
-call "%PYTHON_EXE%" etc/configure.py %CFG_CMD_LINE_ARGS%
+call "%PYTHON_EXE%" %LE_ROOT_DIR%etc\configure.py %CFG_CMD_LINE_ARGS%
+
+
+if %errorlevel% neq 0 (
+    exit /b %errorlevel%
+)
+if exist "%LE_ROOT_DIR%bin\activate" (
+    "%LE_ROOT_DIR%bin\activate"
+)
 goto EOS
 
 :EOS
