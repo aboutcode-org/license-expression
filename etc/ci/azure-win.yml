@@ -20,11 +20,9 @@ jobs:
           versionSpec: '$(python_version)'
           architecture: 'x64'
 
-    - task: BatchScript@1
-      inputs:
-          filename: configure.bat
-
     - script: |
+        configure.bat
         bin\about-code check --verbose .
         bin\py.test -vvs
       displayName: 'Run tests'
+      failOnStderr: true
