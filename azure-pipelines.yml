@@ -50,7 +50,7 @@ jobs:
       versionSpec: '$(python.version)'
       architecture: 'x64'
 
-  - script:
-    - ./configure
-    - "bin/about-code check --verbose ."
-    - "bin/py.test -vvs"
+  - script: |
+    "./configure"
+    "bin/about-code check --verbose ."
+    "bin/py.test -vvs"
