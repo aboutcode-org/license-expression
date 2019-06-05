@@ -45,12 +45,14 @@ jobs:
 
   steps:
 
-  - task: UsePythonVersion@0
-    inputs:
-      versionSpec: '$(python.version)'
-      architecture: 'x64'
+    - task: UsePythonVersion@0
+        inputs:
+          versionSpec: '$(python.version)'
+          architecture: 'x64'
 
-  - script: |
-    ./configure
-    bin/about-code check --verbose .
-    bin/py.test -vvs
+    - script: ./configure
+      displayName: 'Configure'
+    - script: bin/about-code check --verbose .
+      displayName: 'Check ABOUT files'
+    - script: bin/py.test -vvs
+      displayName: 'Run tests'
