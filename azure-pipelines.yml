@@ -50,7 +50,7 @@ jobs:
           versionSpec: '$(python.version)'
           architecture: 'x64'
 
-    - script: ./configure
+    - script: configure
       displayName: 'Configure'
     - script: bin/about-code check --verbose .
       displayName: 'Check ABOUT files'
