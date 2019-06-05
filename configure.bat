@@ -1,4 +1,4 @@
-@echo OFF
+@echo ON
 
 @rem Copyright (c) 2016 nexB Inc. http://www.nexb.com/ - All rights reserved.
 
