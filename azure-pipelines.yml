@@ -6,7 +6,7 @@ trigger:
         include: ['*']
 
 jobs:
-    - template: etc/ci/azure-posix.yml
+    - template: etc/ci/azure-all.yml
       parameters:
           name: Linux
           image_name: ubuntu-16.04
@@ -18,7 +18,7 @@ jobs:
               Python_37_Linux:
                   python_version: '3.7'
     
-    - template: etc/ci/azure-posix.yml
+    - template: etc/ci/azure-all.yml
       parameters:
           name: macOS
           image_name: macos-10.13
@@ -30,7 +30,7 @@ jobs:
               Python_37_Mac:
                   python_version: '3.7'
     
-    - template: etc/ci/azure-win.yml
+    - template: etc/ci/azure-all.yml
       parameters:
           name: Windows
           image_name: vs2017-win2016
