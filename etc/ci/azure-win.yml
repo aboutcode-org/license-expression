@@ -20,9 +20,9 @@ jobs:
           versionSpec: '$(python_version)'
           architecture: 'x64'
 
-    - script: configure,abt
+    - script: configure
       displayName: 'Configure'
     - script: dir bin && dir Scripts && dir
       displayName: 'Check ABOUT files'
-    - script: bin\py.test.exe -vvs
+    - script: bin\py.test -vvs
       displayName: 'Run tests'
