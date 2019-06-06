@@ -1,5 +1,5 @@
 @echo ON
-
+setlocal
 @rem Copyright (c) nexB Inc. http://www.nexb.com/ - All rights reserved.
 
 @rem ################################
@@ -16,7 +16,7 @@ set DEFAULT_PYTHON=python
 set CONF_DEFAULT="etc/conf/dev"
 @rem #################################
 
-
+@rem this always has a trailing backslash
 set CFG_ROOT_DIR=%~dp0
 
 @rem a possible alternative way and simpler way to slurp args
@@ -24,6 +24,7 @@ set CFG_ROOT_DIR=%~dp0
 
 @rem Collect all command line arguments in a variable
 set CFG_CMD_LINE_ARGS=
+
 :collectarg
  if ""%1""=="""" goto continue
  set CFG_CMD_LINE_ARGS=%CFG_CMD_LINE_ARGS% %1
@@ -33,16 +34,11 @@ goto collectarg
 :continue
 
 
-@rem default to dev configuration when no args are passed
-if "%CFG_CMD_LINE_ARGS%"==" " (
-    set CFG_CMD_LINE_ARGS="%CONF_DEFAULT%"
-)
+@rem Set defaults
+if "%CFG_CMD_LINE_ARGS%"=="" set CFG_CMD_LINE_ARGS=%CONF_DEFAULT%
+if "%PYTHON_EXE%"=="" set PYTHON_EXE=%DEFAULT_PYTHON%
 
-if "%PYTHON_EXE%"==" " (
-    set PYTHON_EXE="%DEFAULT_PYTHON%"
-)
 
-@rem run the configuration script proper
 call "%PYTHON_EXE%" %CFG_ROOT_DIR%\etc\configure.py %CFG_CMD_LINE_ARGS%
 
 
@@ -51,7 +47,9 @@ if %errorlevel% neq 0 (
     exit /b %errorlevel%
 )
 
+
 @rem Activate the virtualenv
+endlocal
 if exist "%CFG_ROOT_DIR%bin\activate" (
     "%CFG_ROOT_DIR%bin\activate"
 )
