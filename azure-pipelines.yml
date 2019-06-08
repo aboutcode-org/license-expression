@@ -8,7 +8,7 @@ trigger:
 jobs:
     - template: etc/ci/azure-posix.yml
       parameters:
-          name: Ubuntu16
+          name: Ubuntu_16
           image_name: ubuntu-16.04
           matrix:
               Python_27_Linux:
@@ -20,7 +20,7 @@ jobs:
 
     - template: etc/ci/azure-posix.yml
       parameters:
-          name: macOS-1013
+          name: macOS_1013
           image_name: macos-10.13
           matrix:
               Python_27_Mac:
@@ -32,7 +32,7 @@ jobs:
 
     - template: etc/ci/azure-posix.yml
       parameters:
-          name: macOS-1014
+          name: macOS_1014
           image_name: macos-10.14
           matrix:
               Python_27_Mac:
@@ -44,7 +44,7 @@ jobs:
 
     - template: etc/ci/azure-win.yml
       parameters:
-          name: Windows2016
+          name: Windows_2016
           image_name: vs2017-win2016
           matrix:
               Python_27_Win:
@@ -57,7 +57,7 @@ jobs:
     - template: etc/ci/azure-win.yml
       parameters:
           name: vs2015-win2012r2
-          image_name: win1803
+          image_name: Windows_2012
           matrix:
               Python_27_Win:
                   python_version: '2.7'
