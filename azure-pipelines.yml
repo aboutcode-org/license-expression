@@ -81,100 +81,90 @@ jobs:
           name: Linux  $[variables.container]
           image_name: ubuntu-16.04
           matrix:
-              Python_27_Linux:
+              CentOS6_py27:
+                  container: 'centos:6'
                   python_version: '2.7'
-              Python_36_Linux:
+              CentOS6_py36:
+                  container: 'centos:6'
                   python_version: '3.6'
-              Python_37_Linux:
+              CentOS6_py37:
+                  container: 'centos:6'
                   python_version: '3.7'
-
-    - template: etc/ci/azure-container.yml
-      parameters:
-      matrix:
-          CentOS6_py27:
-              container: 'centos:6'
-              python_version: '2.7'
-          CentOS6_py36:
-              container: 'centos:6'
-              python_version: '3.6'
-          CentOS6_py37:
-              container: 'centos:6'
-              python_version: '3.7'
-
-          CentOS7_py27:
-              container: 'centos:7'
-              python_version: '2.7'
-          CentOS7_py36:
-              container: 'centos:7'
-              python_version: '3.6'
-          CentOS7_py37:
-              container: 'centos:7'
-              python_version: '3.7'
-
-          Fedora_28_py27:
-              container: 'fedora:28'
-              python_version: '2.7'
-          Fedora_28_py36:
-              container: 'fedora:28'
-              python_version: '3.6'
-
-          Fedora_29_py27:
-              container: 'fedora:29'
-              python_version: '2.7'
-          Fedora_29_py36:
-              container: 'fedora:29'
-              python_version: '3.6'
-
-          Fedora_30_py27:
-              container: 'fedora:30'
-              python_version: '2.7'
-          Fedora_30_py36:
-              container: 'fedora:30'
-              python_version: '3.6'
-
-          Ubuntu14_Trusty_py27:
-              container: 'ubuntu:trusty'
-              python_version: '2.7'
-          Ubuntu14_Trusty_py36:
-              container: 'ubuntu:trusty'
-              python_version: '3.6'
-
-          Ubuntu16_Xenial_py27:
-              container: 'ubuntu:xenial'
-              python_version: '2.7'
-          Ubuntu16_Xenial_py36:
-              container: 'ubuntu:xenial'
-              python_version: '3.6'
-
-          Ubuntu_18_Bionic_py27:
-              container: 'ubuntu:bionic'
-              python_version: '2.7'
-          Ubuntu_18_Bionic_py36:
-              container: 'ubuntu:bionic'
-              python_version: '3.6'
-
-          Debian_8_Jessie_py27:
-              container: 'debian:jessie'
-              python_version: '2.7'
-          Debian_8_Jessie_py36:
-              container: 'debian:jessie'
-              python_version: '3.6'
-
-          Debian_9_Stretch_py27:
-              container: 'debian:stretch'
-              python_version: '2.7'
-          Debian_9_Stretch_py36:
-              container: 'debian:stretch'
-              python_version: '3.6'
-
-          Debian_10_Buster_py27:
-              container: 'debian:buster'
-              python_version: '2.7'
-          Debian_10_Buster_py36:
-              container: 'debian:buster'
-              python_version: '3.6'
-
-          Manylinux1-686:
-              container: 'quay.io/pypa/manylinux1_i686:latest'
-          Manylinux1-64:
-              container: 'quay.io/pypa/manylinux1_x86_64:latest'
+    
+              CentOS7_py27:
+                  container: 'centos:7'
+                  python_version: '2.7'
+              CentOS7_py36:
+                  container: 'centos:7'
+                  python_version: '3.6'
+              CentOS7_py37:
+                  container: 'centos:7'
+                  python_version: '3.7'
+    
+              Fedora_28_py27:
+                  container: 'fedora:28'
+                  python_version: '2.7'
+              Fedora_28_py36:
+                  container: 'fedora:28'
+                  python_version: '3.6'
+    
+              Fedora_29_py27:
+                  container: 'fedora:29'
+                  python_version: '2.7'
+              Fedora_29_py36:
+                  container: 'fedora:29'
+                  python_version: '3.6'
+    
+              Fedora_30_py27:
+                  container: 'fedora:30'
+                  python_version: '2.7'
+              Fedora_30_py36:
+                  container: 'fedora:30'
+                  python_version: '3.6'
+    
+              Ubuntu14_Trusty_py27:
+                  container: 'ubuntu:trusty'
+                  python_version: '2.7'
+              Ubuntu14_Trusty_py36:
+                  container: 'ubuntu:trusty'
+                  python_version: '3.6'
+    
+              Ubuntu16_Xenial_py27:
+                  container: 'ubuntu:xenial'
+                  python_version: '2.7'
+              Ubuntu16_Xenial_py36:
+                  container: 'ubuntu:xenial'
+                  python_version: '3.6'
+    
+              Ubuntu_18_Bionic_py27:
+                  container: 'ubuntu:bionic'
+                  python_version: '2.7'
+              Ubuntu_18_Bionic_py36:
+                  container: 'ubuntu:bionic'
+                  python_version: '3.6'
+    
+              Debian_8_Jessie_py27:
+                  container: 'debian:jessie'
+                  python_version: '2.7'
+              Debian_8_Jessie_py36:
+                  container: 'debian:jessie'
+                  python_version: '3.6'
+    
+              Debian_9_Stretch_py27:
+                  container: 'debian:stretch'
+                  python_version: '2.7'
+              Debian_9_Stretch_py36:
+                  container: 'debian:stretch'
+                  python_version: '3.6'
+    
+              Debian_10_Buster_py27:
+                  container: 'debian:buster'
+                  python_version: '2.7'
+              Debian_10_Buster_py36:
+                  container: 'debian:buster'
+                  python_version: '3.6'
+    
+              Manylinux1-686:
+                  container: 'quay.io/pypa/manylinux1_i686:latest'
+              Manylinux1-64:
+                  container: 'quay.io/pypa/manylinux1_x86_64:latest'
