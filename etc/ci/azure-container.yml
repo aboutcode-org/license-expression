@@ -7,7 +7,7 @@ jobs:
 - job: ${{ parameters.name }}
 
   pool: 
-    vmImage: vmImage: 'ubuntu-16.04' 
+    vmImage: 'ubuntu-16.04'
 
   container: ${{ parameters.container }}
 
