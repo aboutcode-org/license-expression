@@ -90,7 +90,7 @@ jobs:
 
     - template: etc/ci/azure-container.yml
       parameters:
-          name: CentOS6_py37:
+          name: CentOS6_py37
           container: 'centos:6'
           python_version: '3.7'
 
