@@ -8,7 +8,19 @@ trigger:
 jobs:
     - template: etc/ci/azure-posix.yml
       parameters:
-          name: Linux
+          name: Ubuntu14
+          image_name: ubuntu-14.04
+          matrix:
+              Python_27_Linux:
+                  python_version: '2.7'
+              Python_36_Linux:
+                  python_version: '3.6'
+              Python_37_Linux:
+                  python_version: '3.7'
+
+    - template: etc/ci/azure-posix.yml
+      parameters:
+          name: Ubuntu16
           image_name: ubuntu-16.04
           matrix:
               Python_27_Linux:
@@ -17,10 +29,22 @@ jobs:
                   python_version: '3.6'
               Python_37_Linux:
                   python_version: '3.7'
-    
+
     - template: etc/ci/azure-posix.yml
       parameters:
-          name: macOS
+          name: Ubuntu18
+          image_name: ubuntu-18.04
+          matrix:
+              Python_27_Linux:
+                  python_version: '2.7'
+              Python_36_Linux:
+                  python_version: '3.6'
+              Python_37_Linux:
+                  python_version: '3.7'
+
+    - template: etc/ci/azure-posix.yml
+      parameters:
+          name: macOS-1013
           image_name: macos-10.13
           matrix:
               Python_27_Mac:
@@ -29,11 +53,47 @@ jobs:
                   python_version: '3.6'
               Python_37_Mac:
                   python_version: '3.7'
-    
+
+    - template: etc/ci/azure-posix.yml
+      parameters:
+          name: macOS-1014
+          image_name: macos-10.14
+          matrix:
+              Python_27_Mac:
+                  python_version: '2.7'
+              Python_36_Mac:
+                  python_version: '3.6'
+              Python_37_Mac:
+                  python_version: '3.7'
+
     - template: etc/ci/azure-win.yml
       parameters:
-          name: Windows
+          name: Windows2016
           image_name: vs2017-win2016
+          matrix:
+              Python_27_Win:
+                  python_version: '2.7'
+              Python_36_Windows:
+                  python_version: '3.6'
+              Python_37_Windows:
+                  python_version: '3.7'
+
+    - template: etc/ci/azure-win.yml
+      parameters:
+          name: Windows1803
+          image_name: win1803
+          matrix:
+              Python_27_Win:
+                  python_version: '2.7'
+              Python_36_Windows:
+                  python_version: '3.6'
+              Python_37_Windows:
+                  python_version: '3.7'
+
+    - template: etc/ci/azure-win.yml
+      parameters:
+          name: vs2015-win2012r2
+          image_name: win1803
           matrix:
               Python_27_Win:
                   python_version: '2.7'
