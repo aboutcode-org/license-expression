@@ -17,7 +17,7 @@ jobs:
     - task: UsePythonVersion@0
       inputs:
           versionSpec: '$(python_version)'
-          architecture: '${python_architecture}'
+          architecture: '$(python_architecture)'
 
     - script: configure
       displayName: 'Configure'
