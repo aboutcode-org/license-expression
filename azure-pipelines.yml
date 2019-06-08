@@ -44,24 +44,30 @@ jobs:
 
     - template: etc/ci/azure-win.yml
       parameters:
-          name: Windows_2016
+          name: Windows_2016_32
           image_name: vs2017-win2016
           matrix:
-              Python_27_Win:
+              Python_27_Win32:
                   python_version: '2.7'
-              Python_36_Windows:
-                  python_version: '3.6'
-              Python_37_Windows:
+                  python_architecture: x86
+              Python_36_Win32:
+                  python_version: '3.6' 
+                  python_architecture: x86
+              Python_37_Win32:
                   python_version: '3.7'
+                  python_architecture: x86
 
     - template: etc/ci/azure-win.yml
       parameters:
-          name: Windows_2012
-          image_name: vs2015-win2012r2
+          name: Windows_2016_64
+          image_name: vs2017-win2016
           matrix:
-              Python_27_Win:
+              Python_27_Win64:
                   python_version: '2.7'
-              Python_36_Windows:
-                  python_version: '3.6'
-              Python_37_Windows:
+                  architecture: x64
+              Python_36_Win64:
+                  python_version: '3.6' 
+                  architecture: x64
+              Python_37_Win64:
                   python_version: '3.7'
+                  architecture: x64
