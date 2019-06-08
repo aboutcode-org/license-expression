@@ -78,8 +78,8 @@ jobs:
 
     - template: etc/ci/azure-container.yml
       parameters:
-          name: Linux  $[variables.container]
           image_name: ubuntu-16.04
+
           matrix:
               CentOS6_py27:
                   container: 'centos:6'

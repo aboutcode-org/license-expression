@@ -1,22 +1,19 @@
 parameters:
-  name: ''
-  container: ''
   matrix: []
 
 jobs:
-- job: ${{ parameters.name }}
+- job: 'Linux container - $(container) - $(python_version)'
 
   pool: 
     vmImage: 'ubuntu-16.04'
 
-  container: ${{ parameters.container }}
+  container: $(container)
 
   strategy:
     matrix:
       ${{ insert }}: ${{ parameters.matrix }}
 
   steps:
-
     - script: |
        echo "Python $(python_version)"
        uname -a
