@@ -1,6 +1,8 @@
 parameters:
   name: ''
-  matrix: []
+  container: ''
+  python_version: ''
+
 
 jobs:
 - job: ${{ parameters.name }}
@@ -8,11 +10,7 @@ jobs:
   pool: 
     vmImage: 'ubuntu-16.04'
 
-  container: $(container)
-
-  strategy:
-    matrix:
-      ${{ insert }}: ${{ parameters.matrix }}
+  container: ${{ parameters.container }}
 
   steps:
     - script: |
