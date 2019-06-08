@@ -49,13 +49,13 @@ jobs:
           matrix:
               Python_27_Win32:
                   python_version: '2.7'
-                  python_architecture: x86
+                  python_architecture: 'x86'
               Python_36_Win32:
                   python_version: '3.6' 
-                  python_architecture: x86
+                  python_architecture: 'x86'
               Python_37_Win32:
                   python_version: '3.7'
-                  python_architecture: x86
+                  python_architecture: 'x86'
 
     - template: etc/ci/azure-win.yml
       parameters:
@@ -64,10 +64,10 @@ jobs:
           matrix:
               Python_27_Win64:
                   python_version: '2.7'
-                  architecture: x64
+                  python_architecture: 'x64'
               Python_36_Win64:
                   python_version: '3.6' 
-                  architecture: x64
+                  python_architecture: 'x64'
               Python_37_Win64:
                   python_version: '3.7'
-                  architecture: x64
+                  python_architecture: 'x64'
