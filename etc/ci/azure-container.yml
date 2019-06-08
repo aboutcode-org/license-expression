@@ -1,8 +1,9 @@
 parameters:
+  name: ''
   matrix: []
 
 jobs:
-- job: 'Linux container - $(container) - $(python_version)'
+- job: ${{ parameters.name }}
 
   pool: 
     vmImage: 'ubuntu-16.04'

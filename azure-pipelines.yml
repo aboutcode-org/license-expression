@@ -78,8 +78,7 @@ jobs:
 
     - template: etc/ci/azure-container.yml
       parameters:
-          image_name: ubuntu-16.04
-
+          name: CentOS
           matrix:
               CentOS6_py27:
                   container: 'centos:6'
@@ -90,7 +89,6 @@ jobs:
               CentOS6_py37:
                   container: 'centos:6'
                   python_version: '3.7'
-    
               CentOS7_py27:
                   container: 'centos:7'
                   python_version: '2.7'
@@ -100,70 +98,81 @@ jobs:
               CentOS7_py37:
                   container: 'centos:7'
                   python_version: '3.7'
-    
+
+    - template: etc/ci/azure-container.yml
+      parameters:
+          name: Fedora
+          matrix:
               Fedora_28_py27:
                   container: 'fedora:28'
                   python_version: '2.7'
               Fedora_28_py36:
                   container: 'fedora:28'
                   python_version: '3.6'
-    
               Fedora_29_py27:
                   container: 'fedora:29'
                   python_version: '2.7'
               Fedora_29_py36:
                   container: 'fedora:29'
                   python_version: '3.6'
-    
               Fedora_30_py27:
                   container: 'fedora:30'
                   python_version: '2.7'
               Fedora_30_py36:
                   container: 'fedora:30'
                   python_version: '3.6'
-    
+
+
+    - template: etc/ci/azure-container.yml
+      parameters:
+          name: Ubuntu
+          matrix:
               Ubuntu14_Trusty_py27:
                   container: 'ubuntu:trusty'
                   python_version: '2.7'
               Ubuntu14_Trusty_py36:
                   container: 'ubuntu:trusty'
                   python_version: '3.6'
-    
               Ubuntu16_Xenial_py27:
                   container: 'ubuntu:xenial'
                   python_version: '2.7'
               Ubuntu16_Xenial_py36:
                   container: 'ubuntu:xenial'
                   python_version: '3.6'
-    
               Ubuntu_18_Bionic_py27:
                   container: 'ubuntu:bionic'
                   python_version: '2.7'
               Ubuntu_18_Bionic_py36:
                   container: 'ubuntu:bionic'
                   python_version: '3.6'
-    
+
+    - template: etc/ci/azure-container.yml
+      parameters:
+          name: Debian
+          matrix:
               Debian_8_Jessie_py27:
                   container: 'debian:jessie'
                   python_version: '2.7'
               Debian_8_Jessie_py36:
                   container: 'debian:jessie'
                   python_version: '3.6'
-    
               Debian_9_Stretch_py27:
                   container: 'debian:stretch'
                   python_version: '2.7'
               Debian_9_Stretch_py36:
                   container: 'debian:stretch'
                   python_version: '3.6'
-    
               Debian_10_Buster_py27:
                   container: 'debian:buster'
                   python_version: '2.7'
               Debian_10_Buster_py36:
                   container: 'debian:buster'
                   python_version: '3.6'
-    
+
+    - template: etc/ci/azure-container.yml
+      parameters:
+          name: Manylinux
+          matrix:
               Manylinux1-686:
                   container: 'quay.io/pypa/manylinux1_i686:latest'
               Manylinux1-64:
