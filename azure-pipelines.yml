@@ -48,13 +48,13 @@ jobs:
           image_name: vs2017-win2016
           matrix:
               Python_27_Win32:
-                  python_version: '2.7'
+                  python_version: '2.7.16'
                   python_architecture: 'x86'
               Python_36_Win32:
-                  python_version: '3.6' 
+                  python_version: '3.6.8' 
                   python_architecture: 'x86'
               Python_37_Win32:
-                  python_version: '3.7'
+                  python_version: '3.7.3'
                   python_architecture: 'x86'
 
     - template: etc/ci/azure-win.yml
@@ -63,11 +63,11 @@ jobs:
           image_name: vs2017-win2016
           matrix:
               Python_27_Win64:
-                  python_version: '2.7'
+                  python_version: '2.7.16'
                   python_architecture: 'x64'
               Python_36_Win64:
-                  python_version: '3.6' 
+                  python_version: '3.6.8' 
                   python_architecture: 'x64'
               Python_37_Win64:
-                  python_version: '3.7'
+                  python_version: '3.7.3'
                   python_architecture: 'x64'
