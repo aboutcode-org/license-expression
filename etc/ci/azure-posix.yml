@@ -14,15 +14,16 @@ jobs:
       ${{ insert }}: ${{ parameters.matrix }}
 
   steps:
-
     - task: UsePythonVersion@0
       inputs:
           versionSpec: '$(python_version)'
-          architecture: 'x64'
 
     - script: ./configure
       displayName: 'Configure'
+
     - script: bin/about-code check --verbose .
       displayName: 'Check ABOUT files'
+
     - script: bin/py.test -vvs
       displayName: 'Run tests'
+
