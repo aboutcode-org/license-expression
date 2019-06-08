@@ -1,27 +1,26 @@
 parameters:
-    name: ''
-    container: ''
-    matrix: []
+  name: ''
+  container: ''
+  matrix: []
 
 jobs:
-  - job: ${{ parameters.name }}
-    pool: 
-        vmImage: vmImage: 'ubuntu-16.04'
-    container: ${{ parameters.container }}
+- job: ${{ parameters.name }}
 
-    strategy:
-        matrix:
-            ${{ insert }}: ${{ parameters.matrix }}
+  pool: 
+    vmImage: vmImage: 'ubuntu-16.04' 
 
-    steps:
-#      - task: UsePythonVersion@0
-#        inputs:
-#            versionSpec: '$(python_version)'
+  container: ${{ parameters.container }}
 
-#            architecture: 'x64'
+  strategy:
+    matrix:
+      ${{ insert }}: ${{ parameters.matrix }}
 
-      - script echo $(python_version)
-      - script: which python2
-      - script: which python3
-      - script: uname -a
-  
+  steps:
+
+    - script |
+       echo "Python $(python_version)"
+       uname -a
+       which python
+       which python2
+       which python3
+       which python$(python_version)
