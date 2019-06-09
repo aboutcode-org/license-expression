@@ -2,7 +2,6 @@ parameters:
   name: ''
   container: ''
   python_version: ''
-  install_packages: ''
 
 jobs:
 - job: ${{ parameters.name }}
@@ -13,7 +12,6 @@ jobs:
   container: ${{ parameters.container }}
 
   steps:
-    - script: ${{ parameters.install_packages }}
     - script: |
        echo "Testing with Python ${{ parameters.python_version }}"
        uname -a
