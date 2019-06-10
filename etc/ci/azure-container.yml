@@ -12,8 +12,8 @@ jobs:
 
   container:
     image: ${{ parameters.container }}
-    # run as root
-    options: --user 0
+    options: '-t -u 0'
+
   steps:
     - script: |
        set -ex
