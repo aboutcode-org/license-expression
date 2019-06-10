@@ -2,7 +2,6 @@ parameters:
   name: ''
   container: ''
   python_version: ''
-  required_packages: ''
   install_python: ''
 
 jobs:
@@ -30,7 +29,7 @@ jobs:
             libxml2-devel libxslt-devel
       displayName: Install required packages
 
-    - script: ${{ install_python }}
+    - script: ${{ parameters.install_python }}
       displayName: Install Python
 
     - script: ./configure

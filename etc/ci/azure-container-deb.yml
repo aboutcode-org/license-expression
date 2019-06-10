@@ -26,7 +26,7 @@ jobs:
             sqlite3 libxml2-dev libxslt1-dev
       displayName: Install required packages
 
-    - script: ${{ install_python }}
+    - script: ${{ parameters.install_python }}
       displayName: Install Python
 
     - script: ./configure
