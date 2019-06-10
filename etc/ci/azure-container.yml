@@ -2,6 +2,7 @@ parameters:
   name: ''
   container: ''
   python_version: ''
+  pacakage_manager: ''
   test_command: ''
 
 jobs:
@@ -12,9 +13,10 @@ jobs:
 
   container:
     image: ${{ parameters.container }}
-    options: -u root
+    options: '--name ${{ parameters.name }} -v /usr/bin/docker:/tmp/docker:ro'
 
   steps:
+    - script: /tmp/docker exec -t -u 0 ${{ parameters.name }} "$(Build.SourcesDirectory)/etc/ci/install_sudo.sh ${{ parameters.package_manager }}"
     - script: |
        set -ex
        whoami

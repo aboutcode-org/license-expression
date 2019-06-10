@@ -82,14 +82,16 @@ jobs:
           name: CentOS7_plain
           container: 'centos:7'
           python_version: '2.7'
-          test_command: 'yum update'
+          pacakage_manager: yum 
+          test_command: 'sudo yum update'
 
     - template: etc/ci/azure-container.yml
       parameters:
           name: Debian_9
           container: 'debian:stretch'
           python_version: '2.7'
-          test_command: 'apt-get update'
+          pacakage_manager: yum 
+          test_command: 'sudo apt-get update'
 
 
 
