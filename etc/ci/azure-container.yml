@@ -20,7 +20,6 @@ jobs:
        whoami
        echo "Testing with Python ${{ parameters.python_version }}"
        uname -a
-       python --version
        ${{ parameters.test_command }}
        
        
