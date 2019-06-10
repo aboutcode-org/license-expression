@@ -2,6 +2,7 @@ parameters:
   name: ''
   container: ''
   python_version: ''
+  test_command: ''
 
 jobs:
 - job: ${{ parameters.name }}
@@ -13,7 +14,10 @@ jobs:
 
   steps:
     - script: |
+       set -ex
        echo "Testing with Python ${{ parameters.python_version }}"
        uname -a
        python --version
+       ${{ parameters.test_command }}
+       
        
