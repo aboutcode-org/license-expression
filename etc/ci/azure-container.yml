@@ -24,5 +24,16 @@ jobs:
        set -ex
        echo "Testing with Python ${{ parameters.python_version }}"
        uname -a
-       
-       
+
+    - task: UsePythonVersion@0
+      inputs:
+          versionSpec: '${{ parameters.python_version }}'
+
+    - script: ./configure
+      displayName: 'Configure'
+
+    - script: bin/about-code check --verbose .
+      displayName: 'Check ABOUT files'
+
+    - script: bin/py.test -vvs
+      displayName: 'Run tests'
