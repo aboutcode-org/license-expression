@@ -1,0 +1,40 @@
+parameters:
+  name: ''
+  container: ''
+  python_version: ''
+  required_packages: ''
+  install_python: ''
+
+jobs:
+- job: ${{ parameters.name }}
+
+  pool: 
+    vmImage: 'ubuntu-16.04'
+
+  container:
+    image: ${{ parameters.container }}
+    options: '--name ${{ parameters.name }} -v /usr/bin/docker:/tmp/docker:ro'
+
+  steps:
+    - script: /tmp/docker exec -t -u 0 ${{ parameters.name }} $(Build.SourcesDirectory)/etc/ci/install_sudo.sh yum
+      displayName: Install sudo
+
+    - script: |
+        sudo yum groupinstall -y 'development tools'
+        sudo yum install -y epel-release
+        sudo yum install -y \
+            gcc \
+            openssl openssl-devel \
+            sqlite-devel zlib-dev xz-devel bzip2-devel \
+            bzip2 tar unzip zip \
+            libxml2-devel libxslt-devel
+      displayName: Install required packages
+
+    - script: {{ install_python }}
+      displayName: Install Python
+
+    - script: ./configure
+      displayName: 'Configure'
+
+    - script: bin/py.test -vvs
+      displayName: 'Run tests'

@@ -1,0 +1,36 @@
+parameters:
+  name: ''
+  container: ''
+  python_version: ''
+  install_python: ''
+
+jobs:
+- job: ${{ parameters.name }}
+
+  pool: 
+    vmImage: 'ubuntu-16.04'
+
+  container:
+    image: ${{ parameters.container }}
+    options: '--name ${{ parameters.name }} -v /usr/bin/docker:/tmp/docker:ro'
+
+  steps:
+    - script: /tmp/docker exec -t -u 0 ${{ parameters.name }} $(Build.SourcesDirectory)/etc/ci/install_sudo.sh apt-get
+      displayName: Install sudo
+
+    - script: |
+        sudo apt-get -y update
+        apt-get -y \
+            build-essential \
+            xz-utils zlib1g bzip2 libbz2-1.0 tar \
+            sqlite3 libxml2-dev libxslt1-dev
+      displayName: Install required packages
+
+    - script: ${{ install_python }}
+      displayName: Install Python
+
+    - script: ./configure
+      displayName: 'Configure'
+
+    - script: bin/py.test -vvs
+      displayName: 'Run tests'
