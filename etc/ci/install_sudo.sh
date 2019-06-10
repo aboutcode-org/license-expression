@@ -2,7 +2,7 @@
 set -e
 
 
-if [[ "$1" == "apt" ]]; then
+if [[ "$1" == "apt-get" ]]; then
     apt-get update -y
     apt-get -o DPkg::Options::="--force-confold" install -y sudo
 

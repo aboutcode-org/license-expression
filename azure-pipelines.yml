@@ -90,7 +90,7 @@ jobs:
           name: Debian_9
           container: 'debian:stretch'
           python_version: '2.7'
-          package_manager: apt-get 
+          package_manager: apt-get
           test_command: 'sudo apt-get update'
 
 
