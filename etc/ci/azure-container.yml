@@ -12,7 +12,7 @@ jobs:
 
   container:
     image: ${{ parameters.container }}
-    options: '-t -u 0'
+    options: -u root
 
   steps:
     - script: |
