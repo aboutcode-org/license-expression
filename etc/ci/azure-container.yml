@@ -10,8 +10,10 @@ jobs:
   pool: 
     vmImage: 'ubuntu-16.04'
 
-  container: ${{ parameters.container }}
-
+  container:
+    image: ${{ parameters.container }}
+    # run as root
+    options: --user 0
   steps:
     - script: |
        set -ex

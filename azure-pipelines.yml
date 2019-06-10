@@ -82,7 +82,17 @@ jobs:
           name: CentOS7_plain
           container: 'centos:7'
           python_version: '2.7'
-          test_command: 'sudo yum update'
+          test_command: 'yum update'
+
+    - template: etc/ci/azure-container.yml
+      parameters:
+          name: Debian_9
+          container: 'debian:stretch'
+          python_version: '2.7'
+          test_command: 'apt-get update'
+
+
+
 
 #    - template: etc/ci/azure-container.yml
 #      parameters:
@@ -96,14 +106,6 @@ jobs:
 #          container: 'centos/python-36-centos7:latest'
 #          python_version: '3.6'
 #
-    - template: etc/ci/azure-container.yml
-      parameters:
-          name: Debian_9
-          container: 'debian:stretch'
-          python_version: '2.7'
-          test_command: 'sudo apt-get update'
-
-
 #    - template: etc/ci/azure-container.yml
 #      parameters:
 #          name: Fedora_30_py27
