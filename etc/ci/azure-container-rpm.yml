@@ -30,7 +30,7 @@ jobs:
             libxml2-devel libxslt-devel
       displayName: Install required packages
 
-    - script: {{ install_python }}
+    - script: ${{ install_python }}
       displayName: Install Python
 
     - script: ./configure
