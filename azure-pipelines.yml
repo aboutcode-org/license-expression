@@ -136,13 +136,13 @@ jobs:
               sudo echo 'APT::Default-Release "stable";' | tee -a /etc/apt/apt.conf.d/00local
               sudo apt-get -t testing install python3.6 python3.6-dev
 
-    - template: etc/ci/azure-container.yml
+    - template: etc/ci/azure-container-manylinux.yml
       parameters:
           name: Manylinux1_64_py27
           container: 'quay.io/pypa/manylinux1_x86_64:latest'
           python_version: '2.7'
 
-    - template: etc/ci/azure-container.yml
+    - template: etc/ci/azure-container-manylinux.yml
       parameters:
           name: Manylinux1_64_py36
           container: 'quay.io/pypa/manylinux1_x86_64:latest'
