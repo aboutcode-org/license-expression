@@ -19,10 +19,9 @@ jobs:
       displayName: Install sudo
 
     - script: |
-        sudo yum groupinstall -y 'development tools'
         sudo yum install -y epel-release
+        sudo yum groupinstall -y development
         sudo yum install -y \
-            gcc \
             openssl openssl-devel \
             sqlite-devel zlib-dev xz-devel bzip2-devel \
             bzip2 tar unzip zip \
