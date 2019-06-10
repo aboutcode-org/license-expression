@@ -83,7 +83,7 @@ jobs:
           container: 'centos:7'
           python_version: '2.7'
           package_manager: yum 
-          test_command: 'sudo yum update'
+          required_packages: 'epel-release'
 
     - template: etc/ci/azure-container.yml
       parameters:
@@ -91,8 +91,7 @@ jobs:
           container: 'debian:stretch'
           python_version: '2.7'
           package_manager: apt-get
-          test_command: 'sudo apt-get update'
-
+          required_packages: 'python-dev'
 
 
 

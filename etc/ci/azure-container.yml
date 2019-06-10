@@ -3,7 +3,7 @@ parameters:
   container: ''
   python_version: ''
   package_manager: ''
-  test_command: ''
+  required_packages: ''
 
 jobs:
 - job: ${{ parameters.name }}
@@ -17,11 +17,12 @@ jobs:
 
   steps:
     - script: /tmp/docker exec -t -u 0 ${{ parameters.name }} $(Build.SourcesDirectory)/etc/ci/install_sudo.sh ${{ parameters.package_manager }}
+      displayName: Install sudo
+    - script: sudo ${{ parameters.package_manager }} install -y ${{ parameters.required_packages }}
+      displayName: Install required packages
     - script: |
        set -ex
-       whoami
        echo "Testing with Python ${{ parameters.python_version }}"
        uname -a
-       ${{ parameters.test_command }}
        
        
