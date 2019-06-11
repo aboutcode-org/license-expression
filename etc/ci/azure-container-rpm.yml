@@ -3,6 +3,14 @@ parameters:
   container: ''
   python_version: ''
   install_python: ''
+  install_packages: |
+    sudo yum groupinstall -y development
+    sudo yum install -y \
+        openssl openssl-devel \
+        sqlite-devel zlib-dev xz-devel bzip2-devel \
+        bzip2 tar unzip zip \
+        libxml2-devel libxslt-devel
+  package_manager: yum
 
 jobs:
 - job: ${{ parameters.name }}
@@ -15,16 +23,10 @@ jobs:
     options: '--name ${{ parameters.name }} -v /usr/bin/docker:/tmp/docker:ro'
 
   steps:
-    - script: /tmp/docker exec -t -u 0 ${{ parameters.name }} $(Build.SourcesDirectory)/etc/ci/install_sudo.sh yum
+    - script: /tmp/docker exec -t -u 0 ${{ parameters.name }} $(Build.SourcesDirectory)/etc/ci/install_sudo.sh ${{ parameters.package_manager }}
       displayName: Install sudo
 
-    - script: |
-        sudo yum groupinstall -y development
-        sudo yum install -y \
-            openssl openssl-devel \
-            sqlite-devel zlib-dev xz-devel bzip2-devel \
-            bzip2 tar unzip zip \
-            libxml2-devel libxslt-devel
+    - script: ${{ parameters.install_packages }}
       displayName: Install required packages
 
     - script: ${{ parameters.install_python }}
