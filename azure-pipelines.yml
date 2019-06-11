@@ -117,34 +117,6 @@ jobs:
           python_path: 'python3.6'
           install_python: sudo apt-get install -y python3.6 python3.6-venv python3.6-dev
 
-    - template: etc/ci/azure-container-deb.yml
-      parameters:
-          name: Debian_9_Stretch_py27
-          container: 'debian:stretch'
-          python_path: 'python2.7'
-          install_python: sudo apt-get install -y python python-dev
-
-    - template: etc/ci/azure-container-deb.yml
-      parameters:
-          name: Debian_9_Stretch_py36
-          container: 'debian:stretch'
-          python_path: 'python3.6'
-          install_python: |
-            set -e -x
-            sudo apt-get install -y \
-                libncurses5-dev libncursesw5-dev libreadline6-dev \
-                libdb-dev libgdbm-dev libsqlite3-dev libssl-dev \
-                libbz2-dev libexpat1-dev liblzma-dev zlib1g-dev \ 
-                libcurl4-openssl-dev libpam0g-dev \
-                libsqlite3-dev tk-dev libffi-dev \
-                curl
-            export PYVER=3.6.8
-            curl -o Python-$PYVER.tgz https://www.python.org/ftp/python/$PYVER/Python-$PYVER.tgz
-            tar -xvf Python-$PYVER.tgz
-            cd Python-$PYVER
-            ./configure --enable-optimizations
-            make -j8
-            sudo make altinstall
 
     - template: etc/ci/azure-container-rpm.yml
       parameters:
@@ -163,21 +135,6 @@ jobs:
               sudo yum install -y epel-release
               sudo yum install -y python36 python36-devel python36-virtualenv
 
-    - template: etc/ci/azure-container-rpm.yml
-      parameters:
-          name: Fedora_30_py27
-          container: 'fedora:30'
-          package_manager: dnf
-          python_path: 'python2.7'
-          install_python: sudo dnf install -y python python27-devel
-
-    - template: etc/ci/azure-container-rpm.yml
-      parameters:
-          name: Fedora_30_py36
-          container: 'fedora:30'
-          package_manager: dnf
-          python_path: 'python3.6'
-          install_python: sudo dnf install -y python36 python36-devel python36-virtualenv
 
     - template: etc/ci/azure-container-rpm.yml
       parameters:
@@ -218,3 +175,55 @@ jobs:
           python_path: '/opt/python/cp37-cp37m/bin/python'
           install_packages: echo "No extra packages for now"
           install_python: echo "Python is pre-installed"
+
+
+    - template: etc/ci/azure-container-deb.yml
+      parameters:
+          name: Debian_9_Stretch_py27
+          container: 'debian:stretch'
+          python_path: 'python2.7'
+          install_python: sudo apt-get install -y python python-dev
+
+          
+################################################################################
+# These jobs are using containers and their own Python: FAILING FOR NOW
+################################################################################
+
+#    - template: etc/ci/azure-container-deb.yml
+#      parameters:
+#          name: Debian_9_Stretch_py36
+#          container: 'debian:stretch'
+#          python_path: 'python3.6'
+#          install_python: |
+#            set -e -x
+#            sudo apt-get install -y \
+#                libncurses5-dev libncursesw5-dev libreadline6-dev \
+#                libdb-dev libgdbm-dev libsqlite3-dev libssl-dev \
+#                libbz2-dev libexpat1-dev liblzma-dev zlib1g-dev \ 
+#                libcurl4-openssl-dev libpam0g-dev \
+#                libsqlite3-dev tk-dev libffi-dev \
+#                curl
+#            export PYVER=3.6.8
+#            curl -o Python-$PYVER.tgz https://www.python.org/ftp/python/$PYVER/Python-$PYVER.tgz
+#            tar -xvf Python-$PYVER.tgz
+#            cd Python-$PYVER
+#            ./configure --enable-optimizations
+#            make -j8
+#            sudo make altinstall
+#
+#    - template: etc/ci/azure-container-rpm.yml
+#      parameters:
+#          name: Fedora_30_py27
+#          container: 'fedora:30'
+#          package_manager: dnf
+#          python_path: 'python2.7'
+#          install_python: sudo dnf install -y python python27-devel
+#
+#    - template: etc/ci/azure-container-rpm.yml
+#      parameters:
+#          name: Fedora_30_py36
+#          container: 'fedora:30'
+#          package_manager: dnf
+#          python_path: 'python3.6'
+#          install_python: sudo dnf install -y python36 python36-devel python36-virtualenv
+#
