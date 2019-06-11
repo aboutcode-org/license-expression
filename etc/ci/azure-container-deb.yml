@@ -20,7 +20,7 @@ jobs:
 
     - script: |
         sudo apt-get -y update
-        apt-get -y install \
+        sudo apt-get -y install \
             build-essential \
             xz-utils zlib1g bzip2 libbz2-1.0 tar \
             sqlite3 libxml2-dev libxslt1-dev
