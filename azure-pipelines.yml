@@ -1,4 +1,3 @@
-# See also https://docs.microsoft.com/en-us/azure/devops/pipelines/scripts/cross-platform-scripting?view=azure-devops&tabs=yaml
 trigger:
     branches:
         include: ['*']
@@ -10,15 +9,20 @@ pr:
         include: ['*']
 
 jobs:
+
+################################################################################
+# These jobs are using VMs and Azure-provided Pythons
+################################################################################
+
     - template: etc/ci/azure-posix.yml
       parameters:
           name: Ubuntu_16
           image_name: ubuntu-16.04
-          matrix:
+          matrix:   
               Python_27_Linux:
-                  python_path: 'python2.7'
+                  python_version: '2.7'
               Python_36_Linux:
-                  python_path: 'python3.6'
+                  python_version: '3.6'
               Python_37_Linux:
                   python_version: '3.7'
 
@@ -28,9 +32,9 @@ jobs:
           image_name: macos-10.13
           matrix:
               Python_27_Mac:
-                  python_path: 'python2.7'
+                  python_version: '2.7'
               Python_36_Mac:
-                  python_path: 'python3.6'
+                  python_version: '3.6'
               Python_37_Mac:
                   python_version: '3.7'
 
@@ -40,9 +44,9 @@ jobs:
           image_name: macos-10.14
           matrix:
               Python_27_Mac:
-                  python_path: 'python2.7'
+                  python_version: '2.7'
               Python_36_Mac:
-                  python_path: 'python3.6'
+                  python_version: '3.6'
               Python_37_Mac:
                   python_version: '3.7'
 
@@ -52,10 +56,10 @@ jobs:
           image_name: vs2017-win2016
           matrix:
               Python_27_Win32:
-                  python_path: 'python2.7'
+                  python_version: '2.7'
                   python_architecture: 'x86'
               Python_36_Win32:
-                  python_path: 'python3.6'
+                  python_version: '3.6'
                   python_architecture: 'x86'
               Python_37_Win32:
                   python_version: '3.7.3'
@@ -67,14 +71,19 @@ jobs:
           image_name: vs2017-win2016
           matrix:
               Python_27_Win64:
-                  python_path: 'python2.7'
+                  python_version: '2.7'
                   python_architecture: 'x64'
               Python_36_Win64:
-                  python_path: 'python3.6' 
+                  python_version: '3.6' 
                   python_architecture: 'x64'
               Python_37_Win64:
                   python_version: '3.7'
                   python_architecture: 'x64'
+
+
+################################################################################
+# These jobs are using containers and their own Python
+################################################################################
 
     - template: etc/ci/azure-container-deb.yml
       parameters:
@@ -209,4 +218,3 @@ jobs:
           python_path: '/opt/python/cp37-cp37m/bin/python'
           install_packages: echo "No extra packages for now"
           install_python: echo "Python is pre-installed"
-
