@@ -10,128 +10,126 @@ pr:
         include: ['*']
 
 jobs:
-#    - template: etc/ci/azure-posix.yml
-#      parameters:
-#          name: Ubuntu_16
-#          image_name: ubuntu-16.04
-#          matrix:
-#              Python_27_Linux:
-#                  python_version: '2.7'
-#              Python_36_Linux:
-#                  python_version: '3.6'
-#              Python_37_Linux:
-#                  python_version: '3.7'
-#
-#    - template: etc/ci/azure-posix.yml
-#      parameters:
-#          name: macOS_1013
-#          image_name: macos-10.13
-#          matrix:
-#              Python_27_Mac:
-#                  python_version: '2.7'
-#              Python_36_Mac:
-#                  python_version: '3.6'
-#              Python_37_Mac:
-#                  python_version: '3.7'
-#
-#    - template: etc/ci/azure-posix.yml
-#      parameters:
-#          name: macOS_1014
-#          image_name: macos-10.14
-#          matrix:
-#              Python_27_Mac:
-#                  python_version: '2.7'
-#              Python_36_Mac:
-#                  python_version: '3.6'
-#              Python_37_Mac:
-#                  python_version: '3.7'
-#
-#    - template: etc/ci/azure-win.yml
-#      parameters:
-#          name: Windows_2016_32
-#          image_name: vs2017-win2016
-#          matrix:
-#              Python_27_Win32:
-#                  python_version: '2.7'
-#                  python_architecture: 'x86'
-#              Python_36_Win32:
-#                  python_version: '3.6'
-#                  python_architecture: 'x86'
-#              Python_37_Win32:
-#                  python_version: '3.7.3'
-#                  python_architecture: 'x86'
-#
-#    - template: etc/ci/azure-win.yml
-#      parameters:
-#          name: Windows_2016_64
-#          image_name: vs2017-win2016
-#          matrix:
-#              Python_27_Win64:
-#                  python_version: '2.7'
-#                  python_architecture: 'x64'
-#              Python_36_Win64:
-#                  python_version: '3.6' 
-#                  python_architecture: 'x64'
-#              Python_37_Win64:
-#                  python_version: '3.7'
-#                  python_architecture: 'x64'
-#
-#
-#
-#    - template: etc/ci/azure-container-deb.yml
-#      parameters:
-#          name: Ubuntu_16_xenial_py27
-#          container: 'ubuntu:xenial'
-#          python_version: '2.7'
-#          install_python: sudo apt-get install -y python python-dev
+    - template: etc/ci/azure-posix.yml
+      parameters:
+          name: Ubuntu_16
+          image_name: ubuntu-16.04
+          matrix:
+              Python_27_Linux:
+                  python_path: 'python2.7'
+              Python_36_Linux:
+                  python_path: 'python3.6'
+              Python_37_Linux:
+                  python_version: '3.7'
+
+    - template: etc/ci/azure-posix.yml
+      parameters:
+          name: macOS_1013
+          image_name: macos-10.13
+          matrix:
+              Python_27_Mac:
+                  python_path: 'python2.7'
+              Python_36_Mac:
+                  python_path: 'python3.6'
+              Python_37_Mac:
+                  python_version: '3.7'
+
+    - template: etc/ci/azure-posix.yml
+      parameters:
+          name: macOS_1014
+          image_name: macos-10.14
+          matrix:
+              Python_27_Mac:
+                  python_path: 'python2.7'
+              Python_36_Mac:
+                  python_path: 'python3.6'
+              Python_37_Mac:
+                  python_version: '3.7'
+
+    - template: etc/ci/azure-win.yml
+      parameters:
+          name: Windows_2016_32
+          image_name: vs2017-win2016
+          matrix:
+              Python_27_Win32:
+                  python_path: 'python2.7'
+                  python_architecture: 'x86'
+              Python_36_Win32:
+                  python_path: 'python3.6'
+                  python_architecture: 'x86'
+              Python_37_Win32:
+                  python_version: '3.7.3'
+                  python_architecture: 'x86'
+
+    - template: etc/ci/azure-win.yml
+      parameters:
+          name: Windows_2016_64
+          image_name: vs2017-win2016
+          matrix:
+              Python_27_Win64:
+                  python_path: 'python2.7'
+                  python_architecture: 'x64'
+              Python_36_Win64:
+                  python_path: 'python3.6' 
+                  python_architecture: 'x64'
+              Python_37_Win64:
+                  python_version: '3.7'
+                  python_architecture: 'x64'
+
+    - template: etc/ci/azure-container-deb.yml
+      parameters:
+          name: Ubuntu_16_xenial_py27
+          container: 'ubuntu:xenial'
+          python_path: 'python2.7'
+          install_python: sudo apt-get install -y python python-dev
 
     - template: etc/ci/azure-container-deb.yml
       parameters:
           name: Ubuntu_16_xenial_py36
           container: 'ubuntu:xenial'
-          python_version: '3.6'
+          python_path: 'python3.6'
           install_python: |
              sudo apt-get -y install software-properties-common
              sudo add-apt-repository -y ppa:deadsnakes
              sudo apt-get -y update
              sudo apt-get install -y python3.6 python3.6-venv python3.6-dev
 
-#    - template: etc/ci/azure-container-deb.yml
-#      parameters:
-#          name: Ubuntu_18_Bionic_py27
-#          container: 'ubuntu:bionic'
-#          python_version: '2.7'
-#          install_python: sudo apt-get install -y python python-dev
+    - template: etc/ci/azure-container-deb.yml
+      parameters:
+          name: Ubuntu_18_Bionic_py27
+          container: 'ubuntu:bionic'
+          python_path: 'python2.7'
+          install_python: sudo apt-get install -y python python-dev
 
     - template: etc/ci/azure-container-deb.yml
       parameters:
           name: Ubuntu_18_Bionic_py36
           container: 'ubuntu:bionic'
-          python_version: '3.6'
+          python_path: 'python3.6'
           install_python: sudo apt-get install -y python3.6 python3.6-venv python3.6-dev
 
-#              set -ex
-#              sudo apt-get -y install software-properties-common
-#              sudo add-apt-repository -y ppa:deadsnakes
-#              sudo apt-get -y update
-#              sudo apt-get install -y python3.6 python3.6-venv python3.6-dev
-#
-#    - template: etc/ci/azure-container-deb.yml
-#      parameters:
-#          name: Debian_9_Stretch_py27
-#          container: 'debian:stretch'
-#          python_version: '2.7'
-#          install_python: sudo apt-get install -y python python-dev
+    - template: etc/ci/azure-container-deb.yml
+      parameters:
+          name: Debian_9_Stretch_py27
+          container: 'debian:stretch'
+          python_path: 'python2.7'
+          install_python: sudo apt-get install -y python python-dev
 
     - template: etc/ci/azure-container-deb.yml
       parameters:
           name: Debian_9_Stretch_py36
           container: 'debian:stretch'
-          python_version: '3.6'
+          python_path: 'python3.6'
           install_python: |
-            set -ex
-            sudo apt-get install -y curl
-            PYVER=3.6.8
+            set -e -x
+            sudo apt-get install -y \
+                libncurses5-dev libncursesw5-dev libreadline6-dev \
+                libdb-dev libgdbm-dev libsqlite3-dev libssl-dev \
+                libbz2-dev libexpat1-dev liblzma-dev zlib1g-dev \ 
+                libcurl4-openssl-dev libpam0g-dev \
+                libsqlite3-dev tk-dev libffi-dev \
+                curl
+            export PYVER=3.6.8
             curl -o Python-$PYVER.tgz https://www.python.org/ftp/python/$PYVER/Python-$PYVER.tgz
             tar -xvf Python-$PYVER.tgz
             cd Python-$PYVER
@@ -139,58 +137,76 @@ jobs:
             make -j8
             sudo make altinstall
 
+    - template: etc/ci/azure-container-rpm.yml
+      parameters:
+          name: CentOS7_py27
+          container: 'centos:7'
+          python_path: 'python2.7'
+          install_python: sudo yum install -y python python27-devel
 
-#              set -ex
-#              sudo apt-get -y install software-properties-common
-#              sudo add-apt-repository -y ppa:deadsnakes
-#              sudo apt-get -y update
-#              sudo apt-get install -y python3.6 python3.6-venv python3.6-dev
-#
-#              echo "deb http://ftp.debian.org/debian testing main" | sudo tee -a /etc/apt/sources.list
-#              echo 'APT::Default-Release "stable";' | sudo tee -a /etc/apt/apt.conf.d/00local
-#              sudo apt-get -y update
-#              # 3.6 is no longer in testing
-#              sudo apt-get install -t testing python3.7 python3.7-dev
-#
-#    - template: etc/ci/azure-container-rpm.yml
-#      parameters:
-#          name: CentOS7_py27
-#          container: 'centos:7'
-#          python_version: '2.7'
-#          install_python: sudo yum install -y python python27-devel
-#
-#    - template: etc/ci/azure-container-rpm.yml
-#      parameters:
-#          name: CentOS7_py36
-#          container: 'centos:7'
-#          python_version: '3.6'
-#          install_python: |
-#              set -ex
-#              sudo yum install -y epel-release
-#              sudo yum install -y python36 python36-devel python36-virtualenv
-#
-#    - template: etc/ci/azure-container-rpm.yml
-#      parameters:
-#          name: Fedora_30_py27
-#          container: 'fedora:30'
-#          python_version: '2.7'
-#          install_python: sudo dnf install -y python python27-devel
-#
-#    - template: etc/ci/azure-container-rpm.yml
-#      parameters:
-#          name: Fedora_30_py36
-#          container: 'fedora:30'
-#          python_version: '3.6'
-#          install_python: sudo dnf install -y python36 python36-devel python36-virtualenv
-#
-#    - template: etc/ci/azure-container-manylinux.yml
-#      parameters:
-#          name: Manylinux1_64_py27
-#          container: 'quay.io/pypa/manylinux1_x86_64:latest'
-#          python_version: '2.7'
-#
-#    - template: etc/ci/azure-container-manylinux.yml
-#      parameters:
-#          name: Manylinux1_64_py36
-#          container: 'quay.io/pypa/manylinux1_x86_64:latest'
-#          python_version: '3.6'
+    - template: etc/ci/azure-container-rpm.yml
+      parameters:
+          name: CentOS7_py36
+          container: 'centos:7'
+          python_path: 'python3.6'
+          install_python: |
+              set -e -x
+              sudo yum install -y epel-release
+              sudo yum install -y python36 python36-devel python36-virtualenv
+
+    - template: etc/ci/azure-container-rpm.yml
+      parameters:
+          name: Fedora_30_py27
+          container: 'fedora:30'
+          package_manager: dnf
+          python_path: 'python2.7'
+          install_python: sudo dnf install -y python python27-devel
+
+    - template: etc/ci/azure-container-rpm.yml
+      parameters:
+          name: Fedora_30_py36
+          container: 'fedora:30'
+          package_manager: dnf
+          python_path: 'python3.6'
+          install_python: sudo dnf install -y python36 python36-devel python36-virtualenv
+
+    - template: etc/ci/azure-container-rpm.yml
+      parameters:
+          name: Manylinux1_64_py27
+          container: 'quay.io/pypa/manylinux1_x86_64:latest'
+          python_path: '/opt/python/cp27-cp27mu/bin/python'
+          install_packages: echo "No extra packages for now"
+          install_python: echo "Python is pre-installed"
+
+    - template: etc/ci/azure-container-rpm.yml
+      parameters:
+          name: Manylinux1_64_py36
+          container: 'quay.io/pypa/manylinux1_x86_64:latest'
+          python_path: '/opt/python/cp36-cp36m/bin/python'
+          install_packages: echo "No extra packages for now"
+          install_python: echo "Python is pre-installed"
+
+    - template: etc/ci/azure-container-rpm.yml
+      parameters:
+          name: Manylinux2010_64_py27
+          container: 'quay.io/pypa/manylinux2010_x86_64:latest'
+          python_path: '/opt/python/cp27-cp27mu/bin/python'
+          install_packages: echo "No extra packages for now"
+          install_python: echo "Python is pre-installed"
+          
+    - template: etc/ci/azure-container-rpm.yml
+      parameters:
+          name: Manylinux2010_64_py36
+          container: 'quay.io/pypa/manylinux2010_x86_64:latest'
+          python_path: '/opt/python/cp36-cp36m/bin/python'
+          install_packages: echo "No extra packages for now"
+          install_python: echo "Python is pre-installed"
+
+    - template: etc/ci/azure-container-rpm.yml
+      parameters:
+          name: Manylinux2010_64_py37
+          container: 'quay.io/pypa/manylinux2010_x86_64:latest'
+          python_path: '/opt/python/cp37-cp37m/bin/python'
+          install_packages: echo "No extra packages for now"
+          install_python: echo "Python is pre-installed"
+

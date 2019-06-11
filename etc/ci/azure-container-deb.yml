@@ -1,17 +1,17 @@
 parameters:
   name: ''
   container: ''
-  python_version: ''
+  python_path: ''
+  package_manager: apt-get
   install_python: ''
   install_packages: |
-    set -ex
+    set -e -x
     sudo apt-get -y update
     sudo apt-get -y install \
         build-essential \
         xz-utils zlib1g bzip2 libbz2-1.0 tar \
         sqlite3 libxml2-dev libxslt1-dev \
-        software-properties-common
-  package_manager: apt-get
+        software-properties-common openssl
 
 jobs:
 - job: ${{ parameters.name }}
@@ -33,7 +33,7 @@ jobs:
     - script: ${{ parameters.install_python }}
       displayName: Install Python
 
-    - script: PYTHON_EXE=python${{ parameters.python_version }} ./configure
+    - script: PYTHON_EXE=${{ parameters.python_path }} ./configure
       displayName: 'Configure'
 
     - script: bin/py.test -vvs

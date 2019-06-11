@@ -1,16 +1,17 @@
 parameters:
   name: ''
   container: ''
-  python_version: ''
+  python_path: ''
+  package_manager: yum
   install_python: ''
   install_packages: |
+    set -e -x
     sudo yum groupinstall -y development
     sudo yum install -y \
         openssl openssl-devel \
-        sqlite-devel zlib-dev xz-devel bzip2-devel \
+        sqlite-devel zlib-devel xz-devel bzip2-devel \
         bzip2 tar unzip zip \
         libxml2-devel libxslt-devel
-  package_manager: yum
 
 jobs:
 - job: ${{ parameters.name }}
@@ -32,7 +33,7 @@ jobs:
     - script: ${{ parameters.install_python }}
       displayName: Install Python
 
-    - script: PYTHON_EXE=python${{ parameters.python_version }} ./configure
+    - script: PYTHON_EXE=${{ parameters.python_path }} ./configure
       displayName: 'Configure'
 
     - script: bin/py.test -vvs
