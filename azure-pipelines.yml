@@ -76,33 +76,6 @@ jobs:
                   python_version: '3.7'
                   python_architecture: 'x64'
 
-    - template: etc/ci/azure-container-rpm.yml
-      parameters:
-          name: CentOS7_py27
-          container: 'centos:7'
-          python_version: '2.7'
-          install_python: sudo yum install -y python python27-devel
-
-    - template: etc/ci/azure-container-rpm.yml
-      parameters:
-          name: CentOS7_py36
-          container: 'centos:7'
-          python_version: '3.6'
-          install_python: sudo yum install -y python36 python36-devel python36-virtualenv
-
-    - template: etc/ci/azure-container-rpm.yml
-      parameters:
-          name: Fedora_30_py27
-          container: 'fedora:30'
-          python_version: '2.7'
-          install_python: sudo dnf install -y python python27-devel
-
-    - template: etc/ci/azure-container-rpm.yml
-      parameters:
-          name: Fedora_30_py36
-          container: 'fedora:30'
-          python_version: '3.6'
-          install_python: sudo dnf install -y python36 python36-devel python36-virtualenv
 
     - template: etc/ci/azure-container-deb.yml
       parameters:
@@ -116,7 +89,11 @@ jobs:
           name: Ubuntu_18_Bionic_py36
           container: 'ubuntu:bionic'
           python_version: '3.6'
-          install_python: sudo apt-get install -y python3.6 python3.6-venv python3.6-dev
+          install_python: |
+              apt-get -y install software-properties-common
+              add-apt-repository -y ppa:deadsnakes
+              apt-get -y update
+              sudo apt-get install -y python3.6 python3.6-venv python3.6-dev
 
     - template: etc/ci/azure-container-deb.yml
       parameters:
@@ -131,19 +108,47 @@ jobs:
           container: 'debian:stretch'
           python_version: '3.6'
           install_python: |
-              sudo echo "" >> /etc/apt/sources.list
-              sudo echo "deb http://ftp.de.debian.org/debian testing main" >> /etc/apt/sources.list
-              sudo echo 'APT::Default-Release "stable";' | tee -a /etc/apt/apt.conf.d/00local
-              sudo apt-get -t testing install python3.6 python3.6-dev
+              sudo echo "deb http://ftp.debian.org/debian testing main" >> /etc/apt/sources.list
+              sudo apt-get update
+              sudo apt-get install -t testing python3.6 python3.6-dev
 
-    - template: etc/ci/azure-container-manylinux.yml
+
+    - template: etc/ci/azure-container-rpm.yml
       parameters:
-          name: Manylinux1_64_py27
-          container: 'quay.io/pypa/manylinux1_x86_64:latest'
+          name: CentOS7_py27
+          container: 'centos:7'
           python_version: '2.7'
+          install_python: sudo yum install -y python python27-devel
 
-    - template: etc/ci/azure-container-manylinux.yml
+    - template: etc/ci/azure-container-rpm.yml
       parameters:
-          name: Manylinux1_64_py36
-          container: 'quay.io/pypa/manylinux1_x86_64:latest'
+          name: CentOS7_py36
+          container: 'centos:7'
           python_version: '3.6'
+          install_python: sudo yum install -y python36 python36-devel python36-virtualenv
+
+#    - template: etc/ci/azure-container-rpm.yml
+#      parameters:
+#          name: Fedora_30_py27
+#          container: 'fedora:30'
+#          python_version: '2.7'
+#          install_python: sudo dnf install -y python python27-devel
+#
+#    - template: etc/ci/azure-container-rpm.yml
+#      parameters:
+#          name: Fedora_30_py36
+#          container: 'fedora:30'
+#          python_version: '3.6'
+#          install_python: sudo dnf install -y python36 python36-devel python36-virtualenv
+#
+#    - template: etc/ci/azure-container-manylinux.yml
+#      parameters:
+#          name: Manylinux1_64_py27
+#          container: 'quay.io/pypa/manylinux1_x86_64:latest'
+#          python_version: '2.7'
+#
+#    - template: etc/ci/azure-container-manylinux.yml
+#      parameters:
+#          name: Manylinux1_64_py36
+#          container: 'quay.io/pypa/manylinux1_x86_64:latest'
+#          python_version: '3.6'

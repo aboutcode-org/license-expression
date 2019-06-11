@@ -34,3 +34,7 @@ jobs:
 
     - script: bin/py.test -vvs
       displayName: 'Run tests'
+
+      
+apt-get -o DPkg::Options::="--force-confold" install -y sudo
+      
