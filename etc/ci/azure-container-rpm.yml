@@ -19,7 +19,6 @@ jobs:
       displayName: Install sudo
 
     - script: |
-        sudo yum install -y epel-release
         sudo yum groupinstall -y development
         sudo yum install -y \
             openssl openssl-devel \
@@ -31,7 +30,7 @@ jobs:
     - script: ${{ parameters.install_python }}
       displayName: Install Python
 
-    - script: ./configure
+    - script: PYTHON_EXE=python${{ python_version }} ./configure
       displayName: 'Configure'
 
     - script: bin/py.test -vvs

@@ -90,9 +90,9 @@ jobs:
           container: 'ubuntu:bionic'
           python_version: '3.6'
           install_python: |
-              apt-get -y install software-properties-common
-              add-apt-repository -y ppa:deadsnakes
-              apt-get -y update
+              sudo apt-get -y install software-properties-common
+              sudo add-apt-repository -y ppa:deadsnakes
+              sudo apt-get -y update
               sudo apt-get install -y python3.6 python3.6-venv python3.6-dev
 
     - template: etc/ci/azure-container-deb.yml
@@ -125,7 +125,9 @@ jobs:
           name: CentOS7_py36
           container: 'centos:7'
           python_version: '3.6'
-          install_python: sudo yum install -y python36 python36-devel python36-virtualenv
+          install_python: |
+              sudo yum install -y epel-release
+              sudo yum install -y python36 python36-devel python36-virtualenv
 
 #    - template: etc/ci/azure-container-rpm.yml
 #      parameters:
