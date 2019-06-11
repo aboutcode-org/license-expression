@@ -30,7 +30,7 @@ jobs:
     - script: ${{ parameters.install_python }}
       displayName: Install Python
 
-    - script: PYTHON_EXE=python${{ python_version }} ./configure
+    - script: PYTHON_EXE=python${{ parameters.python_version }} ./configure
       displayName: 'Configure'
 
     - script: bin/py.test -vvs
