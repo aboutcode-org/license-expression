@@ -77,19 +77,40 @@ jobs:
 #                  python_architecture: 'x64'
 #
 #
+#
+#    - template: etc/ci/azure-container-deb.yml
+#      parameters:
+#          name: Ubuntu_16_xenial_py27
+#          container: 'ubuntu:xenial'
+#          python_version: '2.7'
+#          install_python: sudo apt-get install -y python python-dev
+
+    - template: etc/ci/azure-container-deb.yml
+      parameters:
+          name: Ubuntu_16_xenial_py36
+          container: 'ubuntu:xenial'
+          python_version: '3.6'
+          install_python: |
+             set -ex
+             sudo apt-get -y install software-properties-common
+             sudo add-apt-repository -y ppa:deadsnakes
+             sudo apt-get -y update
+             sudo apt-get install -y python3.6 python3.6-venv python3.6-dev
+
 #    - template: etc/ci/azure-container-deb.yml
 #      parameters:
 #          name: Ubuntu_18_Bionic_py27
 #          container: 'ubuntu:bionic'
 #          python_version: '2.7'
 #          install_python: sudo apt-get install -y python python-dev
-#
-#    - template: etc/ci/azure-container-deb.yml
-#      parameters:
-#          name: Ubuntu_18_Bionic_py36
-#          container: 'ubuntu:bionic'
-#          python_version: '3.6'
-#          install_python: |
+
+    - template: etc/ci/azure-container-deb.yml
+      parameters:
+          name: Ubuntu_18_Bionic_py36
+          container: 'ubuntu:bionic'
+          python_version: '3.6'
+          install_python: sudo apt-get install -y python3.6 python3.6-venv python3.6-dev
+
 #              set -ex
 #              sudo apt-get -y install software-properties-common
 #              sudo add-apt-repository -y ppa:deadsnakes
@@ -105,17 +126,22 @@ jobs:
 
     - template: etc/ci/azure-container-deb.yml
       parameters:
-          name: Debian_9_Stretch_py37
+          name: Debian_9_Stretch_py36
           container: 'debian:stretch'
-          python_version: '3.7'
+          python_version: '3.6'
           install_python: |
               set -ex
-              echo "deb http://ftp.debian.org/debian testing main" | sudo tee -a /etc/apt/sources.list
-              echo 'APT::Default-Release "stable";' | sudo tee -a /etc/apt/apt.conf.d/00local
+              sudo apt-get -y install software-properties-common
+              sudo add-apt-repository -y ppa:deadsnakes
               sudo apt-get -y update
-              # 3.6 is no longer in testing
-              sudo apt-get install -t testing python3.7 python3.7-dev
+              sudo apt-get install -y python3.6 python3.6-venv python3.6-dev
 
+#              echo "deb http://ftp.debian.org/debian testing main" | sudo tee -a /etc/apt/sources.list
+#              echo 'APT::Default-Release "stable";' | sudo tee -a /etc/apt/apt.conf.d/00local
+#              sudo apt-get -y update
+#              # 3.6 is no longer in testing
+#              sudo apt-get install -t testing python3.7 python3.7-dev
+#
 #    - template: etc/ci/azure-container-rpm.yml
 #      parameters:
 #          name: CentOS7_py27
