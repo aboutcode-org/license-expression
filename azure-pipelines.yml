@@ -108,10 +108,9 @@ jobs:
           container: 'debian:stretch'
           python_version: '3.6'
           install_python: |
-              sudo echo "deb http://ftp.debian.org/debian testing main" >> /etc/apt/sources.list
+              echo "deb http://ftp.debian.org/debian testing main" | sudo tee -a /etc/apt/sources.list
               sudo apt-get update
               sudo apt-get install -t testing python3.6 python3.6-dev
-
 
     - template: etc/ci/azure-container-rpm.yml
       parameters:
