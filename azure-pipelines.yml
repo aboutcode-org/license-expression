@@ -130,10 +130,11 @@ jobs:
           python_version: '3.6'
           install_python: |
             set -ex
-            sudo apt-get install curl
-            curl https://www.python.org/ftp/python/3.6.8/Python-3.6.8.tgz
-            tar -xvf Python-3.6.8.tgz
-            cd Python-3.6.8
+            sudo apt-get install -y curl
+            PYVER=3.6.8
+            curl -o Python-$PYVER.tgz https://www.python.org/ftp/python/$PYVER/Python-$PYVER.tgz
+            tar -xvf Python-$PYVER.tgz
+            cd Python-$PYVER
             ./configure --enable-optimizations
             make -j8
             sudo make altinstall
