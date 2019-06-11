@@ -10,71 +10,71 @@ pr:
         include: ['*']
 
 jobs:
-    - template: etc/ci/azure-posix.yml
-      parameters:
-          name: Ubuntu_16
-          image_name: ubuntu-16.04
-          matrix:
-              Python_27_Linux:
-                  python_version: '2.7'
-              Python_36_Linux:
-                  python_version: '3.6'
-              Python_37_Linux:
-                  python_version: '3.7'
-
-    - template: etc/ci/azure-posix.yml
-      parameters:
-          name: macOS_1013
-          image_name: macos-10.13
-          matrix:
-              Python_27_Mac:
-                  python_version: '2.7'
-              Python_36_Mac:
-                  python_version: '3.6'
-              Python_37_Mac:
-                  python_version: '3.7'
-
-    - template: etc/ci/azure-posix.yml
-      parameters:
-          name: macOS_1014
-          image_name: macos-10.14
-          matrix:
-              Python_27_Mac:
-                  python_version: '2.7'
-              Python_36_Mac:
-                  python_version: '3.6'
-              Python_37_Mac:
-                  python_version: '3.7'
-
-    - template: etc/ci/azure-win.yml
-      parameters:
-          name: Windows_2016_32
-          image_name: vs2017-win2016
-          matrix:
-              Python_27_Win32:
-                  python_version: '2.7'
-                  python_architecture: 'x86'
-              Python_36_Win32:
-                  python_version: '3.6'
-                  python_architecture: 'x86'
-              Python_37_Win32:
-                  python_version: '3.7.3'
-                  python_architecture: 'x86'
-
-    - template: etc/ci/azure-win.yml
-      parameters:
-          name: Windows_2016_64
-          image_name: vs2017-win2016
-          matrix:
-              Python_27_Win64:
-                  python_version: '2.7'
-                  python_architecture: 'x64'
-              Python_36_Win64:
-                  python_version: '3.6' 
-                  python_architecture: 'x64'
-              Python_37_Win64:
-                  python_version: '3.7'
-                  python_architecture: 'x64'
+#    - template: etc/ci/azure-posix.yml
+#      parameters:
+#          name: Ubuntu_16
+#          image_name: ubuntu-16.04
+#          matrix:
+#              Python_27_Linux:
+#                  python_version: '2.7'
+#              Python_36_Linux:
+#                  python_version: '3.6'
+#              Python_37_Linux:
+#                  python_version: '3.7'
+#
+#    - template: etc/ci/azure-posix.yml
+#      parameters:
+#          name: macOS_1013
+#          image_name: macos-10.13
+#          matrix:
+#              Python_27_Mac:
+#                  python_version: '2.7'
+#              Python_36_Mac:
+#                  python_version: '3.6'
+#              Python_37_Mac:
+#                  python_version: '3.7'
+#
+#    - template: etc/ci/azure-posix.yml
+#      parameters:
+#          name: macOS_1014
+#          image_name: macos-10.14
+#          matrix:
+#              Python_27_Mac:
+#                  python_version: '2.7'
+#              Python_36_Mac:
+#                  python_version: '3.6'
+#              Python_37_Mac:
+#                  python_version: '3.7'
+#
+#    - template: etc/ci/azure-win.yml
+#      parameters:
+#          name: Windows_2016_32
+#          image_name: vs2017-win2016
+#          matrix:
+#              Python_27_Win32:
+#                  python_version: '2.7'
+#                  python_architecture: 'x86'
+#              Python_36_Win32:
+#                  python_version: '3.6'
+#                  python_architecture: 'x86'
+#              Python_37_Win32:
+#                  python_version: '3.7.3'
+#                  python_architecture: 'x86'
+#
+#    - template: etc/ci/azure-win.yml
+#      parameters:
+#          name: Windows_2016_64
+#          image_name: vs2017-win2016
+#          matrix:
+#              Python_27_Win64:
+#                  python_version: '2.7'
+#                  python_architecture: 'x64'
+#              Python_36_Win64:
+#                  python_version: '3.6' 
+#                  python_architecture: 'x64'
+#              Python_37_Win64:
+#                  python_version: '3.7'
+#                  python_architecture: 'x64'
 
 
     - template: etc/ci/azure-container-deb.yml
@@ -90,6 +90,7 @@ jobs:
           container: 'ubuntu:bionic'
           python_version: '3.6'
           install_python: |
+              set -ex
               sudo apt-get -y install software-properties-common
               sudo add-apt-repository -y ppa:deadsnakes
               sudo apt-get -y update
@@ -104,13 +105,15 @@ jobs:
 
     - template: etc/ci/azure-container-deb.yml
       parameters:
-          name: Debian_9_Stretch_py36
+          name: Debian_9_Stretch_py37
           container: 'debian:stretch'
-          python_version: '3.6'
+          python_version: '3.7'
           install_python: |
+              set -ex
               echo "deb http://ftp.debian.org/debian testing main" | sudo tee -a /etc/apt/sources.list
               sudo apt-get update
-              sudo apt-get install -t testing python3.6 python3.6-dev
+              # 3.6 is no longer in testing
+              sudo apt-get install -t testing python3.7 python3.7-dev
 
     - template: etc/ci/azure-container-rpm.yml
       parameters:
@@ -125,6 +128,7 @@ jobs:
           container: 'centos:7'
           python_version: '3.6'
           install_python: |
+              set -ex
               sudo yum install -y epel-release
               sudo yum install -y python36 python36-devel python36-virtualenv
 
