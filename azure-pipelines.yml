@@ -19,11 +19,11 @@ jobs:
           name: Ubuntu_16
           image_name: ubuntu-16.04
           matrix:   
-              Python_27_Linux:
+              py27:
                   python_version: '2.7'
-              Python_36_Linux:
+              py36:
                   python_version: '3.6'
-              Python_37_Linux:
+              py37:
                   python_version: '3.7'
 
     - template: etc/ci/azure-posix.yml
@@ -31,11 +31,11 @@ jobs:
           name: macOS_1013
           image_name: macos-10.13
           matrix:
-              Python_27_Mac:
+              py27:
                   python_version: '2.7'
-              Python_36_Mac:
+              py36:
                   python_version: '3.6'
-              Python_37_Mac:
+              py37:
                   python_version: '3.7'
 
     - template: etc/ci/azure-posix.yml
@@ -43,40 +43,40 @@ jobs:
           name: macOS_1014
           image_name: macos-10.14
           matrix:
-              Python_27_Mac:
+              py27:
                   python_version: '2.7'
-              Python_36_Mac:
+              py36:
                   python_version: '3.6'
-              Python_37_Mac:
+              py37:
                   python_version: '3.7'
 
     - template: etc/ci/azure-win.yml
       parameters:
-          name: Windows_2016_32
+          name: Win_2016_32
           image_name: vs2017-win2016
           matrix:
-              Python_27_Win32:
+              py27:
                   python_version: '2.7'
                   python_architecture: 'x86'
-              Python_36_Win32:
+              py36:
                   python_version: '3.6'
                   python_architecture: 'x86'
-              Python_37_Win32:
+              py37:
                   python_version: '3.7.3'
                   python_architecture: 'x86'
 
     - template: etc/ci/azure-win.yml
       parameters:
-          name: Windows_2016_64
+          name: Win_2016_64
           image_name: vs2017-win2016
           matrix:
-              Python_27_Win64:
+              py27:
                   python_version: '2.7'
                   python_architecture: 'x64'
-              Python_36_Win64:
+              py36:
                   python_version: '3.6' 
                   python_architecture: 'x64'
-              Python_37_Win64:
+              py37:
                   python_version: '3.7'
                   python_architecture: 'x64'
 
@@ -211,19 +211,19 @@ jobs:
 #            make -j8
 #            sudo make altinstall
 #
-#    - template: etc/ci/azure-container-rpm.yml
-#      parameters:
-#          name: Fedora_30_py27
-#          container: 'fedora:30'
-#          package_manager: dnf
-#          python_path: 'python2.7'
-#          install_python: sudo dnf install -y python python27-devel
-#
-#    - template: etc/ci/azure-container-rpm.yml
-#      parameters:
-#          name: Fedora_30_py36
-#          container: 'fedora:30'
-#          package_manager: dnf
-#          python_path: 'python3.6'
-#          install_python: sudo dnf install -y python36 python36-devel python36-virtualenv
-#
+    - template: etc/ci/azure-container-rpm.yml
+      parameters:
+          name: Fedora_30_py27
+          container: 'fedora:30'
+          package_manager: dnf
+          python_path: 'python2.7'
+          install_python: sudo dnf install -y python python27-devel
+
+    - template: etc/ci/azure-container-rpm.yml
+      parameters:
+          name: Fedora_30_py36
+          container: 'fedora:30'
+          package_manager: dnf
+          python_path: 'python3.6'
+          install_python: sudo dnf install -y python36 python36-devel python36-virtualenv
+

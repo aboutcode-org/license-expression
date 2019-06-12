@@ -6,7 +6,7 @@ parameters:
   install_python: ''
   install_packages: |
     set -e -x
-    sudo yum groupinstall -y development
+    sudo yum groupinstall -y "Development Tools"
     sudo yum install -y \
         openssl openssl-devel \
         sqlite-devel zlib-devel xz-devel bzip2-devel \
