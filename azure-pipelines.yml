@@ -217,13 +217,16 @@ jobs:
           container: 'fedora:30'
           package_manager: dnf
           python_path: 'python2.7'
-          install_python: sudo dnf install -y python python27-devel
+          install_python: |
+              set -e -x
+              sudo dnf install -y python2 python2-devel
 
     - template: etc/ci/azure-container-rpm.yml
       parameters:
-          name: Fedora_30_py36
+          name: Fedora_30_py37
           container: 'fedora:30'
           package_manager: dnf
-          python_path: 'python3.6'
-          install_python: sudo dnf install -y python36 python36-devel python36-virtualenv
-
+          python_path: 'python3.7'
+          install_python: |
+              set -e -x
+              sudo dnf install -y python3 python3-devel python3-virtualenv
