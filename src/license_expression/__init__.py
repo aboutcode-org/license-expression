@@ -128,7 +128,7 @@ KEYWORDS_STRINGS = set(kw.value for kw in KEYWORDS)
 # mapping of lowercase operator strings to an operator object
 OPERATORS = {'and': KW_AND, 'or': KW_OR, 'with': KW_WITH}
 
-_simple_tokenizer = re.compile('''
+_simple_tokenizer = re.compile(r'''
     (?P<symop>[^\s\(\)]+)
      |
     (?P<space>\s+)

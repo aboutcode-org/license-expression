@@ -608,7 +608,7 @@ class Token(object):
 
 
 # tokenize to separate text from parens
-_tokenizer = re.compile('''
+_tokenizer = re.compile(r'''
     (?P<text>[^\s\(\)]+)
      |
     (?P<space>\s+)
