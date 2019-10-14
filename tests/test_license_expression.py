@@ -554,11 +554,13 @@ class LicensingParseTest(TestCase):
 
     def test_parse_simplify_no_sort(self):
         licensing = Licensing()
+        expr = licensing.parse('gpl-2.0 OR apache-2.0')
+        expr2 = licensing.parse('apache-2.0 OR gpl-2.0')
 
-        expr = licensing.parse('gpl-2.0 OR apache-2.0 OR gpl-2.0')
-
-        self.assertEqual(expr.simplify(), expr.simplify(sort=False))
-        self.assertNotEqual(expr.simplify().pretty(), expr.simplify(sort=False).pretty())
+        self.assertEqual(expr, expr2)
+        self.assertEqual(expr.simplify(), expr2.simplify())
+        self.assertEqual(expr.simplify(sort=False), expr2.simplify())
+        self.assertNotEqual(expr.simplify(sort=False).pretty(), expr2.pretty())
 
     def test_license_expression_is_equivalent(self):
         lic = Licensing()
