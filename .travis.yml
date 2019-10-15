@@ -1,49 +1,67 @@
 matrix:
   include:
     - os: osx
-      language: generic
       env:
-        - PYENV_PYTHON="2.7.14"
+        - PYTHON="3.6.8"
+        - TEST_SUITE="bin/py.test -vvs"
+      language: generic
+      python:
 
     - os: osx
-      language: generic
       env:
-        - PYENV_PYTHON="3.6.1"
+        - PYTHON="2.7.15"
+        - TEST_SUITE="bin/py.test -vvs"
+      language: generic
+      python:
 
     - os: linux
-      language: generic
-      env:
-        - PYENV_PYTHON="2.7.14"
-
+      sudo: required
+      env: TEST_SUITE="bin/py.test -vvs"
+      language: python
+      python: "2.7"
+      dist: xenial
+    
     - os: linux
-      language: generic
-      env:
-        - PYENV_PYTHON="3.6.1"
+      sudo: required
+      env: TEST_SUITE="bin/py.test -vvs"
+      language: python
+      python: "2.7"
+      dist: bionic
+    
+    - os: linux
+      sudo: required
+      env: TEST_SUITE="bin/py.test -vvs"
+      language: python
+      python: "3.6"
+      dist: xenial
+    
+    - os: linux
+      sudo: required
+      env: TEST_SUITE="bin/py.test -vvs"
+      language: python
+      python: "3.6"
+      dist: bionic
 
+addons:
+  homebrew:
+    packages:
+      - openssl
+      - readline
+      - sqlite3
+      - xz
+      - zlib
+      - pyenv
+    update: true
 
 install:
-  - |
-    if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
-        rm -rf ~/.pyenv
-        git clone https://github.com/pyenv/pyenv.git ~/.pyenv
-        echo 'export PYENV_ROOT="$HOME/.pyenv"' >> ~/.bash_profile
-        echo 'export PATH="$PYENV_ROOT/bin:$PATH"' >> ~/.bash_profile
-        echo -e 'if command -v pyenv 1>/dev/null 2>&1; then\n  eval "$(pyenv init -)"\nfi' >> ~/.bash_profile
-        exec "$SHELL"
-    fi
-  - which pyenv
-  - pyenv install --list
-  - python --version
-  - pyenv install "$PYENV_PYTHON"
-  - pyenv global "$PYENV_PYTHON"
-  - python --version
   - ./configure
 
-
 script:
+  # If debugging, use a subset of tests to wait less:
+  # - ./bin/py.test -n 2 -vvs --cov=src tests/scancode
+  # - echo $TEST_SUITE
   - bin/about-code check --verbose .
-  - "bin/py.test -vvs"
-
+  - $TEST_SUITE
 
 notifications:
   irc:
