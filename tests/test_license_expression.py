@@ -552,6 +552,16 @@ class LicensingParseTest(TestCase):
         expr3 = licensing.parse('mit and LGPL2.1')
         self.assertTrue(expr3 in expr2)
 
+    def test_parse_simplify_no_sort(self):
+        licensing = Licensing()
+        expr = licensing.parse('gpl-2.0 OR apache-2.0')
+        expr2 = licensing.parse('apache-2.0 OR gpl-2.0')
+
+        self.assertEqual(expr, expr2)
+        self.assertEqual(expr.simplify(), expr2.simplify())
+        self.assertEqual(expr.simplify(sort=False), expr2.simplify())
+        self.assertNotEqual(expr.simplify(sort=False).pretty(), expr2.pretty())
+
     def test_license_expression_is_equivalent(self):
         lic = Licensing()
         is_equiv = lic.is_equivalent
