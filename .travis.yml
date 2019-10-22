@@ -60,7 +60,7 @@ script:
   # If debugging, use a subset of tests to wait less:
   # - ./bin/py.test -n 2 -vvs --cov=src tests/scancode
   # - echo $TEST_SUITE
-  - bin/about-code check --verbose .
+  - bin/about check --verbose .
   - $TEST_SUITE
 
 notifications:
