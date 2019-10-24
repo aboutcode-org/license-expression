@@ -39,6 +39,7 @@ Source code and download
 
 * https://github.com/nexB/license-expression.git
 * https://pypi.python.org/pypi/license-expression
+* https://aur.archlinux.org/packages/python-license-expression/ (Arch Linux through AUR)
 
 Support
 =======
