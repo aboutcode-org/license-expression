@@ -827,6 +827,19 @@ class Renderable(object):
         """
         return NotImplementedError
 
+    def render_as_readable(self, template='{symbol.key}', *args, **kwargs):
+        """
+        Return a formatted string rendering for this expression using the
+        `template` format string to render each symbol.  Add extra parenthesis
+        around WITH sub-expressions for improved readbility. See `render()` for
+        other arguments.
+        """
+        if isinstance(self, LicenseWithExceptionSymbol):
+            return self.render(
+                template=template, wrap_in_parens=False, *args, **kwargs)
+        else:
+            return self.render(template=template, wrap_with_in_parens=True, *args, **kwargs)
+
 
 class BaseSymbol(Renderable, boolean.Symbol):
     """
@@ -1075,10 +1088,17 @@ class LicenseWithExceptionSymbol(BaseSymbol):
         yield self.license_symbol
         yield self.exception_symbol
 
-    def render(self, template='{symbol.key}', *args, **kwargs):
+    def render(self, template='{symbol.key}', wrap_with_in_parens=False, *args, **kwargs):
+        """
+        Return a formatted WITH expression. If `wrap_in_parens`, wrap in parens.
+        """
         lic = self.license_symbol.render(template, *args, **kwargs)
         exc = self.exception_symbol.render(template, *args, **kwargs)
-        return '%(lic)s WITH %(exc)s' % locals()
+        if wrap_with_in_parens:
+            temp = '(%(lic)s WITH %(exc)s)'
+        else:
+            temp = '%(lic)s WITH %(exc)s'
+        return temp % locals()
 
     def __hash__(self, *args, **kwargs):
         return hash((self.license_symbol, self.exception_symbol,))
