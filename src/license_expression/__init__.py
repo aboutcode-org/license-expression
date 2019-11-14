@@ -836,7 +836,7 @@ class Renderable(object):
         """
         if isinstance(self, LicenseWithExceptionSymbol):
             return self.render(
-                template=template, wrap_in_parens=False, *args, **kwargs)
+                template=template, wrap_with_in_parens=False, *args, **kwargs)
         else:
             return self.render(template=template, wrap_with_in_parens=True, *args, **kwargs)
 
@@ -1090,7 +1090,9 @@ class LicenseWithExceptionSymbol(BaseSymbol):
 
     def render(self, template='{symbol.key}', wrap_with_in_parens=False, *args, **kwargs):
         """
-        Return a formatted WITH expression. If `wrap_in_parens`, wrap in parens.
+        Return a formatted WITH expression. If `wrap_with_in_parens`, wrap in
+        parens a WITH expression, unless it is alone and not used with other AND
+        or OR sub-expressions.
         """
         lic = self.license_symbol.render(template, *args, **kwargs)
         exc = self.exception_symbol.render(template, *args, **kwargs)
