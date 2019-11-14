@@ -62,7 +62,7 @@ jobs:
                   python_version: '3.6'
                   python_architecture: 'x86'
               py37:
-                  python_version: '3.7.4'
+                  python_version: '3.7'
                   python_architecture: 'x86'
 
     - template: etc/ci/azure-win.yml
