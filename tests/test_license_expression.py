@@ -1665,6 +1665,30 @@ class LicensingSymbolsTest(TestCase):
         assert expected == licensing.primary_license_symbol(
             parsed, decompose=False).render('{symbol.key}')
 
+    def test_render_plain(self):
+        l = Licensing()
+        result = l.parse('gpl-2.0 WITH exception-gpl-2.0-plus or MIT').render()
+        expected = 'gpl-2.0 WITH exception-gpl-2.0-plus OR MIT'
+        assert expected == result
+
+    def test_render_as_readable_does_not_wrap_in_parens_single_with(self):
+        l = Licensing()
+        result = l.parse('gpl-2.0 WITH exception-gpl-2.0-plus').render_as_readable()
+        expected = 'gpl-2.0 WITH exception-gpl-2.0-plus'
+        assert expected == result
+
+    def test_render_as_readable_wraps_in_parens_with_and_other_subexpressions(self):
+        l = Licensing()
+        result = l.parse('mit AND gpl-2.0 WITH exception-gpl-2.0-plus').render_as_readable()
+        expected = 'mit AND (gpl-2.0 WITH exception-gpl-2.0-plus)'
+        assert expected == result
+
+    def test_render_as_readable_does_not_wrap_in_parens_if_no_with(self):
+        l = Licensing()
+        result1 = l.parse('gpl-2.0 and exception OR that').render_as_readable()
+        result2 = l.parse('gpl-2.0 and exception OR that').render()
+        assert result1 == result2
+
 
 class SplitAndTokenizeTest(TestCase):
 
