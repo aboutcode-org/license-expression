@@ -645,6 +645,34 @@ class LicensingParseTest(TestCase):
         expr3 = l.parse('mit and LGPL2.1')
         assert expr3 in expr2
 
+    def test_dedup(self):
+        l = Licensing()
+        exp1 = 'mit OR mit AND apache-2.0 AND bsd-new OR mit'
+        dedup_exp1 = l.dedup(exp1)
+        result1 = l.parse(dedup_exp1)
+        expected1 = l.parse('mit OR (mit AND apache-2.0 AND bsd-new)')
+        assert result1 == expected1
+        exp2 = 'mit AND (mit OR bsd-new) AND mit OR mit'
+        dedup_exp2 = l.dedup(exp2)
+        result2 = l.parse(dedup_exp2)
+        expected2 = l.parse('(mit AND (mit OR bsd-new)) OR mit')
+        assert result2 == expected2
+        exp3 = l.parse(' GPL-2.0 or (mit and LGPL-2.1) or bsd Or GPL-2.0  or (mit and LGPL-2.1)')
+        dedup_exp3 = l.dedup(exp3)
+        result3 = l.parse(dedup_exp3)
+        expected3 = l.parse('GPL-2.0 OR (mit AND LGPL-2.1) OR bsd')
+        assert result3 == expected3
+        exp4 = l.parse('mit AND (mit OR bsd-new)')
+        dedup_exp4 = l.dedup(exp4)
+        result4 = l.parse(dedup_exp4)
+        expected4 = l.parse('mit AND (mit OR bsd-new)')
+        assert result4 == expected4
+        exp5 = l.parse('mit AND (mit OR bsd-new) AND mit AND (mit OR bsd-new)')
+        dedup_exp5 = l.dedup(exp5)
+        result5 = l.parse(dedup_exp5)
+        expected5 = l.parse('mit AND (mit OR bsd-new)')
+        assert result5 == expected5
+
     def test_simplify_and_equivalent_and_contains(self):
         l = Licensing()
         expr2 = l.parse(' GPL-2.0 or (mit and LGPL-2.1) or bsd Or GPL-2.0  or (mit and LGPL-2.1)')

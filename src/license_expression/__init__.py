@@ -599,6 +599,35 @@ class Licensing(boolean.BooleanAlgebra):
                         sym = LicenseSymbol(key=sym_or_op)
                     yield Token(start, end, sym_or_op, sym)
 
+    def dedup(self, expression):
+        """
+        Return a de-dupulicated expression
+        """
+        l = Licensing()
+        exp = l.parse(expression)
+        operator = vars(exp)['operator']
+        dedup_expression = ''
+        expression_list = []
+        for arg in vars(exp)['args']:
+            if isinstance(arg, l.AND) or isinstance(arg, l.OR):
+                # Run this recursive function if there is another AND/OR expression
+                # and add the expression to the expression_list. 
+                expression_list.append(self.dedup(arg))
+            else:
+                # Get the license key from the expression.
+                exp_key = l.license_keys(arg)[0]
+                # Add the license key to the expression_list if it's not already
+                # present.
+                if not exp_key in expression_list:
+                    expression_list.append(exp_key)
+        # The operator can only be either ' AND ' or ' OR '
+        if operator == ' AND ':
+            dedup_expression = ' AND '.join(expression_list)
+        else:
+            dedup_expression = ' OR '.join(expression_list)
+        # Put the parentheses between the expression for grouping purpose.
+        dedup_expression = '(' + dedup_expression + ')'
+        return dedup_expression
 
 def build_symbols_from_unknown_tokens(tokens):
     """
