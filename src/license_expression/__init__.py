@@ -631,11 +631,8 @@ class Licensing(boolean.BooleanAlgebra):
         else:
             dedup_expression = combine_expressions(expression_list, relation='OR')
         # Put the parentheses between the expression for grouping purpose.
-<<<<<<< HEAD
-        #dedup_expression = '(' + dedup_expression + ')'
-=======
         dedup_expression = '({})'.format(dedup_expression)
->>>>>>> Update src/license_expression/__init__.py
+
         return dedup_expression
 
 def build_symbols_from_unknown_tokens(tokens):
