@@ -604,7 +604,11 @@ class Licensing(boolean.BooleanAlgebra):
         Return a de-dupulicated expression
         """
         exp = self.parse(expression)
-        operator = exp.operator
+        try:
+            operator = exp.operator
+        except:
+            # No operator means it's a single license
+            operator = None
         dedup_expression = ''
         expression_list = []
         for arg in exp.args:
@@ -614,18 +618,20 @@ class Licensing(boolean.BooleanAlgebra):
                 expression_list.append(self.dedup(arg))
             else:
                 # Get the license key from the expression.
-                exp_key = l.license_keys(arg)[0]
+                exp_key = self.license_keys(arg)[0]
                 # Add the license key to the expression_list if it's not already
                 # present.
                 if not exp_key in expression_list:
                     expression_list.append(exp_key)
-        # The operator can only be either ' AND ' or ' OR '
-        if operator == ' AND ':
+        # The operator can only be either ' AND ', ' OR ' or None
+        if operator == None:
+            dedup_expression = str(expression)
+        elif operator == ' AND ':
             dedup_expression = ' AND '.join(expression_list)
         else:
             dedup_expression = ' OR '.join(expression_list)
         # Put the parentheses between the expression for grouping purpose.
-        dedup_expression = '(' + dedup_expression + ')'
+        #dedup_expression = '(' + dedup_expression + ')'
         return dedup_expression
 
 def build_symbols_from_unknown_tokens(tokens):
