@@ -603,13 +603,12 @@ class Licensing(boolean.BooleanAlgebra):
         """
         Return a de-dupulicated expression
         """
-        l = Licensing()
-        exp = l.parse(expression)
-        operator = vars(exp)['operator']
+        exp = self.parse(expression)
+        operator = exp.operator
         dedup_expression = ''
         expression_list = []
-        for arg in vars(exp)['args']:
-            if isinstance(arg, l.AND) or isinstance(arg, l.OR):
+        for arg in exp.args:
+            if isinstance(arg, (self.AND, self.OR)):
                 # Run this recursive function if there is another AND/OR expression
                 # and add the expression to the expression_list. 
                 expression_list.append(self.dedup(arg))
