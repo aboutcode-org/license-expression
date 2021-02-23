@@ -8,6 +8,16 @@ Changelog <https://keepachangelog.com/en/1.0.0/>`__
 [Unreleased]
 ------------
 
+[2.0] - 2021-xx-xx
+------------------
+Added
+~~~~~
+-  Add ability to simplify license expressions without over simplifying using using boolean logic
+
+Changed
+~~~~~~~
+-  Drop support for python27
+
 [1.2] - 2019-11-14
 ------------------
 Added
