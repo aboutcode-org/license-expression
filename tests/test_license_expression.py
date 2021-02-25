@@ -647,16 +647,16 @@ class LicensingParseTest(TestCase):
 
     def test_expressions_can_be_simplified_1(self):
         l = Licensing()
-        exp = 'mit OR mit AND apache-2.0 AND bsd-new OR mit'
-        dedup_exp = l.expressions(exp)
+        exp = l.parse('mit OR mit AND apache-2.0 AND bsd-new OR mit')
+        dedup_exp = l.dedup(exp)
         result = l.parse(dedup_exp)
         expected = l.parse('mit OR (mit AND apache-2.0 AND bsd-new)')
         assert result == expected
 
     def test_expressions_can_be_simplified_2(self):
         l = Licensing()
-        exp = 'mit AND (mit OR bsd-new) AND mit OR mit'
-        dedup_exp = l.expressions(exp)
+        exp = l.parse('mit AND (mit OR bsd-new) AND mit OR mit')
+        dedup_exp = l.dedup(exp)
         result = l.parse(dedup_exp)
         expected = l.parse('(mit AND (mit OR bsd-new)) OR mit')
         assert result == expected
@@ -664,7 +664,7 @@ class LicensingParseTest(TestCase):
     def test_expressions_multiple_occurrences(self):
         l = Licensing()
         exp = l.parse(' GPL-2.0 or (mit and LGPL-2.1) or bsd Or GPL-2.0  or (mit and LGPL-2.1)')
-        dedup_exp = l.expressions(exp)
+        dedup_exp = l.dedup(exp)
         result = l.parse(dedup_exp)
         expected = l.parse('GPL-2.0 OR (mit AND LGPL-2.1) OR bsd')
         assert result == expected
@@ -672,7 +672,7 @@ class LicensingParseTest(TestCase):
     def test_expressions_cannot_be_simplified(self):
         l = Licensing()
         exp = l.parse('mit AND (mit OR bsd-new)')
-        dedup_exp = l.expressions(exp)
+        dedup_exp = l.dedup(exp)
         result = l.parse(dedup_exp)
         expected = l.parse('mit AND (mit OR bsd-new)')
         assert result == expected
@@ -680,10 +680,43 @@ class LicensingParseTest(TestCase):
     def test_expressions_single_license(self):
         l = Licensing()
         exp = l.parse('mit')
-        dedup_exp = l.expressions(exp)
+        dedup_exp = l.dedup(exp)
         result = l.parse(dedup_exp)
         expected = l.parse('mit')
         assert result == expected
+
+    def test_expressions_WITH(self):
+        l = Licensing()
+        exp = l.parse('gpl-2.0 with autoconf-exception-2.0')
+        dedup_exp = l.dedup(exp)
+        result = l.parse(dedup_exp)
+        expected = l.parse('gpl-2.0 with autoconf-exception-2.0')
+        assert result == expected
+
+    def test_expressions_WITH_OR(self):
+        l = Licensing()
+        exp = l.parse('gpl-2.0 with autoconf-exception-2.0 OR gpl-2.0')
+        dedup_exp = l.dedup(exp)
+        result = l.parse(dedup_exp)
+        expected = l.parse('gpl-2.0 with autoconf-exception-2.0 OR gpl-2.0')
+        assert result == expected
+
+    def test_expressions_WITH_AND(self):
+        l = Licensing()
+        exp = l.parse('gpl-2.0 AND gpl-2.0 with autoconf-exception-2.0 AND gpl-2.0')
+        dedup_exp = l.dedup(exp)
+        result = l.parse(dedup_exp)
+        expected = l.parse('gpl-2.0 AND gpl-2.0 with autoconf-exception-2.0')
+        assert result == expected
+
+    def test_expressions_can_be_simplified_3(self):
+        l = Licensing()
+        exp = l.parse('mit AND mit')
+        dedup_exp = l.dedup(exp)
+        result = l.parse(dedup_exp)
+        expected = l.parse('mit')
+        assert result == expected
+
 
     def test_simplify_and_equivalent_and_contains(self):
         l = Licensing()

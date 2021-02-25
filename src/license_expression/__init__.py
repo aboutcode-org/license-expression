@@ -599,39 +599,50 @@ class Licensing(boolean.BooleanAlgebra):
                         sym = LicenseSymbol(key=sym_or_op)
                     yield Token(start, end, sym_or_op, sym)
 
-    def expressions(self, expression):
+    def dedup(self, expression):
         """
-        Return a de-dupulicated expression
+        Return a de-duplicated expression
         """
         exp = self.parse(expression)
         dedup_expression = ''
         expression_list = []
         for arg in exp.args:
-            print(arg)
             if isinstance(arg, (self.AND, self.OR)):
                 # Run this recursive function if there is another AND/OR expression
                 # and add the expression to the expression_list. 
-                expression_list.append(self.expressions(arg))
+                expression_list.append(self.dedup(arg))
             else:
-                # Get the license key from the expression.
-                exp_key = self.license_keys(arg)[0]
+                # Get the license key from the expression as a list.
+                exp_key = self.license_keys(arg)
+                # We treat the license with exception as a single license key so
+                # that it won't over de-dupped for case such as 
+                # gpl-2.0 WITH classpath exception AND gpl-2.0
+                if type(arg).__name__ == 'LicenseWithExceptionSymbol':
+                    key = ' WITH '.join(exp_key)
+                else:
+                    # The list should only contains 1 license symbol as the "AND"
+                    # and "OR" condition is taken care in the above
+                    # isinstance(arg, (self.AND, self.OR)) and the "WITH" condition
+                    # is taken care in the above if condition.
+                    key = exp_key[0]
                 # Add the license key to the expression_list if it's not already
                 # present.
-                if not exp_key in expression_list:
-                    expression_list.append(exp_key)
+                if not key in expression_list:
+                    expression_list.append(key)
 
-        # It's a single license if the class is LicenseSymbol
-        if type(expression) == self.LicenseSymbol:
+        if isinstance(expression, self.LicenseSymbol) or type(expression).__name__ == 'LicenseWithExceptionSymbol':
             dedup_expression = str(expression)
-        elif type(expression) == self.AND:
+        elif isinstance(expression, self.AND):
             dedup_expression = combine_expressions(expression_list, relation='AND')
-        else:
+        elif isinstance(expression, self.OR):
             dedup_expression = combine_expressions(expression_list, relation='OR')
+        else:
+            raise Exception('Unknown expression type: {}'.format(repr(expression)))
 
         # Put the parentheses between the expression for grouping purpose.
         dedup_expression = '({})'.format(dedup_expression)
-
         return dedup_expression
+
 
 def build_symbols_from_unknown_tokens(tokens):
     """
