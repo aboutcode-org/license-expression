@@ -585,47 +585,32 @@ class Licensing(boolean.BooleanAlgebra):
 
     def dedup(self, expression):
         """
-        Return a de-duplicated expression
+        Return a de-duplicated LicenseExpression given a license expfession
+        string or LicenseExpression object.
         """
         exp = self.parse(expression)
-        dedup_expression = ''
-        expression_list = []
+        expressions = []
         for arg in exp.args:
-            if isinstance(arg, (self.AND, self.OR)):
-                # Run this recursive function if there is another AND/OR expression
-                # and add the expression to the expression_list.
-                expression_list.append(self.dedup(arg))
+            if isinstance(arg, (self.AND, self.OR,)):
+                # Run this recursive function if there is another AND/OR
+                # expression and add the expression to the expressions list.
+                expressions.append(self.dedup(arg))
             else:
-                # Get the license key from the expression as a list.
-                exp_key = self.license_keys(arg)
-                # We treat the license with exception as a single license key so
-                # that it won't over de-dupped for case such as
-                # gpl-2.0 WITH classpath exception AND gpl-2.0
-                if type(arg).__name__ == 'LicenseWithExceptionSymbol':
-                    key = ' WITH '.join(exp_key)
-                else:
-                    # The list should only contains 1 license symbol as the "AND"
-                    # and "OR" condition is taken care in the above
-                    # isinstance(arg, (self.AND, self.OR)) and the "WITH" condition
-                    # is taken care in the above if condition.
-                    key = exp_key[0]
-                # Add the license key to the expression_list if it's not already
-                # present.
-                if not key in expression_list:
-                    expression_list.append(key)
+                expressions.append(arg)
 
-        if isinstance(expression, self.LicenseSymbol) or type(expression).__name__ == 'LicenseWithExceptionSymbol':
-            dedup_expression = str(expression)
-        elif isinstance(expression, self.AND):
-            dedup_expression = combine_expressions(expression_list, relation='AND')
-        elif isinstance(expression, self.OR):
-            dedup_expression = combine_expressions(expression_list, relation='OR')
+        if isinstance(exp, BaseSymbol):
+            deduped = exp
+        elif isinstance(exp, (self.AND, self.OR,)):
+            relation = exp.__class__.__name__
+            deduped = combine_expressions(
+                expressions,
+                relation=relation,
+                unique=True,
+                licensing=self,
+            )
         else:
             raise Exception('Unknown expression type: {}'.format(repr(expression)))
-
-        # Put the parentheses between the expression for grouping purpose.
-        dedup_expression = '({})'.format(dedup_expression)
-        return dedup_expression
+        return deduped
 
 
 def build_symbols_from_unknown_tokens(tokens):
@@ -1283,8 +1268,9 @@ def as_symbols(symbols):
                 yield LicenseSymbolLike(symbol)
 
             else:
-                raise TypeError('%(symbol)r is not a unicode string '
-                                'or a LicenseSymbol-like instance.' % locals())
+                raise TypeError(
+                    '%(symbol)r is not a unicode string '
+                    'or a LicenseSymbol-like instance.' % locals())
 
 
 def validate_symbols(symbols, validate_keys=False):
@@ -1399,26 +1385,35 @@ def validate_symbols(symbols, validate_keys=False):
         errors.append('Invalid key: a key cannot be an expression keyword: %(ikw)s.' % locals())
 
     warnings = []
-    for dupeal in sorted(dupe_aliases):
-        errors.append('Duplicated or empty aliases ignored for license key: %(dupeal)r.' % locals())
+    for dupe_alias in sorted(dupe_aliases):
+        errors.append('Duplicated or empty aliases ignored for license key: %(dupe_alias)r.' % locals())
 
     return warnings, errors
 
 
-def combine_expressions(expressions, relation='AND', licensing=Licensing()):
+def combine_expressions(
+    expressions,
+    relation='AND',
+    unique=True,
+    licensing=Licensing(),
+):
     """
-    Return a combined license expression string with relation, given a list of
-    license expressions strings.
-    For example:
-    >>> a = 'mit'
-    >>> b = 'gpl'
-    >>> combine_expressions([a, b])
-    'mit AND gpl'
-    >>> assert 'mit' == combine_expressions([a])
-    >>> combine_expressions([])
-    >>> combine_expressions(None)
-    >>> combine_expressions(('gpl', 'mit', 'apache',))
-    'gpl AND mit AND apache'
+    Return a combined LicenseExpression object with the `relation`,
+    given a list of license `expressions` strings or LicenseExpression.
+    If unique is True remove duplicates before combining expressions.
+
+    For example::
+        >>> a = 'mit'
+        >>> b = 'gpl'
+        >>> str(combine_expressions([a, b]))
+        'mit AND gpl'
+        >>> assert 'mit' == str(combine_expressions([a]))
+        >>> combine_expressions([])
+        >>> combine_expressions(None)
+        >>> str(combine_expressions(('gpl', 'mit', 'apache',)))
+        'gpl AND mit AND apache'
+        >>> str(combine_expressions(('gpl', 'mit', 'apache',), relation='OR'))
+        'gpl OR mit OR apache'
     """
     if not expressions:
         return
@@ -1428,14 +1423,15 @@ def combine_expressions(expressions, relation='AND', licensing=Licensing()):
             'expressions should be a list or tuple and not: {}'.format(
                 type(expressions)))
 
-    # Remove duplicate element in the expressions list
-    expressions = list(dict((x, True) for x in expressions).keys())
+    # only del with LicenseExpression objects
+    expressions = [licensing.parse(le, simple=True) for le in expressions]
+
+    # Remove duplicate expressions
+    if unique:
+        expressions = list({str(x): x for x in expressions}.values())
 
     if len(expressions) == 1:
         return expressions[0]
 
-    expressions = [licensing.parse(le, simple=True) for le in expressions]
-    if relation == 'OR':
-        return str(licensing.OR(*expressions))
-    else:
-        return str(licensing.AND(*expressions))
+    relation = {'AND': licensing.AND, 'OR': licensing.OR}[relation]
+    return relation(*expressions)
