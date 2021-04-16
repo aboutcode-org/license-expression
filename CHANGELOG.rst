@@ -1,5 +1,6 @@
 Changelog
 =========
+<<<<<<< HEAD
 All notable changes to this project are documented in this file.
 
 The format is based on `Keep a
@@ -18,6 +19,15 @@ Changed
 ~~~~~~~
 -  Drop support for python27
 -  Adopt the skeleton from https://github.com/nexB/skeleton
+=======
+All notable changes to this project will be documented in this file.
+
+The format is based on `Keep a
+Changelog <https://keepachangelog.com/en/1.0.0/>`__
+
+[Unreleased]
+------------
+>>>>>>> refs/remotes/origin/master
 
 [1.2] - 2019-11-14
 ------------------
