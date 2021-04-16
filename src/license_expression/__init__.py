@@ -2,7 +2,7 @@
 # license-expression is a free software tool from nexB Inc. and others.
 # Visit https://github.com/nexB/license-expression for support and download.
 #
-# Copyright (c) 2017 nexB Inc. and others. All rights reserved.
+# Copyright (c) nexB Inc. and others. All rights reserved.
 # http://nexb.com and http://aboutcode.org
 #
 # This software is licensed under the Apache License version 2.0.
@@ -27,14 +27,9 @@ equivalence and can be normalized or simplified.
 The main entry point is the Licensing object.
 """
 
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from __future__ import print_function
-
 from collections import defaultdict
 from collections import deque
 from collections import namedtuple
-from collections import OrderedDict
 from copy import copy
 from copy import deepcopy
 from functools import total_ordering
@@ -64,16 +59,6 @@ from boolean.boolean import TOKEN_RPAR
 
 from license_expression._pyahocorasick import Trie as AdvancedTokenizer
 from license_expression._pyahocorasick import Token
-
-
-# Python 2 and 3 support
-try:
-    # Python 2
-    unicode
-    str = unicode  # NOQA
-except NameError:
-    # Python 3
-    unicode = str  # NOQA
 
 
 # append new error codes to PARSE_ERRORS by monkey patching
