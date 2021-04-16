@@ -13,12 +13,7 @@
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
 
-from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import unicode_literals
-
 from collections import namedtuple
-from collections import OrderedDict
 from unittest import TestCase
 from unittest.case import expectedFailure
 import sys
@@ -717,7 +712,6 @@ class LicensingParseTest(TestCase):
         expected = l.parse('mit')
         assert result == expected
 
-
     def test_simplify_and_equivalent_and_contains(self):
         l = Licensing()
         expr2 = l.parse(' GPL-2.0 or (mit and LGPL-2.1) or bsd Or GPL-2.0  or (mit and LGPL-2.1)')
@@ -1293,7 +1287,7 @@ class LicensingSymbolsReplacement(TestCase):
         source3 = gpl2
         target3 = gpl2plus
 
-        subs = OrderedDict([
+        subs = dict([
             (source1, target1),
             (source2, target2),
             (source3, target3),
@@ -1317,7 +1311,7 @@ class LicensingSymbolsReplacement(TestCase):
         source3 = gpl2
         target3 = gpl2plus
 
-        subs = OrderedDict([
+        subs = dict([
             (source1, target1),
             (source2, target2),
             (source3, target3),
