@@ -1,15 +1,11 @@
 #!/usr/bin/env python
 # -*- encoding: utf-8 -*-
 
-from __future__ import absolute_import
-from __future__ import print_function
-
 from glob import glob
 from os.path import basename
 from os.path import splitext
 from setuptools import find_packages
 from setuptools import setup
-
 
 desc = ('license-expression is small utility library to parse, compare, '
         'simplify and normalize license expressions (such as SPDX license '
@@ -17,7 +13,7 @@ desc = ('license-expression is small utility library to parse, compare, '
 
 setup(
     name='license-expression',
-    version='1.2',
+    version='2.0',
     license='apache-2.0',
     description=desc,
     long_description=desc,
@@ -35,11 +31,11 @@ setup(
         'Intended Audience :: Developers',
         'Operating System :: OS Independent',
         'Programming Language :: Python',
-        'Programming Language :: Python :: 2',
-        'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.4',
-        'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
         'Topic :: Utilities',
     ],
     keywords=[
