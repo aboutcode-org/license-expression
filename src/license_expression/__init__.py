@@ -60,7 +60,6 @@ from boolean.boolean import TOKEN_RPAR
 from license_expression._pyahocorasick import Trie as AdvancedTokenizer
 from license_expression._pyahocorasick import Token
 
-
 # append new error codes to PARSE_ERRORS by monkey patching
 PARSE_EXPRESSION_NOT_UNICODE = 100
 if PARSE_EXPRESSION_NOT_UNICODE not in PARSE_ERRORS:
@@ -594,13 +593,13 @@ class Licensing(boolean.BooleanAlgebra):
         for arg in exp.args:
             if isinstance(arg, (self.AND, self.OR)):
                 # Run this recursive function if there is another AND/OR expression
-                # and add the expression to the expression_list. 
+                # and add the expression to the expression_list.
                 expression_list.append(self.dedup(arg))
             else:
                 # Get the license key from the expression as a list.
                 exp_key = self.license_keys(arg)
                 # We treat the license with exception as a single license key so
-                # that it won't over de-dupped for case such as 
+                # that it won't over de-dupped for case such as
                 # gpl-2.0 WITH classpath exception AND gpl-2.0
                 if type(arg).__name__ == 'LicenseWithExceptionSymbol':
                     key = ' WITH '.join(exp_key)
@@ -1404,6 +1403,7 @@ def validate_symbols(symbols, validate_keys=False):
         errors.append('Duplicated or empty aliases ignored for license key: %(dupeal)r.' % locals())
 
     return warnings, errors
+
 
 def combine_expressions(expressions, relation='AND', licensing=Licensing()):
     """
