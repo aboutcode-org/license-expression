@@ -1,7 +1,7 @@
 # license-expression is a free software tool from nexB Inc. and others.
 # Visit https://github.com/nexB/license-expression for support and download.
 #
-# Copyright (c) 2017 nexB Inc. and others. All rights reserved.
+# Copyright (c)  nexB Inc. and others. All rights reserved.
 # http://nexb.com  and http://aboutcode.org
 #
 # This software is licensed under the Apache License version 2.0.
