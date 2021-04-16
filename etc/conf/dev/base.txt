@@ -1,6 +1,0 @@
-# Testing
-py
-colorama
-pytest
-pluggy
-aboutcode-toolkit

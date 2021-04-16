@@ -1,28 +1,44 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
-# Copyright (c) 2016 nexB Inc. http://www.nexb.com/ - All rights reserved.
+# Copyright (c) nexB Inc. and others.
+# SPDX-License-Identifier: Apache-2.0
 #
-################################
-# change these variables to customize this script locally
-################################
-# you can define one or more thirdparty dirs, each prefixed with TPP_DIR
-export TPP_DIR_BASE="thirdparty"
 
-# default configurations for dev
-CONF_DEFAULT="etc/conf/dev"
-#################################
+set -e
+#set -x
 
-CFG_CMD_LINE_ARGS="$@"
-
-if [[ "$1" == "" ]]; then
-    # default for dev conf if not argument is provided
-    CFG_CMD_LINE_ARGS=$CONF_DEFAULT
-fi
+# source this script for a basic setup and configuration for local development
 
 CONFIGURE_ROOT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-if [[ "$PYTHON_EXE" == "" ]]; then
-    PYTHON_EXE=python
+
+if [[ "$1" == "--clean" ]]; then
+    rm -rf "$CONFIGURE_ROOT_DIR/tmp"
+    exit
 fi
 
-$PYTHON_EXE "$CONFIGURE_ROOT_DIR/etc/configure.py" $CFG_CMD_LINE_ARGS
+
+if [[ "$PYTHON_EXE" == "" ]]; then
+    PYTHON_EXE=python3
+fi
+
+
+function setup {
+    # create a virtualenv on Python
+    mkdir -p $CONFIGURE_ROOT_DIR/tmp
+    wget -O $CONFIGURE_ROOT_DIR/tmp/virtualenv.pyz https://bootstrap.pypa.io/virtualenv.pyz
+    $PYTHON_EXE $CONFIGURE_ROOT_DIR/tmp/virtualenv.pyz $CONFIGURE_ROOT_DIR/tmp
+    source $CONFIGURE_ROOT_DIR/tmp/bin/activate
+    $CONFIGURE_ROOT_DIR/tmp/bin/pip install --upgrade pip virtualenv setuptools wheel
+}
+
+
+setup
+
+$CONFIGURE_ROOT_DIR/tmp/bin/pip install -e .[testing]
+
+if [ -f "$CONFIGURE_ROOT_DIR/tmp/bin/activate" ]; then
+    source "$CONFIGURE_ROOT_DIR/tmp/bin/activate"
+fi
+
+set +e

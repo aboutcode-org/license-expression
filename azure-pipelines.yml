@@ -1,142 +1,64 @@
-trigger:
-    branches:
-        include: ['*']
-    tags:
-        include: ['*']
 
-pr:
-    branches:
-        include: ['*']
+################################################################################
+# We use Azure to run the full tests suites on multiple Python 3.x
+# on multiple Windows, macOS and Linux versions all on 64 bits
+# These jobs are using VMs with Azure-provided Python builds
+################################################################################
 
 jobs:
 
-################################################################################
-# These jobs are using VMs and Azure-provided Pythons
-################################################################################
-
-    - template: etc/ci/azure-posix.yml
+    - template: etc/ci/azure-linux.yml
       parameters:
-          name: Ubuntu_16
+          job_name: ubuntu16_cpython
           image_name: ubuntu-16.04
-          matrix:   
-              py36:
-                  python_version: '3.6'
-              py37:
-                  python_version: '3.7'
-              py38:
-                  python_version: '3.8'
-              py39:
-                  python_version: '3.9'
+          python_versions: ['3.6', '3.7', '3.8', '3.9']
+          test_suites:
+              all: tmp/bin/pytest -vvs
 
-    - template: etc/ci/azure-posix.yml
+    - template: etc/ci/azure-linux.yml
       parameters:
-          name: macOS_1013
-          image_name: macos-10.13
-          matrix:
-              py36:
-                  python_version: '3.6'
-              py37:
-                  python_version: '3.7'
-              py38:
-                  python_version: '3.8'
-              py39:
-                  python_version: '3.9'
+          job_name: ubuntu18_cpython
+          image_name: ubuntu-18.04
+          python_versions: ['3.6', '3.7', '3.8', '3.9']
+          test_suites:
+              all: tmp/bin/pytest -n 2 -vvs
 
-    - template: etc/ci/azure-posix.yml
+    - template: etc/ci/azure-linux.yml
       parameters:
-          name: macOS_1014
+          job_name: ubuntu20_cpython
+          image_name: ubuntu-20.04
+          python_versions: ['3.6', '3.7', '3.8', '3.9']
+          test_suites:
+              all: tmp/bin/pytest -n 2 -vvs
+
+    - template: etc/ci/azure-mac.yml
+      parameters:
+          job_name: macos1014_cpython
           image_name: macos-10.14
-          matrix:
-              py36:
-                  python_version: '3.6'
-              py37:
-                  python_version: '3.7'
-              py38:
-                  python_version: '3.8'
-              py39:
-                  python_version: '3.9'
+          python_versions: ['3.6', '3.7', '3.8', '3.9']
+          test_suites:
+              all: tmp/bin/pytest -n 2 -vvs
+
+    - template: etc/ci/azure-mac.yml
+      parameters:
+          job_name: macos1015_cpython
+          image_name: macos-10.15
+          python_versions: ['3.6', '3.7', '3.8', '3.9']
+          test_suites:
+              all: tmp/bin/pytest -n 2 -vvs
 
     - template: etc/ci/azure-win.yml
       parameters:
-          name: Win_2016_64
+          job_name: win2016_cpython
           image_name: vs2017-win2016
-          matrix:
-              py36:
-                  python_version: '3.6' 
-                  python_architecture: 'x64'
-              py37:
-                  python_version: '3.7'
-                  python_architecture: 'x64'
-              py38:
-                  python_version: '3.8' 
-                  python_architecture: 'x64'
-              py39:
-                  python_version: '3.9'
-                  python_architecture: 'x64'
+          python_versions: ['3.6', '3.7', '3.8', '3.9']
+          test_suites:
+              all: tmp\Scripts\pytest -n 2 -vvs
 
-
-################################################################################
-# These jobs are using containers and their own Python
-################################################################################
-
-    - template: etc/ci/azure-container-deb.yml
+    - template: etc/ci/azure-win.yml
       parameters:
-          name: Ubuntu_16_xenial_py36
-          container: 'ubuntu:xenial'
-          python_path: 'python3.6'
-          install_python: |
-             sudo apt-get -y install software-properties-common
-             sudo add-apt-repository -y ppa:deadsnakes
-             sudo apt-get -y update
-             sudo apt-get install -y python3.6 python3.6-venv python3.6-dev
-
-    - template: etc/ci/azure-container-deb.yml
-      parameters:
-          name: Ubuntu_18_Bionic_py36
-          container: 'ubuntu:bionic'
-          python_path: 'python3.6'
-          install_python: sudo apt-get install -y python3.6 python3.6-venv python3.6-dev
-
-    - template: etc/ci/azure-container-rpm.yml
-      parameters:
-          name: CentOS7_py36
-          container: 'centos:7'
-          python_path: 'python3.6'
-          install_python: |
-              set -e -x
-              sudo yum install -y epel-release
-              sudo yum install -y python36 python36-devel python36-virtualenv
-
-    - template: etc/ci/azure-container-rpm.yml
-      parameters:
-          name: Manylinux1_64_py36
-          container: 'quay.io/pypa/manylinux1_x86_64:latest'
-          python_path: '/opt/python/cp36-cp36m/bin/python'
-          install_packages: echo "No extra packages for now"
-          install_python: echo "Python is pre-installed"
-
-    - template: etc/ci/azure-container-rpm.yml
-      parameters:
-          name: Manylinux2010_64_py36
-          container: 'quay.io/pypa/manylinux2010_x86_64:latest'
-          python_path: '/opt/python/cp36-cp36m/bin/python'
-          install_packages: echo "No extra packages for now"
-          install_python: echo "Python is pre-installed"
-
-    - template: etc/ci/azure-container-rpm.yml
-      parameters:
-          name: Manylinux2010_64_py37
-          container: 'quay.io/pypa/manylinux2010_x86_64:latest'
-          python_path: '/opt/python/cp37-cp37m/bin/python'
-          install_packages: echo "No extra packages for now"
-          install_python: echo "Python is pre-installed"
-
-    - template: etc/ci/azure-container-rpm.yml
-      parameters:
-          name: Fedora_30_py37
-          container: 'fedora:30'
-          package_manager: dnf
-          python_path: 'python3.7'
-          install_python: |
-              set -e -x
-              sudo dnf install -y python3 python3-devel python3-virtualenv
+          job_name: win2019_cpython
+          image_name: windows-2019
+          python_versions: ['3.6', '3.7', '3.8', '3.9']
+          test_suites:
+              all: tmp\Scripts\pytest -n 2 -vvs
