@@ -198,13 +198,11 @@ class Licensing(boolean.BooleanAlgebra):
     >>> assert expected == l.license_symbols(expression)
     """
 
-    def __init__(self, symbols=tuple(), quiet=True, spdx=False):
+    def __init__(self, symbols=tuple(), quiet=True):
         """
         Initialize a Licensing with an optional `symbols` sequence of
         LicenseSymbol or LicenseSymbol-like objects or license key strings. If
         provided and this list data is invalid, raise a ValueError.
-
-        If `spdx` is True, SPDX license keys are used to index Symbols
         """
         super(Licensing, self).__init__(Symbol_class=LicenseSymbol, AND_class=AND, OR_class=OR)
 
@@ -229,26 +227,10 @@ class Licensing(boolean.BooleanAlgebra):
                 raise ValueError('\n'.join(warns + errors))
 
         # mapping of known symbol key to symbol for reference
-        if spdx:
-            self.known_symbols = {}
-            for symbol in symbols:
-                wrapped = symbol.wrapped
-                if not hasattr(wrapped, 'spdx_license_key'):
-                    continue
-                self.known_symbols[wrapped.spdx_license_key] = symbol
-        else:
-            self.known_symbols = {symbol.key: symbol for symbol in symbols}
+        self.known_symbols = {symbol.key: symbol for symbol in symbols}
 
         # mapping of known symbol lowercase key to symbol for reference
-        if spdx:
-            self.known_symbols_lowercase = {}
-            for symbol in symbols:
-                wrapped = symbol.wrapped
-                if not hasattr(symbol, 'spdx_license_key'):
-                    continue
-                self.known_symbols_lowercase[wrapped.spdx_license_key.lower()] = symbol
-        else:
-            self.known_symbols_lowercase = {symbol.key.lower(): symbol for symbol in symbols}
+        self.known_symbols_lowercase = {symbol.key.lower(): symbol for symbol in symbols}
 
         # Aho-Corasick automaton-based Advanced Tokenizer
         self.advanced_tokenizer = None
@@ -284,7 +266,7 @@ class Licensing(boolean.BooleanAlgebra):
             raise TypeError('expressions must be LicenseExpression objects: %(expression1)r, %(expression2)r' % locals())
         return expression.simplify()
 
-    def license_symbols(self, expression, unique=True, decompose=True, spdx=False, **kwargs):
+    def license_symbols(self, expression, unique=True, decompose=True, **kwargs):
         """
         Return a list of LicenseSymbol objects used in an expression in
         the same order as they first appear in the expression tree.
@@ -372,27 +354,18 @@ class Licensing(boolean.BooleanAlgebra):
             keys = ordered_unique(keys)
         return keys
 
-    def unknown_license_symbols(self, expression, unique=True, spdx=False, **kwargs):
+    def unknown_license_symbols(self, expression, unique=True, **kwargs):
         """
         Return a list of unknown licenses symbols used in an `expression` in the same
         order as they first appear in the `expression`.
         `expression` is either a string or a LicenseExpression object.
 
-        If `spdx` is True, interpret SPDX license keys from `expressions`
-
         Extra kwargs are passed down to the parse() function.
         """
-        if spdx:
-            unknown_license_symbols = []
-            for ls in self.license_symbols(expression, unique=unique, decompose=True, spdx=spdx, **kwargs):
-                wrapped = ls.wrapped
-                if not wrapped.spdx_license_key in self.known_symbols:
-                    unknown_license_symbols.append(ls)
-            return unknown_license_symbols
         return [ls for ls in self.license_symbols(expression, unique=unique, decompose=True, **kwargs)
                 if not ls.key in self.known_symbols]
 
-    def unknown_license_keys(self, expression, unique=True, spdx=False, **kwargs):
+    def unknown_license_keys(self, expression, unique=True, **kwargs):
         """
         Return a list of unknown licenses keys used in an `expression` in the same
         order as they first appear in the `expression`.
@@ -402,14 +375,12 @@ class Licensing(boolean.BooleanAlgebra):
 
         If `unique` is True only return unique keys.
 
-        If `spdx` is True, interpet `expression` as SPDX
-
         Extra kwargs are passed down to the parse() function.
         """
-        symbols = self.unknown_license_symbols(expression, unique=False, spdx=spdx, **kwargs)
+        symbols = self.unknown_license_symbols(expression, unique=False, **kwargs)
         return self._keys(symbols, unique)
 
-    def parse(self, expression, validate=False, strict=False, simple=False, spdx=False, **kwargs):
+    def parse(self, expression, validate=False, strict=False, simple=False, **kwargs):
         """
         Return a new license LicenseExpression object by parsing a license
         `expression` string. Check that the expression syntax is valid and raise
@@ -436,9 +407,6 @@ class Licensing(boolean.BooleanAlgebra):
 
         If `simple` is True, parsing will use a simple tokenizer that assumes
         that license symbols are all license keys that cannot contain spaces.
-
-        If 'spdx' is True, `expression` will be parsed for SPDX license expressions,
-        rather than ScanCode license expressions.
 
         For example:
         >>> expression = 'EPL-1.0 and Apache-1.1 OR GPL-2.0 with Classpath-exception'
@@ -467,7 +435,7 @@ class Licensing(boolean.BooleanAlgebra):
             return
         try:
             # this will raise a ParseError on errors
-            tokens = list(self.tokenize(expression, strict=strict, simple=simple, spdx=spdx))
+            tokens = list(self.tokenize(expression, strict=strict, simple=simple))
             expression = super(Licensing, self).parse(tokens)
         except ParseError as e:
             new_error = ExpressionParseError(
@@ -479,14 +447,14 @@ class Licensing(boolean.BooleanAlgebra):
             raise ExpressionError('expression must be a LicenseExpression once parsed.')
 
         if validate:
-            unknown_keys = self.unknown_license_keys(expression, unique=True, spdx=spdx)
+            unknown_keys = self.unknown_license_keys(expression, unique=True)
             if unknown_keys:
                 msg = 'Unknown license key(s): {}'.format(', '.join(unknown_keys))
                 raise ExpressionError(msg)
 
         return expression
 
-    def tokenize(self, expression, strict=False, simple=False, spdx=False):
+    def tokenize(self, expression, strict=False, simple=False):
         """
         Return an iterable of 3-tuple describing each token given an expression
         unicode string. See boolean.BooleanAlgreba.tokenize() for API details.
@@ -502,9 +470,6 @@ class Licensing(boolean.BooleanAlgebra):
 
         If `simple` is True, use a simple tokenizer that assumes that license
         symbols are all license keys that cannot contain spaces.
-
-        If `spdx` is True, interpret license expressions in `expression` as SPDX
-        license expressions
         """
         if not expression:
             return
