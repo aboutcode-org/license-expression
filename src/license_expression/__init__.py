@@ -38,6 +38,9 @@ from collections import OrderedDict
 from copy import copy
 from copy import deepcopy
 from functools import total_ordering
+from os.path import abspath
+from os.path import dirname
+from os.path import join
 import itertools
 import json
 import re
@@ -600,7 +603,7 @@ class Licensing(boolean.BooleanAlgebra):
                         sym = LicenseSymbol(key=sym_or_op)
                     yield Token(start, end, sym_or_op, sym)
 
-    def validate(self, expression, strict=False, simple=False, **kwargs):
+    def validate(self, expression, strict=False, **kwargs):
         data = {
             'normalized_license_expression': '',
             'errors': [],
@@ -609,67 +612,53 @@ class Licensing(boolean.BooleanAlgebra):
             'exception_symbols': [],
         }
 
-        if expression is None:
-            return data
-
-        if isinstance(expression, LicenseExpression):
-            data['normalized_license_expression'] = expression.render()
-            return data
-
-        if isinstance(expression, bytes):
-            try:
-                expression = str(expression)
-            except:
-                ext = type(expression)
-                data['errors'].append('expression must be a string and not: %(ext)r' % locals())
-                return data
-
-        if not isinstance(expression, str):
-            ext = type(expression)
-            data['errors'].append('expression must be a string and not: %(ext)r' % locals())
-            return data
-
-        if not expression or not expression.strip():
-            return
+        # Check `expression` type
         try:
-            # this will raise a ParseError on errors
-            tokens = list(self.tokenize(expression, strict=strict, simple=simple))
-            expression = super(Licensing, self).parse(tokens)
-        except ParseError as e:
-            new_error = ExpressionParseError(
-                token_type=e.token_type, token_string=e.token_string,
-                position=e.position, error_code=e.error_code)
-            data['errors'].append(str(new_error))
+            self.parse(expression)
+        except ExpressionError as e:
+            data['errors'].append(str(e))
+            return data
+
+        # Check `expression` syntax
+        try:
+            self.parse(expression, strict=strict)
+        except ExpressionParseError as e:
+            data['errors'].append(str(e))
             data['invalid_symbols'].append(e.token_string)
             return data
 
-        if not isinstance(expression, LicenseExpression):
-            data['errors'].append('expression must be a LicenseExpression once parsed.')
+        # Check `expression` keys
+        try:
+            parsed_expression = self.parse(expression, strict=strict, validate=True)
+        except ExpressionError as e:
+            error_message = str(e)
+            data['errors'].append(error_message)
+            if 'Unknown license key' in error_message:
+                unknown_keys = self.unknown_license_keys(expression)
+                data['invalid_symbols'].extend(unknown_keys)
             return data
 
-        unknown_keys = self.unknown_license_keys(expression, unique=True)
-        if unknown_keys:
-            msg = 'Unknown license key(s): {}'.format(', '.join(unknown_keys))
-            data['errors'].append(msg)
-            data['invalid_symbols'].extend(unknown_keys)
-            return data
-
-        symbols = list(expression.symbols)
-        data['normalized_license_expression'] = expression.render()
+        # If we have not hit an exception, load `data` and return it
+        symbols = list(parsed_expression.symbols)
+        data['normalized_license_expression'] = parsed_expression.render()
         data['valid_symbols'] = [s.render() for s in symbols]
         data['exception_symbols'] = [s.render() for s in symbols if isinstance(s, LicenseWithExceptionSymbol) or s.is_exception]
         return data
 
 
-def build_spdx_licensing(index_json_location=None):
-    # if no index_json, use vendored version
-    # TODO: vendor index.json
-
-    if index_json_location:
-        with open(index_json_location, 'r') as f:
+def build_spdx_licensing(license_key_index_location=None):
+    """
+    Return a Licensing object that has been loaded with SPDX license keys
+    """
+    if license_key_index_location:
+        with open(license_key_index_location, 'r') as f:
             license_info = json.load(f)
     else:
-        with open(vendored_index_json_location, 'r') as f:
+        # Use vendored license key index if `license_key_index_location` has not been provided
+        curr_dir = dirname(abspath(__file__))
+        data_dir = join(curr_dir, 'data')
+        vendored_license_key_index_location = join(data_dir, 'license_key_index.json')
+        with open(vendored_license_key_index_location, 'r') as f:
             license_info = json.load(f)
 
     lics = [
@@ -677,23 +666,9 @@ def build_spdx_licensing(index_json_location=None):
             'key': l.get('spdx_license_key', ''),
             'aliases': l.get('other_spdx_license_keys', ''),
             'is_exception': l.get('is_exception', ''),
-        } for l in license_info
+        } for l in license_info if l.get('spdx_license_key')
     ]
     syms = [LicenseSymbol(**l) for l in lics]
-    return Licensing(syms)
-
-
-def build_spdx_licensing_scancode():
-    from licensedcode.cache import get_licenses_db
-    ld = get_licenses_db()
-    ld_spdx = [
-        {
-            'key': l.spdx_license_key,
-            'aliases': l.other_spdx_license_keys,
-            'is_exception': l.is_exception
-        } for _, l in ld.items()
-    ]
-    syms = [LicenseSymbol(**l) for l in ld_spdx]
     return Licensing(syms)
 
 
