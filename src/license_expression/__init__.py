@@ -603,28 +603,55 @@ class Licensing(boolean.BooleanAlgebra):
                         sym = LicenseSymbol(key=sym_or_op)
                     yield Token(start, end, sym_or_op, sym)
 
-    def validate(self, expression, strict=False, **kwargs):
-        data = {
-            'normalized_license_expression': '',
-            'errors': [],
-            'valid_symbols': [],
-            'invalid_symbols': [],
-            'exception_symbols': [],
-        }
+    def validate(self, expression, strict=True, **kwargs):
+        """
+        Return a ExpressionInfo object that contains information about
+        `expression` by parsing `expression` using Licensing.parse()
+
+        The ExpressionInfo class has the following fields:
+            - normalized_license_expression: str
+            - errors: list
+            - valid_symbols: list
+            - invalid_symbols: list
+            - exception_symbols: list
+
+        If `expression` is valid, then
+        `ExpressionInfo.normalized_license_expression` is set, along with a list
+        of valid license symbols in `valid_symbols` and `exception_symbols`.
+
+        If an error was encountered when validating `expression`,
+        `ExpressionInfo.errors` will be populated with strings containing the
+        error message that has occured. If an error has occured due to invalid
+        license symbols, the offending symbols will be present in
+        `ExpressionInfo.invalid_symbols`
+
+        If `strict` is True, additional exceptions will be raised if in a "WITH"
+        expression such as "XXX with ZZZ" if the XXX symbol has `is_exception`
+        set to True or the YYY symbol has `is_exception` set to False. This
+        checks that symbols are used strictly as constructed.
+        """
+        class ExpressionInfo:
+            normalized_license_expression = ''
+            errors = []
+            valid_symbols = []
+            invalid_symbols = []
+            exception_symbols = []
+
+        data = ExpressionInfo()
 
         # Check `expression` type
         try:
             self.parse(expression)
         except ExpressionError as e:
-            data['errors'].append(str(e))
+            data.errors.append(str(e))
             return data
 
         # Check `expression` syntax
         try:
             self.parse(expression, strict=strict)
         except ExpressionParseError as e:
-            data['errors'].append(str(e))
-            data['invalid_symbols'].append(e.token_string)
+            data.errors.append(str(e))
+            data.invalid_symbols.append(e.token_string)
             return data
 
         # Check `expression` keys
@@ -632,17 +659,17 @@ class Licensing(boolean.BooleanAlgebra):
             parsed_expression = self.parse(expression, strict=strict, validate=True)
         except ExpressionError as e:
             error_message = str(e)
-            data['errors'].append(error_message)
+            data.errors.append(error_message)
             if 'Unknown license key' in error_message:
                 unknown_keys = self.unknown_license_keys(expression)
-                data['invalid_symbols'].extend(unknown_keys)
+                data.invalid_symbols.extend(unknown_keys)
             return data
 
         # If we have not hit an exception, load `data` and return it
         symbols = list(parsed_expression.symbols)
-        data['normalized_license_expression'] = parsed_expression.render()
-        data['valid_symbols'] = [s.render() for s in symbols]
-        data['exception_symbols'] = [s.render() for s in symbols if isinstance(s, LicenseWithExceptionSymbol) or s.is_exception]
+        data.normalized_license_expression = parsed_expression.render()
+        data.valid_symbols = [s.render() for s in symbols]
+        data.exception_symbols = [s.render() for s in symbols if isinstance(s, LicenseWithExceptionSymbol) or s.is_exception]
         return data
 
 

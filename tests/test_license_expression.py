@@ -2165,3 +2165,62 @@ class MockLicensesTest(TestCase):
         ]
 
         assert expected == results
+
+
+class LicensingValidateTest(TestCase):
+    licensing = Licensing(
+        [
+            LicenseSymbol(key='GPL-2.0-or-later', is_exception=False),
+            LicenseSymbol(key='MIT', is_exception=False),
+            LicenseSymbol(key='Apache-2.0', is_exception=False),
+            LicenseSymbol(key='WxWindows-exception-3.1', is_exception=True),
+        ]
+    )
+
+    def test_validate_simple(self):
+        result = self.licensing.validate('GPL-2.0-or-later AND MIT')
+        assert 'GPL-2.0-or-later AND MIT' == result.normalized_license_expression
+        assert [] == result.errors
+        assert sorted(['MIT', 'GPL-2.0-or-later']) == sorted(result.valid_symbols)
+        assert [] == result.invalid_symbols
+        assert [] == result.exception_symbols
+
+    def test_validation_invalid_license_key(self):
+        result = self.licensing.validate('cool-license')
+        assert '' == result.normalized_license_expression
+        assert ['Unknown license key(s): cool-license'] == result.errors
+        assert [] == result.valid_symbols
+        assert ['cool-license'] == result.invalid_symbols
+        assert [] == result.exception_symbols
+
+    def test_validate_exception(self):
+        result = self.licensing.validate('GPL-2.0-or-later WITH WxWindows-exception-3.1')
+        assert 'GPL-2.0-or-later WITH WxWindows-exception-3.1' == result.normalized_license_expression
+        assert [] == result.errors
+        assert ['GPL-2.0-or-later WITH WxWindows-exception-3.1'] == result.valid_symbols
+        assert [] == result.invalid_symbols
+        assert ['GPL-2.0-or-later WITH WxWindows-exception-3.1'] == result.exception_symbols
+
+    def test_validation_exception_with_choice(self):
+        result = self.licensing.validate('GPL-2.0-or-later WITH WxWindows-exception-3.1 OR MIT')
+        assert 'GPL-2.0-or-later WITH WxWindows-exception-3.1 OR MIT' == result.normalized_license_expression
+        assert [] == result.errors
+        assert sorted(['GPL-2.0-or-later WITH WxWindows-exception-3.1', 'MIT']) == sorted(result.valid_symbols)
+        assert [] == result.invalid_symbols
+        assert ['GPL-2.0-or-later WITH WxWindows-exception-3.1'] == result.exception_symbols
+
+    def test_validation_bad_syntax(self):
+        result = self.licensing.validate('Apache-2.0 + MIT')
+        assert '' == result.normalized_license_expression
+        assert ['Invalid symbols sequence such as (A B) for token: "+" at position: 11'] == result.errors
+        assert [] == result.valid_symbols
+        assert [] == result.invalid_symbols
+        assert [] == result.exception_symbols
+
+    def test_validation_invalid_license_exception(self):
+        result = self.licensing.validate('Apache-2.0 WITH MIT')
+        assert '' == result.normalized_license_expression
+        assert ["A plain license symbol cannot be used as an exception in a \"WITH symbol\" statement. for token: \"MIT\" at position: 16"] == result.errors
+        assert [] == result.valid_symbols
+        assert ['MIT'] == result.invalid_symbols
+        assert [] == result.exception_symbols
