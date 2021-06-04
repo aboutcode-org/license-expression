@@ -1,30 +1,23 @@
 Changelog
 =========
 
-All notable changes to this project are documented in this file.
-
-The format is based on `Keep a
-Changelog <https://keepachangelog.com/en/1.0.0/>`__
-
 [Unreleased]
 ------------
 
-[2.0] - 2021-xx-xx
+
+
+[2.0] - 2021-06-04
 ------------------
 
 Added
 ~~~~~
--  Add ability to simplify license expressions without over simplifying using using boolean logic
+-  Add ability to simplify license expressions without over simplifying by not
+   using using boolean logic.
 
 Changed
 ~~~~~~~
 -  Drop support for python27
 -  Adopt the skeleton from https://github.com/nexB/skeleton
-=======
-All notable changes to this project will be documented in this file.
-
-The format is based on `Keep a
-Changelog <https://keepachangelog.com/en/1.0.0/>`__
 
 
 [1.2] - 2019-11-14
@@ -41,6 +34,7 @@ Changed
 ~~~~~~~
 -  Update the thirdparty directory structure.
 
+
 [1.0] - 2019-10-16
 ------------------
 Added
@@ -51,6 +45,7 @@ Added
 Changed
 ~~~~~~~
 -  updated travis CI settings
+
 
 [0.999] - 2019-04-29
 --------------------
