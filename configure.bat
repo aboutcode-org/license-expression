@@ -1,54 +1,180 @@
 @echo OFF
-setlocal
-@rem Copyright (c) nexB Inc. http://www.nexb.com/ - All rights reserved.
+@setlocal
+
+@rem Copyright (c) nexB Inc. and others. All rights reserved.
+@rem SPDX-License-Identifier: Apache-2.0
+@rem See http://www.apache.org/licenses/LICENSE-2.0 for the license text.
+@rem See https://github.com/nexB/ for support or download.
+@rem See https://aboutcode.org for more information about nexB OSS projects.
+
 
 @rem ################################
-@rem # Defaults. change these variables to customize this script locally
+@rem # A configuration script to set things up:
+@rem # create a virtualenv and install or update thirdparty packages.
+@rem # Source this script for initial configuration
+@rem # Use configure --help for details
+
+@rem # This script will search for a virtualenv.pyz app in etc\thirdparty\virtualenv.pyz
+@rem # Otherwise it will download the latest from the VIRTUALENV_PYZ_URL default
 @rem ################################
-@rem # you can define one or more thirdparty dirs, each prefixed with TPP_DIR
-set TPP_DIR=thirdparty
 
-set DEFAULT_PYTHON=python
 
-@rem # default configurations for dev
-set CONF_DEFAULT="etc/conf/dev"
-@rem #################################
+@rem ################################
+@rem # Defaults. Change these variables to customize this script
+@rem ################################
 
+@rem # Requirement arguments passed to pip and used by default or with --dev.
+set "REQUIREMENTS=--editable ."
+set "DEV_REQUIREMENTS=--editable .[testing]"
+
+@rem # where we create a virtualenv
+set "VIRTUALENV_DIR=tmp"
+
+@rem # Cleanable files and directories to delete with the --clean option
+set "CLEANABLE=build tmp"
+
+@rem # extra  arguments passed to pip
+set "PIP_EXTRA_ARGS= "
+
+@rem # the URL to download virtualenv.pyz if needed
+set VIRTUALENV_PYZ_URL=https://bootstrap.pypa.io/virtualenv.pyz
+@rem ################################
+
+
+@rem ################################
+@rem # Current directory where this script lives
 set CFG_ROOT_DIR=%~dp0
-
-@rem Collect all command line arguments in a variable
-set CFG_CMD_LINE_ARGS=
-
-@rem a possible alternative way and simpler way to slurp args
-@rem set CFG_CMD_LINE_ARGS=%*
+set "CFG_BIN_DIR=%CFG_ROOT_DIR%\%VIRTUALENV_DIR%\Scripts"
 
 
-:collectarg
- if ""%1""=="""" goto continue
- call set CFG_CMD_LINE_ARGS=%CFG_CMD_LINE_ARGS% %1
- shift
- goto collectarg
-
-:continue
-
-@rem Set defaults when no args are passed
-if "%CFG_CMD_LINE_ARGS%"=="" set CFG_CMD_LINE_ARGS="%CONF_DEFAULT%"
-if "%PYTHON_EXE%"=="" set PYTHON_EXE=%DEFAULT_PYTHON%
-
-
-call "%PYTHON_EXE%" "%CFG_ROOT_DIR%etc\configure.py" %CFG_CMD_LINE_ARGS%
-@rem Return a proper return code on failure
-
-if %errorlevel% neq 0 (
-    exit /b %errorlevel%
+@rem ################################
+@rem # Set the quiet flag to empty if not defined
+if not defined CFG_QUIET (
+    set "CFG_QUIET= "
 )
 
 
-@rem Activate the virtualenv
-endlocal
-if exist "%CFG_ROOT_DIR%bin\activate" (
-    "%CFG_ROOT_DIR%bin\activate"
-)
-goto EOS
+@rem ################################
+@rem # Main command line entry point
+set CFG_DEV_MODE=0
+set "CFG_REQUIREMENTS=%REQUIREMENTS%"
 
-:EOS
+if "%1" EQU "--help"   (goto cli_help)
+if "%1" EQU "--clean"  (goto clean)
+if "%1" EQU "--dev"    (
+    set "CFG_REQUIREMENTS=%DEV_REQUIREMENTS%"
+    set CFG_DEV_MODE=1
+)
+if "%1" EQU "--python" (
+    echo "The --python option is now DEPRECATED. Use the PYTHON_EXECUTABLE environment"
+    echo "variable instead. Run configure --help for details."
+    exit /b 0
+)
+
+@rem ################################
+@rem # find a proper Python to run
+@rem # Use environment variables or a file if available.
+@rem # Otherwise the latest Python by default.
+if not defined PYTHON_EXECUTABLE (
+    @rem # check for a file named PYTHON_EXECUTABLE
+    if exist ""%CFG_ROOT_DIR%\PYTHON_EXECUTABLE"" (
+        set /p PYTHON_EXECUTABLE=<""%CFG_ROOT_DIR%\PYTHON_EXECUTABLE""
+    ) else (
+        set "PYTHON_EXECUTABLE=py"
+    )
+)
+
+:create_virtualenv
+@rem # create a virtualenv for Python
+@rem # Note: we do not use the bundled Python 3 "venv" because its behavior and
+@rem # presence is not consistent across Linux distro and sometimes pip is not
+@rem # included either by default. The virtualenv.pyz app cures all these issues.
+
+if not exist ""%CFG_BIN_DIR%\python.exe"" (
+    if not exist "%CFG_BIN_DIR%" (
+        mkdir %CFG_BIN_DIR%
+    )
+
+    if exist ""%CFG_ROOT_DIR%\etc\thirdparty\virtualenv.pyz"" (
+        %PYTHON_EXECUTABLE% "%CFG_ROOT_DIR%\etc\thirdparty\virtualenv.pyz" ^
+            --wheel embed --pip embed --setuptools embed ^
+            --seeder pip ^
+            --never-download ^
+            --no-periodic-update ^
+            --no-vcs-ignore ^
+            %CFG_QUIET% ^
+            %CFG_ROOT_DIR%\%VIRTUALENV_DIR%
+    ) else (
+        if not exist ""%CFG_ROOT_DIR%\%VIRTUALENV_DIR%\virtualenv.pyz"" (
+            curl -o "%CFG_ROOT_DIR%\%VIRTUALENV_DIR%\virtualenv.pyz" %VIRTUALENV_PYZ_URL%
+
+            if %ERRORLEVEL% neq 0 (
+                exit /b %ERRORLEVEL%
+            )
+        )
+        %PYTHON_EXECUTABLE% "%CFG_ROOT_DIR%\%VIRTUALENV_DIR%\virtualenv.pyz" ^
+            --wheel embed --pip embed --setuptools embed ^
+            --seeder pip ^
+            --never-download ^
+            --no-periodic-update ^
+            --no-vcs-ignore ^
+            %CFG_QUIET% ^
+            %CFG_ROOT_DIR%\%VIRTUALENV_DIR%
+    )
+)
+
+if %ERRORLEVEL% neq 0 (
+    exit /b %ERRORLEVEL%
+)
+
+
+:install_packages
+@rem # install requirements in virtualenv
+@rem # note: --no-build-isolation means that pip/wheel/setuptools will not
+@rem # be reinstalled a second time and reused from the virtualenv and this
+@rem # speeds up the installation.
+@rem # We always have the PEP517 build dependencies installed already.
+
+%CFG_BIN_DIR%\pip install ^
+    --upgrade ^
+    --no-build-isolation ^
+    %CFG_QUIET% ^
+    %PIP_EXTRA_ARGS% ^
+    %CFG_REQUIREMENTS%
+
+if %ERRORLEVEL% neq 0 (
+    exit /b %ERRORLEVEL%
+)
+
+exit /b 0
+
+
+@rem ################################
+
+:cli_help
+    echo An initial configuration script
+    echo "  usage: configure [options]"
+    echo " "
+    echo The default is to configure for regular use. Use --dev for development.
+    echo " "
+    echo The options are:
+    echo " --clean: clean built and installed files and exit."
+    echo " --dev:   configure the environment for development."
+    echo " --help:  display this help message and exit."
+    echo " "
+    echo By default, the python interpreter version found in the path is used.
+    echo Alternatively, the PYTHON_EXECUTABLE environment variable can be set to
+    echo configure another Python executable interpreter to use. If this is not
+    echo set, a file named PYTHON_EXECUTABLE containing a single line with the
+    echo path of the Python executable to use will be checked last.
+    exit /b 0
+
+
+:clean
+@rem # Remove cleanable file and directories and files from the root dir.
+echo "* Cleaning ..."
+for %%F in (%CLEANABLE%) do (
+    rmdir /s /q "%CFG_ROOT_DIR%\%%F" >nul 2>&1
+    del /f /q "%CFG_ROOT_DIR%\%%F" >nul 2>&1
+)
+exit /b 0

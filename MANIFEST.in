@@ -1,19 +1,15 @@
 graft src
-graft etc
-graft tests
 
-prune src/license_expression.egg-info
-
-include README.rst
-include apache-2.0.LICENSE
+include *.LICENSE
 include NOTICE
-include MANIFEST.in
-include setup.py
-include setup.cfg
-include .gitignore
-include configure
-include configure.bat
-
-include .travis.yml appveyor.yml
+include *.ABOUT
+include *.toml
+include *.yml
+include *.rst
+include setup.*
+include configure*
+include requirements*
+include .git*
 
 global-exclude *.py[co] __pycache__ *.*~
+

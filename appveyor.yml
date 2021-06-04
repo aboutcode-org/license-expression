@@ -2,20 +2,18 @@ version: '{build}'
 
 environment:
     matrix:
-        - PYTHON_EXE: "C:\\Python27\\python.exe"
-        - PYTHON_EXE: "C:\\Python27-x64\\python.exe"
-        - PYTHON_EXE: "C:\\Python36\\python.exe"
         - PYTHON_EXE: "C:\\Python36-x64\\python.exe"
+        - PYTHON_EXE: "C:\\Python37-x64\\python.exe"
+        - PYTHON_EXE: "C:\\Python38-x64\\python.exe"
+        - PYTHON_EXE: "C:\\Python39-x64\\python.exe"
 
 install:
-    - configure
+    - configure --dev
 
 build: off
 
 test_script:
-    - 'bin\activate'
-    - 'bin\python -c "from __future__ import print_function;import sys;print(sys.getdefaultencoding())"'
-    - 'bin\py.test -vvs'
+    - 'tmp\Scripts\activate'
+    - 'tmp\Scripts\python -c "from __future__ import print_function;import sys;print(sys.getdefaultencoding())"'
+    - 'tmp\Scripts\pytest -vvs'
 
-on_failure:
-    - "python etc/scripts/irc-notify.py aboutcode [{project_name}:{branch}] {short_commit}: \"{message}\" ({author}) {color_red}Failed,Details: {build_url},Commit: {commit_url}"

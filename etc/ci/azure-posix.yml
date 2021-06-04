@@ -1,28 +1,41 @@
 parameters:
-  name: ''
-  image_name: ''
-  matrix: []
+    job_name: ''
+    image_name: ''
+    python_versions: []
+    test_suites: {}
+    python_architecture: x64
 
 jobs:
-- job: ${{ parameters.name }}
+    - job: ${{ parameters.job_name }}
 
-  pool: 
-    vmImage: ${{ parameters.image_name }}
+      pool:
+          vmImage: ${{ parameters.image_name }}
 
-  strategy:
-    matrix:
-      ${{ insert }}: ${{ parameters.matrix }}
+      strategy:
+          matrix:
+            ${{ each pyver in parameters.python_versions }}:
+              ${{ each tsuite in parameters.test_suites }}:
+                 ${{ format('py{0} {1}', pyver, tsuite.key) }}:
+                     python_version: ${{ pyver }}
+                     test_suite_label: ${{ tsuite.key }}
+                     test_suite: ${{ tsuite.value }}
 
-  steps:
-    - task: UsePythonVersion@0
-      inputs:
-          versionSpec: '$(python_version)'
+      steps:
+          - checkout: self
+            fetchDepth: 10
 
-    - script: ./configure
-      displayName: 'Configure'
+          - task: UsePythonVersion@0
+            inputs:
+                versionSpec: '$(python_version)'
+                architecture: '${{ parameters.python_architecture }}'
+            displayName: 'Install Python $(python_version)'
 
-    - script: bin/about check --verbose .
-      displayName: 'Check ABOUT files'
+          - script: |
+                python3 --version
+                python$(python_version) --version
+                echo "python$(python_version)" > PYTHON_EXECUTABLE
+                ./configure --dev
+            displayName: 'Run Configure'
 
-    - script: bin/py.test -vvs
-      displayName: 'Run tests'
+          - script: $(test_suite)
+            displayName: 'Run $(test_suite_label) tests with py$(python_version) on ${{ parameters.job_name }}'
