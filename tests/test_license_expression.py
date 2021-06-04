@@ -696,6 +696,13 @@ class LicensingParseTest(TestCase):
         expected = l.parse('mit')
         assert result == expected
 
+    def test_dedup_licensexpressions_works_with_subexpressions(self):
+        l = Licensing()
+        exp = l.parse('(mit OR gpl-2.0) AND mit AND bsd-new AND (mit OR gpl-2.0)')
+        result = l.dedup(exp)
+        expected = l.parse('(mit OR gpl-2.0) AND mit AND bsd-new')
+        assert result == expected
+
     def test_simplify_and_equivalent_and_contains(self):
         l = Licensing()
         expr2 = l.parse(' GPL-2.0 or (mit and LGPL-2.1) or bsd Or GPL-2.0  or (mit and LGPL-2.1)')
@@ -940,21 +947,17 @@ class LicensingParseTest(TestCase):
             }
             assert expected == _parse_error_as_dict(pe)
 
-    @expectedFailure
-    def test_parse_invalid_expression_with_single_trailing_or_raise_exception(self):
+    def test_parse_invalid_expression_drops_single_trailing_or(self):
         licensing = Licensing()
         expression = 'mit or mit or'
-        try:
-            licensing.parse(expression, simple=False)
-            self.fail('Exception not raised')
-        except ParseError as pe:
-            expected = {
-                'error_code': PARSE_INVALID_OPERATOR_SEQUENCE,
-                'position': 14,
-                'token_string': 'or',
-                'token_type': TOKEN_OR
-            }
-            assert expected == _parse_error_as_dict(pe)
+        e = licensing.parse(expression, simple=False)
+        assert str(e) == 'mit OR mit'
+
+    def test_parse_invalid_expression_drops_single_trailing_or2(self):
+        licensing = Licensing()
+        expression = 'mit or mit or'
+        e = licensing.parse(expression, simple=True)
+        assert str(e) == 'mit OR mit'
 
     def test_parse_invalid_expression_with_single_trailing_and_raise_exception(self):
         licensing = Licensing()
