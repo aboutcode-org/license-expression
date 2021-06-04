@@ -19,8 +19,12 @@ from __future__ import unicode_literals
 
 from collections import namedtuple
 from collections import OrderedDict
+from os.path import abspath
+from os.path import dirname
+from os.path import join
 from unittest import TestCase
 from unittest.case import expectedFailure
+import json
 import sys
 
 from boolean.boolean import PARSE_UNBALANCED_CLOSING_PARENS
@@ -42,6 +46,7 @@ from license_expression import LicenseWithExceptionSymbol
 from license_expression import ParseError
 from license_expression import Token
 
+from license_expression import build_spdx_licensing
 from license_expression import build_token_groups_for_with_subexpression
 from license_expression import validate_symbols
 
@@ -2224,3 +2229,27 @@ class LicensingValidateTest(TestCase):
         assert [] == result.valid_symbols
         assert ['MIT'] == result.invalid_symbols
         assert [] == result.exception_symbols
+
+
+class UtilTest(TestCase):
+    def test_build_spdx_licensing(self):
+        curr_dir = dirname(abspath(__file__))
+        data_dir = join(curr_dir, 'data')
+        test_license_key_index_location = join(data_dir, 'test_license_key_index.json')
+
+        with open(test_license_key_index_location, 'r') as f:
+            license_info = json.load(f)
+        lics = [
+            {
+                'key': l.get('spdx_license_key', ''),
+                'aliases': l.get('other_spdx_license_keys', ''),
+                'is_exception': l.get('is_exception', ''),
+            } for l in license_info if l.get('spdx_license_key')
+        ]
+        syms = [LicenseSymbol(**l) for l in lics]
+        expected = Licensing(syms)
+
+        result = build_spdx_licensing(test_license_key_index_location)
+
+        assert expected.known_symbols == result.known_symbols
+        assert expected.known_symbols_lowercase == result.known_symbols_lowercase
