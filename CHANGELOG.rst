@@ -1,6 +1,6 @@
 Changelog
 =========
-<<<<<<< HEAD
+
 All notable changes to this project are documented in this file.
 
 The format is based on `Keep a
@@ -11,6 +11,7 @@ Changelog <https://keepachangelog.com/en/1.0.0/>`__
 
 [2.0] - 2021-xx-xx
 ------------------
+
 Added
 ~~~~~
 -  Add ability to simplify license expressions without over simplifying using using boolean logic
@@ -25,9 +26,6 @@ All notable changes to this project will be documented in this file.
 The format is based on `Keep a
 Changelog <https://keepachangelog.com/en/1.0.0/>`__
 
-[Unreleased]
-------------
->>>>>>> refs/remotes/origin/master
 
 [1.2] - 2019-11-14
 ------------------
