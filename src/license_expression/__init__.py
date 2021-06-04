@@ -673,27 +673,60 @@ class Licensing(boolean.BooleanAlgebra):
         return data
 
 
-def build_spdx_licensing(license_key_index_location=None):
+def get_license_key_info(license_key_index_location=None):
     """
-    Return a Licensing object that has been loaded with SPDX license keys
+    Return a list of dictionaries that contain license key information from
+    `license_key_index_location`
+
+    If `license_key_index_location` is not present, then we use a vendored copy
+    of the license key index from https://scancode-licensedb.aboutcode.org/
     """
     if license_key_index_location:
         with open(license_key_index_location, 'r') as f:
-            license_info = json.load(f)
+            license_key_info = json.load(f)
     else:
-        # Use vendored license key index if `license_key_index_location` has not been provided
         curr_dir = dirname(abspath(__file__))
         data_dir = join(curr_dir, 'data')
         vendored_license_key_index_location = join(data_dir, 'license_key_index.json')
         with open(vendored_license_key_index_location, 'r') as f:
-            license_info = json.load(f)
+            license_key_info = json.load(f)
+    return license_key_info
 
+
+def build_licensing(license_key_index_location=None):
+    """
+    Return a Licensing object that has been loaded with license keys.
+
+    If `license_key_index_location` is present, then license key information
+    will be loaded from `license_key_index_location`, otherwise license key
+    information will come from a vendored license key index file.
+    """
+    license_key_info = get_license_key_info(license_key_index_location)
+    lics = [
+        {
+            'key': l.get('license_key', ''),
+            'is_exception': l.get('is_exception', ''),
+        } for l in license_key_info
+    ]
+    syms = [LicenseSymbol(**l) for l in lics]
+    return Licensing(syms)
+
+
+def build_spdx_licensing(license_key_index_location=None):
+    """
+    Return a Licensing object that has been loaded with SPDX license keys.
+
+    If `license_key_index_location` is present, then license key information
+    will be loaded from `license_key_index_location`, otherwise license key
+    information will come from a vendored license key index file.
+    """
+    license_key_info = get_license_key_info(license_key_index_location)
     lics = [
         {
             'key': l.get('spdx_license_key', ''),
             'aliases': l.get('other_spdx_license_keys', ''),
             'is_exception': l.get('is_exception', ''),
-        } for l in license_info if l.get('spdx_license_key')
+        } for l in license_key_info if l.get('spdx_license_key')
     ]
     syms = [LicenseSymbol(**l) for l in lics]
     return Licensing(syms)

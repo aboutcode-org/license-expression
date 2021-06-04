@@ -46,8 +46,10 @@ from license_expression import LicenseWithExceptionSymbol
 from license_expression import ParseError
 from license_expression import Token
 
+from license_expression import build_licensing
 from license_expression import build_spdx_licensing
 from license_expression import build_token_groups_for_with_subexpression
+from license_expression import get_license_key_info
 from license_expression import validate_symbols
 
 from license_expression import TOKEN_AND
@@ -2232,10 +2234,28 @@ class LicensingValidateTest(TestCase):
 
 
 class UtilTest(TestCase):
+    test_data_dir = join(dirname(__file__), 'data')
+
+    def test_build_licensing(self):
+        test_license_key_index_location = join(self.test_data_dir, 'test_license_key_index.json')
+        with open(test_license_key_index_location, 'r') as f:
+            license_info = json.load(f)
+        lics = [
+            {
+                'key': l.get('license_key', ''),
+                'is_exception': l.get('is_exception', ''),
+            } for l in license_info if l.get('spdx_license_key')
+        ]
+        syms = [LicenseSymbol(**l) for l in lics]
+        expected = Licensing(syms)
+
+        result = build_licensing(test_license_key_index_location)
+
+        assert expected.known_symbols == result.known_symbols
+        assert expected.known_symbols_lowercase == result.known_symbols_lowercase
+
     def test_build_spdx_licensing(self):
-        curr_dir = dirname(abspath(__file__))
-        data_dir = join(curr_dir, 'data')
-        test_license_key_index_location = join(data_dir, 'test_license_key_index.json')
+        test_license_key_index_location = join(self.test_data_dir, 'test_license_key_index.json')
 
         with open(test_license_key_index_location, 'r') as f:
             license_info = json.load(f)
