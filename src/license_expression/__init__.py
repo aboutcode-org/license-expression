@@ -576,8 +576,22 @@ class Licensing(boolean.BooleanAlgebra):
 
     def dedup(self, expression):
         """
-        Return a de-duplicated LicenseExpression given a license expfession
+        Return a deduplicated LicenseExpression given a license expression
         string or LicenseExpression object.
+
+        The deduplication process is similar to simplification but is specialized
+        for working with license expressions. Simplification on the other hand
+        is a generic boolean operation not aware of the specifis of license expressions.
+
+        The deduplication:
+
+        - Does not sort the licenses of sub-expression in an expression. They
+          stay in the same order as in the original.
+
+        - Choices (as in MIT or GPL) are kept as-is and not treated as
+          simplifiable. This way this avoid droping important choice options in
+          complex expressions which is never desirable.
+
         """
         exp = self.parse(expression)
         expressions = []
@@ -600,7 +614,7 @@ class Licensing(boolean.BooleanAlgebra):
                 licensing=self,
             )
         else:
-            raise Exception('Unknown expression type: {}'.format(repr(expression)))
+            raise Exception(f'Unknown expression type: {expression!r}')
         return deduped
 
 
@@ -717,8 +731,8 @@ def replace_with_subexpression_by_license_symbol(tokens, strict=False):
     Check validity of with subexpessions and raise ParseError as needed.
 
     If `strict` is True also raise ParseError if the left hand side
-    LicenseSymbol has is_exception True or if the right hand side
-    LicenseSymbol has is_exception False.
+    LicenseSymbol has is_exception True or if the right hand side LicenseSymbol
+    has is_exception False.
     """
     token_groups = build_token_groups_for_with_subexpression(tokens)
 
@@ -751,7 +765,7 @@ def replace_with_subexpression_by_license_symbol(tokens, strict=False):
 
             else:
                 # this should not be possible by design
-                raise Exception('Licensing.tokenize is internally confused...:' + repr(tval))
+                raise Exception(f'Licensing.tokenize is internally confused...: {tval!r}')
 
             yield token
             continue
@@ -763,8 +777,8 @@ def replace_with_subexpression_by_license_symbol(tokens, strict=False):
             raise ParseError(
                 TOKEN_SYMBOL, string, start, PARSE_INVALID_EXPRESSION)
 
-        # from now on we have a tripple of tokens: a WITH sub-expression such as "A with
-        # B" seq of three tokens
+        # from now on we have a tripple of tokens: a WITH sub-expression such as
+        # "A with B" seq of three tokens
         lic_token, WITH , exc_token = token_group
 
         token_string = ' '.join([
@@ -818,13 +832,14 @@ class Renderable(object):
 
     def render(self, template='{symbol.key}', *args, **kwargs):
         """
-        Return a formatted string rendering for this expression using the `template`
-        format string to render each symbol. The variable available are `symbol.key`
-        and any other attribute that was attached to a license symbol instance and a
-        custom template can be provided to handle custom HTML rendering or similar.
+        Return a formatted string rendering for this expression using the
+        `template` format string to render each symbol. The variable available
+        are `symbol.key` and any other attribute that was attached to a license
+        symbol instance and a custom template can be provided to handle custom
+        HTML rendering or similar.
 
-        For symbols that hold multiple licenses (e.g. a WITH statement) the template
-        is applied to each symbol individually.
+        For symbols that hold multiple licenses (e.g. a WITH statement) the
+        template is applied to each symbol individually.
 
         Note that when render() is called the *args and **kwargs are propagated
         recursively to any Renderable object render() method.
@@ -840,9 +855,18 @@ class Renderable(object):
         """
         if isinstance(self, LicenseWithExceptionSymbol):
             return self.render(
-                template=template, wrap_with_in_parens=False, *args, **kwargs)
-        else:
-            return self.render(template=template, wrap_with_in_parens=True, *args, **kwargs)
+                template=template,
+                wrap_with_in_parens=False,
+                *args,
+                **kwargs,
+            )
+
+        return self.render(
+            template=template,
+            wrap_with_in_parens=True,
+            *args,
+            **kwargs,
+        )
 
 
 class BaseSymbol(Renderable, boolean.Symbol):
@@ -862,6 +886,7 @@ class BaseSymbol(Renderable, boolean.Symbol):
         """
         if not isinstance(other, BaseSymbol):
             return False
+
         if self == other:
             return True
 
@@ -905,7 +930,8 @@ class LicenseSymbol(BaseSymbol):
         if not is_valid_license_key(key):
             raise ExpressionError(
                 'Invalid license key: the valid characters are: letters and numbers, '
-                'underscore, dot, colon or hyphen signs and spaces: "%(key)s"' % locals())
+                f'underscore, dot, colon or hyphen signs and spaces: {key!r}'
+            )
 
         # normalize for spaces
         key = ' '.join(key.split())
@@ -1049,10 +1075,11 @@ class LicenseSymbolLike(LicenseSymbol):
 @total_ordering
 class LicenseWithExceptionSymbol(BaseSymbol):
     """
-    A LicenseWithExceptionSymbol represents a license "with" an exception as used in
-    a license expression. It holds two LicenseSymbols objects: one for the left-hand
-    license proper and one for the right-hand exception to this license and deals
-    with the specifics of resolution, validation and representation.
+    A LicenseWithExceptionSymbol represents a license "with" an exception as
+    used in a license expression. It holds two LicenseSymbols objects: one for
+    the left-hand license proper and one for the right-hand exception to this
+    license and deals with the specifics of resolution, validation and
+    representation.
     """
 
     def __init__(self, license_symbol, exception_symbol, strict=False, *args, **kwargs):
@@ -1180,8 +1207,11 @@ class RenderableFunction(Renderable):
                 rendered = arg.render(template, *args, **kwargs)
 
             else:
-                print('WARNING: object in expression is not renderable: falling back to plain string representation: %(arg)r.')
                 # FIXME: CAN THIS REALLY HAPPEN since we only have symbols, or and AND?
+                print(
+                    'WARNING: object in expression is not renderable: '
+                    f'falling back to plain string representation: {arg!r}.'
+                )
                 rendered = str(arg)
 
             if arg.isliteral:
@@ -1199,7 +1229,8 @@ class AND(RenderableFunction, boolean.AND):
 
     def __init__(self, *args):
         if len(args) < 2:
-            raise ExpressionError('AND requires two or more licenses as in: MIT AND BSD')
+            raise ExpressionError(
+                'AND requires two or more licenses as in: MIT AND BSD')
         super(AND, self).__init__(*args)
         self.operator = ' AND '
 
@@ -1211,7 +1242,8 @@ class OR(RenderableFunction, boolean.OR):
 
     def __init__(self, *args):
         if len(args) < 2:
-            raise ExpressionError('OR requires two or more licenses as in: MIT OR BSD')
+            raise ExpressionError(
+                'OR requires two or more licenses as in: MIT OR BSD')
         super(OR, self).__init__(*args)
         self.operator = ' OR '
 
@@ -1389,22 +1421,23 @@ def combine_expressions(
     licensing=Licensing(),
 ):
     """
-    Return a combined LicenseExpression object with the `relation`,
-    given a list of license `expressions` strings or LicenseExpression.
-    If unique is True remove duplicates before combining expressions.
+    Return a combined LicenseExpression object with the `relation`, given a list
+    of license `expressions` strings or LicenseExpression. If unique is True
+    remove duplicates before combining expressions.
 
     For example::
-        >>> a = 'mit'
-        >>> b = 'gpl'
-        >>> str(combine_expressions([a, b]))
-        'mit AND gpl'
-        >>> assert 'mit' == str(combine_expressions([a]))
-        >>> combine_expressions([])
-        >>> combine_expressions(None)
-        >>> str(combine_expressions(('gpl', 'mit', 'apache',)))
-        'gpl AND mit AND apache'
-        >>> str(combine_expressions(('gpl', 'mit', 'apache',), relation='OR'))
-        'gpl OR mit OR apache'
+
+    >>> a = 'mit'
+    >>> b = 'gpl'
+    >>> str(combine_expressions([a, b]))
+    'mit AND gpl'
+    >>> assert 'mit' == str(combine_expressions([a]))
+    >>> combine_expressions([])
+    >>> combine_expressions(None)
+    >>> str(combine_expressions(('gpl', 'mit', 'apache',)))
+    'gpl AND mit AND apache'
+    >>> str(combine_expressions(('gpl', 'mit', 'apache',), relation='OR'))
+    'gpl OR mit OR apache'
     """
     if not expressions:
         return
