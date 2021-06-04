@@ -120,6 +120,39 @@ _simple_tokenizer = re.compile(r'''
 ).finditer
 
 
+class ExpressionInfo:
+    """
+    The ExpressionInfo class is returned by Licensing.validate() where it stores
+    information about a given license expression passed into
+    Licensing.validate().
+
+    The ExpressionInfo class has the following fields:
+    - normalized_license_expression: str.
+      - If a valid license expression has been passed into `validate()`,
+        then the license expression string will be set in this field.
+    - errors: list
+      - If there were errors validating a license expression,
+        the error messages will be appended here.
+    - valid_symbols: list
+      - If a valid license expression has been passed into `validate()`,
+        then the license symbols from the license expression will be
+        appended here.
+    - invalid_symbols: list
+      - If an invalid license expression has been passed into `validate()`,
+        then the invalid license symbols from the license expression will be
+        appended here.
+    - exception_symbols: list
+      - If a license symbol in the license expression is a license exception,
+        then that license symbol will be appended here.
+    """
+    def __init__(self):
+        self.normalized_license_expression = ''
+        self.errors = []
+        self.valid_symbols = []
+        self.invalid_symbols = []
+        self.exception_symbols = []
+
+
 class Licensing(boolean.BooleanAlgebra):
     """
     Licensing defines a mini language to parse, validate and compare license
@@ -626,13 +659,6 @@ class Licensing(boolean.BooleanAlgebra):
         Return a ExpressionInfo object that contains information about
         `expression` by parsing `expression` using Licensing.parse()
 
-        The ExpressionInfo class has the following fields:
-            - normalized_license_expression: str
-            - errors: list
-            - valid_symbols: list
-            - invalid_symbols: list
-            - exception_symbols: list
-
         If `expression` is valid, then
         `ExpressionInfo.normalized_license_expression` is set, along with a list
         of valid license symbols in `valid_symbols` and `exception_symbols`.
@@ -648,47 +674,40 @@ class Licensing(boolean.BooleanAlgebra):
         set to True or the YYY symbol has `is_exception` set to False. This
         checks that symbols are used strictly as constructed.
         """
-        class ExpressionInfo:
-            normalized_license_expression = ''
-            errors = []
-            valid_symbols = []
-            invalid_symbols = []
-            exception_symbols = []
-
-        data = ExpressionInfo()
+        expression_info = ExpressionInfo()
 
         # Check `expression` type
         try:
             self.parse(expression)
         except ExpressionError as e:
-            data.errors.append(str(e))
-            return data
+            expression_info.errors.append(str(e))
+            return expression_info
 
         # Check `expression` syntax
         try:
             self.parse(expression, strict=strict)
         except ExpressionParseError as e:
-            data.errors.append(str(e))
-            data.invalid_symbols.append(e.token_string)
-            return data
+            expression_info.errors.append(str(e))
+            expression_info.invalid_symbols.append(e.token_string)
+            return expression_info
 
         # Check `expression` keys
         try:
             parsed_expression = self.parse(expression, strict=strict, validate=True)
         except ExpressionError as e:
             error_message = str(e)
-            data.errors.append(error_message)
+            expression_info.errors.append(error_message)
             if 'Unknown license key' in error_message:
                 unknown_keys = self.unknown_license_keys(expression)
-                data.invalid_symbols.extend(unknown_keys)
-            return data
+                expression_info.invalid_symbols.extend(unknown_keys)
+            return expression_info
 
-        # If we have not hit an exception, load `data` and return it
+        # If we have not hit an exception, load `expression_info` and return it
         symbols = list(parsed_expression.symbols)
-        data.normalized_license_expression = parsed_expression.render()
-        data.valid_symbols = [s.render() for s in symbols]
-        data.exception_symbols = [s.render() for s in symbols if isinstance(s, LicenseWithExceptionSymbol) or s.is_exception]
-        return data
+        expression_info.normalized_license_expression = parsed_expression.render()
+        expression_info.valid_symbols = [s.render() for s in symbols]
+        expression_info.exception_symbols = [s.render() for s in symbols if isinstance(s, LicenseWithExceptionSymbol) or s.is_exception]
+        return expression_info
 
 
 def get_license_key_info(license_key_index_location=None):

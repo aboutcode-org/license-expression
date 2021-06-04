@@ -6,8 +6,10 @@
 #
 import json
 import sys
+import pathlib
 from collections import namedtuple
 from unittest import TestCase
+from os.path import abspath
 from os.path import join
 from os.path import dirname
 
@@ -41,7 +43,7 @@ from license_expression import TOKEN_SYMBOL
 from license_expression import TOKEN_WITH
 from license_expression import build_licensing
 from license_expression import build_spdx_licensing
-
+from license_expression import get_license_key_info
 
 
 def _parse_error_as_dict(pe):
@@ -2322,3 +2324,24 @@ class UtilTest(TestCase):
 
         assert expected.known_symbols == result.known_symbols
         assert expected.known_symbols_lowercase == result.known_symbols_lowercase
+
+    def test_get_license_key_info(self):
+        test_license_key_index_location = join(self.test_data_dir, 'test_license_key_index.json')
+        with open(test_license_key_index_location, 'r') as f:
+            expected = json.load(f)
+        result = get_license_key_info(test_license_key_index_location)
+        assert expected == result
+
+    def test_get_license_key_info_vendored(self):
+        curr_dir = dirname(abspath(__file__))
+        parent_dir = pathlib.Path(curr_dir).parent
+        vendored_license_key_index_location = parent_dir.joinpath(
+            'src',
+            'license_expression',
+            'data',
+            'license_key_index.json'
+        )
+        with open(vendored_license_key_index_location, 'r') as f:
+            expected = json.load(f)
+        result = get_license_key_info()
+        assert expected == result
