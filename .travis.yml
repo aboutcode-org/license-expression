@@ -1,75 +1,22 @@
-matrix:
-  include:
-    - os: osx
-      env:
-        - PYTHON="3.6.8"
-        - TEST_SUITE="bin/py.test -vvs"
-      language: generic
-      python:
+# This is a skeleton Travis CI config file that provides a starting point for adding CI
+# to a Python project. Since we primarily develop in python3, this skeleton config file
+# will be specific to that language.
+#
+# See https://config.travis-ci.com/ for a full list of configuration options.
 
-    - os: osx
-      env:
-        - PYTHON="2.7.15"
-        - TEST_SUITE="bin/py.test -vvs"
-      language: generic
-      python:
+os: linux
 
-    - os: linux
-      sudo: required
-      env: TEST_SUITE="bin/py.test -vvs"
-      language: python
-      python: "2.7"
-      dist: xenial
-    
-    - os: linux
-      sudo: required
-      env: TEST_SUITE="bin/py.test -vvs"
-      language: python
-      python: "2.7"
-      dist: bionic
-    
-    - os: linux
-      sudo: required
-      env: TEST_SUITE="bin/py.test -vvs"
-      language: python
-      python: "3.6"
-      dist: xenial
-    
-    - os: linux
-      sudo: required
-      env: TEST_SUITE="bin/py.test -vvs"
-      language: python
-      python: "3.6"
-      dist: bionic
+dist: xenial
 
-addons:
-  homebrew:
-    packages:
-      - openssl
-      - readline
-      - sqlite3
-      - xz
-      - zlib
-      - pyenv
-    update: true
+language: python
+python:
+  - "3.6"
+  - "3.7"
+  - "3.8"
+  - "3.9"
 
-install:
-  - ./configure
+# Scripts to run at install stage
+install: ./configure --dev
 
-script:
-  # If debugging, use a subset of tests to wait less:
-  # - ./bin/py.test -n 2 -vvs --cov=src tests/scancode
-  # - echo $TEST_SUITE
-  - bin/about check --verbose .
-  - $TEST_SUITE
-
-notifications:
-  irc:
-    channels:
-      - "chat.freenode.net#aboutcode"
-  on_success: change
-  on_failure: always
-  use_notice: true
-  skip_join: true
-  template:
-    - "%{repository_slug}#%{build_number} (%{branch}-%{commit}:%{author})-%{message}- %{build_url}"
+# Scripts to run at script stage
+script: tmp/bin/pytest
