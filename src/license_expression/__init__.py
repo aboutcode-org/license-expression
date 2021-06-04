@@ -1,19 +1,10 @@
 #
-# license-expression is a free software tool from nexB Inc. and others.
-# Visit https://github.com/nexB/license-expression for support and download.
-#
 # Copyright (c) nexB Inc. and others. All rights reserved.
-# http://nexb.com and http://aboutcode.org
+# SPDX-License-Identifier: Apache-2.0
+# See http://www.apache.org/licenses/LICENSE-2.0 for the license text.
+# See https://github.com/nexB/license-expression for support or download.
+# See https://aboutcode.org for more information about nexB OSS projects.
 #
-# This software is licensed under the Apache License version 2.0.
-#
-# You may not use this software except in compliance with the License.
-# You may obtain a copy of the License at: http://apache.org/licenses/LICENSE-2.0
-# Unless required by applicable law or agreed to in writing, software distributed
-# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
-# CONDITIONS OF ANY KIND, either express or implied. See the License for the
-# specific language governing permissions and limitations under the License.
-
 """
 This module defines a mini language to parse, validate, simplify, normalize and
 compare license expressions using a boolean logic engine.
@@ -27,15 +18,15 @@ equivalence and can be normalized or simplified.
 The main entry point is the Licensing object.
 """
 
+import itertools
+import re
+import string
 from collections import defaultdict
 from collections import deque
 from collections import namedtuple
 from copy import copy
 from copy import deepcopy
 from functools import total_ordering
-import itertools
-import re
-import string
 
 import boolean
 from boolean import Expression as LicenseExpression
