@@ -408,6 +408,12 @@ class Licensing(boolean.BooleanAlgebra):
         symbols = self.unknown_license_symbols(expression, unique=False, **kwargs)
         return self._keys(symbols, unique)
 
+    def validate_license_keys(self, expression):
+        unknown_keys = self.unknown_license_keys(expression, unique=True)
+        if unknown_keys:
+            msg = 'Unknown license key(s): {}'.format(', '.join(unknown_keys))
+            raise ExpressionError(msg)
+
     def parse(self, expression, validate=False, strict=False, simple=False, **kwargs):
         """
         Return a new license LicenseExpression object by parsing a license
@@ -475,10 +481,7 @@ class Licensing(boolean.BooleanAlgebra):
             raise ExpressionError('expression must be a LicenseExpression once parsed.')
 
         if validate:
-            unknown_keys = self.unknown_license_keys(expression, unique=True)
-            if unknown_keys:
-                msg = 'Unknown license key(s): {}'.format(', '.join(unknown_keys))
-                raise ExpressionError(msg)
+            self.validate_license_keys(expression)
 
         return expression
 
@@ -721,9 +724,9 @@ class Licensing(boolean.BooleanAlgebra):
                 expression_info.errors.append(str(e))
                 expression_info.invalid_symbols.append(e.token_string)
 
-        # Check `expression` keys
+        # Check `expression` keys (validate)
         try:
-            parsed_expression = self.parse(expression, validate=True)
+            self.validate_license_keys(expression)
         except ExpressionError as e:
             error_message = str(e)
             expression_info.errors.append(error_message)
