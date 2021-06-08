@@ -2239,57 +2239,52 @@ class LicensingValidateTest(TestCase):
 
     def test_validate_simple(self):
         result = self.licensing.validate('GPL-2.0-or-later AND MIT')
-        assert result.original_license_expression == 'GPL-2.0-or-later AND MIT'
-        assert result.normalized_license_expression == 'GPL-2.0-or-later AND MIT'
+        assert result.original_expression == 'GPL-2.0-or-later AND MIT'
+        assert result.normalized_expression == 'GPL-2.0-or-later AND MIT'
         assert result.errors == []
-        assert sorted(result.valid_symbols) == sorted(['MIT', 'GPL-2.0-or-later'])
-        assert result.invalid_symbols == []
-        assert result.valid_exception_symbols == []
+        assert result.invalid_keys == []
 
     def test_validation_invalid_license_key(self):
         result = self.licensing.validate('cool-license')
-        assert result.original_license_expression == 'cool-license'
-        assert result.normalized_license_expression == 'cool-license'
+        assert result.original_expression == 'cool-license'
+        assert not result.normalized_expression
         assert result.errors == ['Unknown license key(s): cool-license']
-        assert result.valid_symbols == ['cool-license']
-        assert result.invalid_symbols == ['cool-license']
-        assert result.valid_exception_symbols == []
+        assert result.invalid_keys == ['cool-license']
 
     def test_validate_exception(self):
         result = self.licensing.validate('GPL-2.0-or-later WITH WxWindows-exception-3.1')
-        assert result.original_license_expression == 'GPL-2.0-or-later WITH WxWindows-exception-3.1'
-        assert result.normalized_license_expression == 'GPL-2.0-or-later WITH WxWindows-exception-3.1'
+        assert result.original_expression == 'GPL-2.0-or-later WITH WxWindows-exception-3.1'
+        assert result.normalized_expression == 'GPL-2.0-or-later WITH WxWindows-exception-3.1'
         assert result.errors == []
-        assert result.valid_symbols == ['GPL-2.0-or-later WITH WxWindows-exception-3.1']
-        assert result.invalid_symbols == []
-        assert result.valid_exception_symbols == ['GPL-2.0-or-later WITH WxWindows-exception-3.1']
+        assert result.invalid_keys == []
 
     def test_validation_exception_with_choice(self):
         result = self.licensing.validate('GPL-2.0-or-later WITH WxWindows-exception-3.1 OR MIT')
-        assert result.original_license_expression == 'GPL-2.0-or-later WITH WxWindows-exception-3.1 OR MIT'
-        assert result.normalized_license_expression == 'GPL-2.0-or-later WITH WxWindows-exception-3.1 OR MIT'
+        assert result.original_expression == 'GPL-2.0-or-later WITH WxWindows-exception-3.1 OR MIT'
+        assert result.normalized_expression == 'GPL-2.0-or-later WITH WxWindows-exception-3.1 OR MIT'
         assert result.errors == []
-        assert sorted(result.valid_symbols) == sorted(['GPL-2.0-or-later WITH WxWindows-exception-3.1', 'MIT'])
-        assert result.invalid_symbols == []
-        assert result.valid_exception_symbols == ['GPL-2.0-or-later WITH WxWindows-exception-3.1']
+        assert result.invalid_keys == []
 
     def test_validation_bad_syntax(self):
         result = self.licensing.validate('Apache-2.0 + MIT')
-        assert result.original_license_expression == 'Apache-2.0 + MIT'
-        assert result.normalized_license_expression == ''
+        assert result.original_expression == 'Apache-2.0 + MIT'
+        assert not result.normalized_expression
         assert result.errors == ['Invalid symbols sequence such as (A B) for token: "+" at position: 11']
-        assert result.valid_symbols == []
-        assert result.invalid_symbols == []
-        assert result.valid_exception_symbols == []
+        assert result.invalid_keys == []
 
     def test_validation_invalid_license_exception(self):
         result = self.licensing.validate('Apache-2.0 WITH MIT')
-        assert result.original_license_expression == 'Apache-2.0 WITH MIT'
-        assert result.normalized_license_expression == ''
+        assert result.original_expression == 'Apache-2.0 WITH MIT'
+        assert not result.normalized_expression
         assert result.errors == ["A plain license symbol cannot be used as an exception in a \"WITH symbol\" statement. for token: \"MIT\" at position: 16"]
-        assert result.valid_symbols == []
-        assert result.invalid_symbols == ['MIT']
-        assert result.valid_exception_symbols == []
+        assert result.invalid_keys == ['MIT']
+
+    def test_validation_invalid_license_exception_strict_false(self):
+        result = self.licensing.validate('Apache-2.0 WITH MIT', strict=False)
+        assert result.original_expression == 'Apache-2.0 WITH MIT'
+        assert result.normalized_expression == 'Apache-2.0 WITH MIT'
+        assert result.errors == []
+        assert result.invalid_keys == []
 
 
 class UtilTest(TestCase):
@@ -2313,6 +2308,9 @@ class UtilTest(TestCase):
 
         assert result.known_symbols == expected.known_symbols
         assert result.known_symbols_lowercase == expected.known_symbols_lowercase
+        # Ensure deprecated licenses are not loaded
+        assert 'aladdin-md5' not in result.known_symbols
+        assert 'aladdin-md5' not in result.known_symbols_lowercase
 
     def test_build_spdx_licensing(self):
         test_license_index_location = join(self.test_data_dir, 'test_license_key_index.json')
@@ -2333,10 +2331,13 @@ class UtilTest(TestCase):
 
         assert result.known_symbols == expected.known_symbols
         assert result.known_symbols_lowercase == expected.known_symbols_lowercase
+        # Ensure deprecated licenses are not loaded
+        assert 'aladdin-md5' not in result.known_symbols
+        assert 'aladdin-md5' not in result.known_symbols_lowercase
 
     def test_get_license_key_info(self):
         test_license_index_location = join(self.test_data_dir, 'test_license_key_index.json')
-        with open(test_license_index_location, 'r') as f:
+        with open(test_license_index_location) as f:
             expected = json.load(f)
         result = get_license_index(test_license_index_location)
         assert expected == result
@@ -2350,7 +2351,7 @@ class UtilTest(TestCase):
             'data',
             'scancode-licensedb-index.json'
         )
-        with open(vendored_license_key_index_location, 'r') as f:
+        with open(vendored_license_key_index_location) as f:
             expected = json.load(f)
         result = get_license_index()
         assert expected == result
