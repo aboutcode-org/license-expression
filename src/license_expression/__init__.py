@@ -141,22 +141,23 @@ class ExpressionInfo:
     - errors: list
       - If there were errors validating a license expression,
         the error messages will be appended here.
-    - invalid_keys: list
+    - invalid_symbols: list
       - If the license expression that has been passed into `validate()` has
         license keys that are invalid (either that they are unknown or not used
-        in the right context), then those keys will be appended here.
+        in the right context), or the syntax is incorrect because an invalid
+        symbol was used, then those symbols will be appended here.
     """
     def __init__(
         self,
         original_expression,
         normalized_expression=None,
         errors=None,
-        invalid_keys=None,
+        invalid_symbols=None,
     ):
         self.original_expression = original_expression
         self.normalized_expression = normalized_expression
         self.errors = errors or []
-        self.invalid_keys = invalid_keys or []
+        self.invalid_symbols = invalid_symbols or []
 
     def __repr__(self):
         return (
@@ -164,7 +165,7 @@ class ExpressionInfo:
                 f'    original_expression={self.original_expression!r},\n'
                 f'    normalized_expression={self.normalized_expression!r},\n'
                 f'    errors={self.errors!r},\n'
-                f'    invalid_keys={self.invalid_keys!r}\n'
+                f'    invalid_symbols={self.invalid_symbols!r}\n'
             ')'
         )
 
@@ -684,8 +685,8 @@ class Licensing(boolean.BooleanAlgebra):
         If an error was encountered when validating `expression`,
         `ExpressionInfo.errors` will be populated with strings containing the
         error message that has occured. If an error has occured due to unknown
-        license keys, the offending keys will be present in
-        `ExpressionInfo.invalid_keys`
+        license keys or an invalid license symbol, the offending keys or symbols
+        will be present in `ExpressionInfo.invalid_symbols`
 
         If `strict` is True, validation error messages will be included if in a "WITH"
         expression such as "XXX with ZZZ" if the XXX symbol has `is_exception`
@@ -701,11 +702,7 @@ class Licensing(boolean.BooleanAlgebra):
             parsed_expression = self.parse(expression, strict=strict)
         except ExpressionError as e:
             expression_info.errors.append(str(e))
-            error_code = e.error_code
-            # If we have these error codes, then we have a problematic license
-            # key that we need to append to `invalid_keys`
-            if error_code and error_code in (PARSE_INVALID_EXCEPTION, PARSE_INVALID_SYMBOL_AS_EXCEPTION):
-                expression_info.invalid_keys.append(e.token_string)
+            expression_info.invalid_symbols.append(e.token_string)
             return expression_info
 
         # Check `expression` keys (validate)
@@ -714,13 +711,13 @@ class Licensing(boolean.BooleanAlgebra):
         except ExpressionError as e:
             expression_info.errors.append(str(e))
             unknown_keys = self.unknown_license_keys(expression)
-            expression_info.invalid_keys.extend(unknown_keys)
+            expression_info.invalid_symbols.extend(unknown_keys)
             return expression_info
 
         # If we have not hit an exception, set `normalized_expression` in
         # `expression_info` only if we did not encounter any errors
         # along the way
-        if not expression_info.errors and not expression_info.invalid_keys:
+        if not expression_info.errors and not expression_info.invalid_symbols:
             expression_info.normalized_expression = str(parsed_expression)
         return expression_info
 

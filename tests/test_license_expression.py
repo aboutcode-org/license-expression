@@ -2242,56 +2242,56 @@ class LicensingValidateTest(TestCase):
         assert result.original_expression == 'GPL-2.0-or-later AND MIT'
         assert result.normalized_expression == 'GPL-2.0-or-later AND MIT'
         assert result.errors == []
-        assert result.invalid_keys == []
+        assert result.invalid_symbols == []
 
     def test_validation_invalid_license_key(self):
         result = self.licensing.validate('cool-license')
         assert result.original_expression == 'cool-license'
         assert not result.normalized_expression
         assert result.errors == ['Unknown license key(s): cool-license']
-        assert result.invalid_keys == ['cool-license']
+        assert result.invalid_symbols == ['cool-license']
 
     def test_validate_exception(self):
         result = self.licensing.validate('GPL-2.0-or-later WITH WxWindows-exception-3.1')
         assert result.original_expression == 'GPL-2.0-or-later WITH WxWindows-exception-3.1'
         assert result.normalized_expression == 'GPL-2.0-or-later WITH WxWindows-exception-3.1'
         assert result.errors == []
-        assert result.invalid_keys == []
+        assert result.invalid_symbols == []
 
     def test_validation_exception_with_choice(self):
         result = self.licensing.validate('GPL-2.0-or-later WITH WxWindows-exception-3.1 OR MIT')
         assert result.original_expression == 'GPL-2.0-or-later WITH WxWindows-exception-3.1 OR MIT'
         assert result.normalized_expression == 'GPL-2.0-or-later WITH WxWindows-exception-3.1 OR MIT'
         assert result.errors == []
-        assert result.invalid_keys == []
+        assert result.invalid_symbols == []
 
     def test_validation_exception_as_regular_key(self):
         result = self.licensing.validate('GPL-2.0-or-later AND WxWindows-exception-3.1')
         assert result.original_expression == 'GPL-2.0-or-later AND WxWindows-exception-3.1'
         assert not result.normalized_expression
         assert result.errors == ['A license exception symbol can only be used as an exception in a "WITH exception" statement. for token: "WxWindows-exception-3.1" at position: 21']
-        assert result.invalid_keys == ['WxWindows-exception-3.1']
+        assert result.invalid_symbols == ['WxWindows-exception-3.1']
 
     def test_validation_bad_syntax(self):
         result = self.licensing.validate('Apache-2.0 + MIT')
         assert result.original_expression == 'Apache-2.0 + MIT'
         assert not result.normalized_expression
         assert result.errors == ['Invalid symbols sequence such as (A B) for token: "+" at position: 11']
-        assert result.invalid_keys == []
+        assert result.invalid_symbols == ['+']
 
     def test_validation_invalid_license_exception(self):
         result = self.licensing.validate('Apache-2.0 WITH MIT')
         assert result.original_expression == 'Apache-2.0 WITH MIT'
         assert not result.normalized_expression
         assert result.errors == ["A plain license symbol cannot be used as an exception in a \"WITH symbol\" statement. for token: \"MIT\" at position: 16"]
-        assert result.invalid_keys == ['MIT']
+        assert result.invalid_symbols == ['MIT']
 
     def test_validation_invalid_license_exception_strict_false(self):
         result = self.licensing.validate('Apache-2.0 WITH MIT', strict=False)
         assert result.original_expression == 'Apache-2.0 WITH MIT'
         assert result.normalized_expression == 'Apache-2.0 WITH MIT'
         assert result.errors == []
-        assert result.invalid_keys == []
+        assert result.invalid_symbols == []
 
 
 class UtilTest(TestCase):
