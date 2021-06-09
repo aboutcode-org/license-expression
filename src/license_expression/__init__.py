@@ -696,20 +696,17 @@ class Licensing(boolean.BooleanAlgebra):
             original_expression=str(expression)
         )
 
-        # Check `expression` type
+        # Check `expression` type and syntax
         try:
-            parsed_expression = self.parse(expression)
+            parsed_expression = self.parse(expression, strict=strict)
         except ExpressionError as e:
             expression_info.errors.append(str(e))
-            return expression_info
-
-        if strict:
-            # Check `expression` syntax
-            try:
-                parsed_expression = self.parse(expression, strict=strict)
-            except ExpressionParseError as e:
-                expression_info.errors.append(str(e))
+            error_code = e.error_code
+            # If we have these error codes, then we have a problematic license
+            # key that we need to append to `invalid_keys`
+            if error_code and error_code in (PARSE_INVALID_EXCEPTION, PARSE_INVALID_SYMBOL_AS_EXCEPTION):
                 expression_info.invalid_keys.append(e.token_string)
+            return expression_info
 
         # Check `expression` keys (validate)
         try:
