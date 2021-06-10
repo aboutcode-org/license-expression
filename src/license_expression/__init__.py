@@ -764,7 +764,7 @@ def build_spdx_licensing(license_index):
     lics = [
         {
             'key': l.get('spdx_license_key', ''),
-            'aliases': l.get('other_spdx_license_keys', ''),
+            'aliases': l.get('other_spdx_license_keys', []),
             'is_exception': l.get('is_exception', ''),
         } for l in license_index
         if l.get('spdx_license_key')
