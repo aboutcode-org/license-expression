@@ -19,6 +19,7 @@ The main entry point is the Licensing object.
 """
 
 import itertools
+import json
 import re
 import string
 from collections import defaultdict
@@ -27,6 +28,9 @@ from collections import namedtuple
 from copy import copy
 from copy import deepcopy
 from functools import total_ordering
+from os.path import abspath
+from os.path import dirname
+from os.path import join
 
 import boolean
 from boolean import Expression as LicenseExpression
@@ -50,6 +54,12 @@ from boolean.boolean import TOKEN_RPAR
 
 from license_expression._pyahocorasick import Trie as AdvancedTokenizer
 from license_expression._pyahocorasick import Token
+
+
+curr_dir = dirname(abspath(__file__))
+data_dir = join(curr_dir, 'data')
+vendored_scancode_licensedb_index_location = join(data_dir, 'scancode-licensedb-index.json')
+
 
 # append new error codes to PARSE_ERRORS by monkey patching
 PARSE_EXPRESSION_NOT_UNICODE = 100
@@ -114,6 +124,50 @@ _simple_tokenizer = re.compile(r'''
     ''',
     re.VERBOSE | re.MULTILINE | re.UNICODE
 ).finditer
+
+
+class ExpressionInfo:
+    """
+    The ExpressionInfo class is returned by Licensing.validate() where it stores
+    information about a given license expression passed into
+    Licensing.validate().
+
+    The ExpressionInfo class has the following fields:
+    - original_expression: str.
+      - This is the license expression that was originally passed into Licensing.validate()
+    - normalized_expression: str.
+      - If a valid license expression has been passed into `validate()`,
+        then the license expression string will be set in this field.
+    - errors: list
+      - If there were errors validating a license expression,
+        the error messages will be appended here.
+    - invalid_symbols: list
+      - If the license expression that has been passed into `validate()` has
+        license keys that are invalid (either that they are unknown or not used
+        in the right context), or the syntax is incorrect because an invalid
+        symbol was used, then those symbols will be appended here.
+    """
+    def __init__(
+        self,
+        original_expression,
+        normalized_expression=None,
+        errors=None,
+        invalid_symbols=None,
+    ):
+        self.original_expression = original_expression
+        self.normalized_expression = normalized_expression
+        self.errors = errors or []
+        self.invalid_symbols = invalid_symbols or []
+
+    def __repr__(self):
+        return (
+            'ExpressionInfo(\n'
+                f'    original_expression={self.original_expression!r},\n'
+                f'    normalized_expression={self.normalized_expression!r},\n'
+                f'    errors={self.errors!r},\n'
+                f'    invalid_symbols={self.invalid_symbols!r}\n'
+            ')'
+        )
 
 
 class Licensing(boolean.BooleanAlgebra):
@@ -355,6 +409,12 @@ class Licensing(boolean.BooleanAlgebra):
         symbols = self.unknown_license_symbols(expression, unique=False, **kwargs)
         return self._keys(symbols, unique)
 
+    def validate_license_keys(self, expression):
+        unknown_keys = self.unknown_license_keys(expression, unique=True)
+        if unknown_keys:
+            msg = 'Unknown license key(s): {}'.format(', '.join(unknown_keys))
+            raise ExpressionError(msg)
+
     def parse(self, expression, validate=False, strict=False, simple=False, **kwargs):
         """
         Return a new license LicenseExpression object by parsing a license
@@ -422,10 +482,7 @@ class Licensing(boolean.BooleanAlgebra):
             raise ExpressionError('expression must be a LicenseExpression once parsed.')
 
         if validate:
-            unknown_keys = self.unknown_license_keys(expression, unique=True)
-            if unknown_keys:
-                msg = 'Unknown license key(s): {}'.format(', '.join(unknown_keys))
-                raise ExpressionError(msg)
+            self.validate_license_keys(expression)
 
         return expression
 
@@ -616,6 +673,104 @@ class Licensing(boolean.BooleanAlgebra):
         else:
             raise Exception(f'Unknown expression type: {expression!r}')
         return deduped
+
+    def validate(self, expression, strict=True, **kwargs):
+        """
+        Return a ExpressionInfo object that contains information about
+        the validation of an `expression`  license expression string.
+
+        If the syntax and license keys of `expression` is valid, then
+        `ExpressionInfo.normalized_license_expression` is set.
+
+        If an error was encountered when validating `expression`,
+        `ExpressionInfo.errors` will be populated with strings containing the
+        error message that has occured. If an error has occured due to unknown
+        license keys or an invalid license symbol, the offending keys or symbols
+        will be present in `ExpressionInfo.invalid_symbols`
+
+        If `strict` is True, validation error messages will be included if in a "WITH"
+        expression such as "XXX with ZZZ" if the XXX symbol has `is_exception`
+        set to True or the YYY symbol has `is_exception` set to False. This
+        checks that symbols are used strictly as intended.
+        """
+        expression_info = ExpressionInfo(
+            original_expression=str(expression)
+        )
+
+        # Check `expression` type and syntax
+        try:
+            parsed_expression = self.parse(expression, strict=strict)
+        except ExpressionError as e:
+            expression_info.errors.append(str(e))
+            expression_info.invalid_symbols.append(e.token_string)
+            return expression_info
+
+        # Check `expression` keys (validate)
+        try:
+            self.validate_license_keys(expression)
+        except ExpressionError as e:
+            expression_info.errors.append(str(e))
+            unknown_keys = self.unknown_license_keys(expression)
+            expression_info.invalid_symbols.extend(unknown_keys)
+            return expression_info
+
+        # If we have not hit an exception, set `normalized_expression` in
+        # `expression_info` only if we did not encounter any errors
+        # along the way
+        if not expression_info.errors and not expression_info.invalid_symbols:
+            expression_info.normalized_expression = str(parsed_expression)
+        return expression_info
+
+
+def get_license_index(license_index_location=vendored_scancode_licensedb_index_location):
+    """
+    Return a list of dictionaries that contain license key information from
+    `license_index_location`
+
+    The default value of `license_index_location` points to a vendored copy
+    of the license index from https://scancode-licensedb.aboutcode.org/
+    """
+    with open(license_index_location) as f:
+        return json.load(f)
+
+
+def load_licensing_from_license_index(license_index):
+    """
+    Return a Licensing object that has been loaded with license keys and
+    attributes from `license_index`.
+    """
+    syms = [LicenseSymbol(**l) for l in license_index]
+    return Licensing(syms)
+
+
+def build_licensing(license_index):
+    """
+    Return a Licensing object that has been loaded with license keys.
+    """
+    lics = [
+        {
+            'key': l.get('license_key', ''),
+            'is_exception': l.get('is_exception', ''),
+        } for l in license_index if not l.get('is_deprecated', False)
+    ]
+    return load_licensing_from_license_index(lics)
+
+
+def build_spdx_licensing(license_index):
+    """
+    Return a Licensing object that has been loaded with SPDX license keys.
+    """
+    # Massage data such that SPDX license key is the primary license key
+    lics = [
+        {
+            'key': l.get('spdx_license_key', ''),
+            'aliases': l.get('other_spdx_license_keys', []),
+            'is_exception': l.get('is_exception', ''),
+        } for l in license_index
+        if l.get('spdx_license_key')
+        and not l.get('is_deprecated', False)
+    ]
+    return load_licensing_from_license_index(lics)
 
 
 def build_symbols_from_unknown_tokens(tokens):
