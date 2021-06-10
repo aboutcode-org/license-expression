@@ -1,4 +1,8 @@
 # -*- coding: utf-8 -*-
+#
+# SPDX-License-Identifier: LicenseRef-scancode-public-domain
+# See https://github.com/nexB/license-expression for support or download.
+# See https://aboutcode.org for more information about nexB OSS projects.
 
 """
 Tests for Aho-Corasick string search algorithm.
@@ -8,10 +12,6 @@ License        : public domain
 
 Modified for use in the license_expression library.
 """
-
-from __future__ import unicode_literals
-from __future__ import absolute_import
-from __future__ import print_function
 
 import unittest
 

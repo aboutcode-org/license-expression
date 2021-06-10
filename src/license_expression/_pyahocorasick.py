@@ -1,35 +1,28 @@
 # -*- coding: utf-8 -*-
+#
+# SPDX-License-Identifier: LicenseRef-scancode-public-domain
+# See https://github.com/nexB/license-expression for support or download.
+# See https://aboutcode.org for more information about nexB OSS projects.
+#
 """
-Aho-Corasick string search algorithm.
+Aho-Corasick string search algorithm in pure Python
 
 Original Author: Wojciech Muła, wojciech_mula@poczta.onet.pl
 WWW            : http://0x80.pl
 License        : public domain
 
-Modified for use in the license_expression library:
+This is the pure Python Aho-Corasick automaton from pyahocorasick modified for
+use in the license_expression library for advanced tokenization:
+
  - add support for unicode strings.
  - case insensitive search using sequence of words and not characters
  - improve returned results with the actual start,end and matched string.
  - support returning non-matched parts of a string
 """
-
-from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import unicode_literals
-
 from collections import deque
 from collections import OrderedDict
 import logging
 import re
-
-# Python 2 and 3 support
-try:
-    # Python 2
-    unicode
-    str = unicode  # NOQA
-except NameError:
-    # Python 3
-    unicode = str  # NOQA
 
 TRACE = False
 
@@ -109,7 +102,7 @@ class Trie(object):
         provided value, typically a Token object. If a value is not provided,
         the tokens_string is used as value.
 
-        A tokens_string is any unicode string. It will be tokenized when added
+        A tokens_string is any string. It will be tokenized when added
         to the Trie.
         """
         if self._converted:
@@ -326,7 +319,12 @@ class Trie(object):
                 if include_unmatched:
                     n = len(token_string)
                     start_pos = end_pos - n + 1
-                    tok = Token(start_pos, end_pos, tokens_string[start_pos: end_pos + 1], None)
+                    tok = Token(
+                        start=start_pos,
+                        end=end_pos,
+                        string=tokens_string[start_pos: end_pos + 1],
+                        value=None
+                    )
                     if TRACE:
                         logger_debug('  unmatched tok:', tok)
                     yield tok

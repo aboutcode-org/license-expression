@@ -1,0 +1,43 @@
+[
+    {
+        "license_key": "389-exception",
+        "spdx_license_key": "389-exception",
+        "other_spdx_license_keys": [],
+        "is_exception": true,
+        "json": "389-exception.json",
+        "yml": "389-exception.yml",
+        "html": "389-exception.html",
+        "text": "389-exception.LICENSE"
+    },
+    {
+        "license_key": "3com-microcode",
+        "spdx_license_key": "LicenseRef-scancode-3com-microcode",
+        "other_spdx_license_keys": [],
+        "is_exception": false,
+        "json": "3com-microcode.json",
+        "yml": "3com-microcode.yml",
+        "html": "3com-microcode.html",
+        "text": "3com-microcode.LICENSE"
+    },
+    {
+        "license_key": "3dslicer-1.0",
+        "spdx_license_key": "LicenseRef-scancode-3dslicer-1.0",
+        "other_spdx_license_keys": [],
+        "is_exception": false,
+        "json": "3dslicer-1.0.json",
+        "yml": "3dslicer-1.0.yml",
+        "html": "3dslicer-1.0.html",
+        "text": "3dslicer-1.0.LICENSE"
+    },
+    {
+        "license_key": "aladdin-md5",
+        "spdx_license_key": null,
+        "other_spdx_license_keys": [],
+        "is_exception": false,
+        "is_deprecated": true,
+        "json": "aladdin-md5.json",
+        "yml": "aladdin-md5.yml",
+        "html": "aladdin-md5.html",
+        "text": "aladdin-md5.LICENSE"
+    }
+]

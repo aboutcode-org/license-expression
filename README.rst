@@ -2,16 +2,16 @@
 license-expression
 ==================
 
-license-expression is a small utility library to parse, compare, simplify and normalize
-license expressions (e.g. SPDX license expressions) using boolean logic such as:
-`GPL-2.0 or later WITH Classpath Exception AND MIT`.
+license-expression is a comprehensive utility library to parse, compare,
+simplify and normalize license expressions (such as SPDX license expressions)
+using boolean logic like in: `GPL-2.0 or later WITH Classpath Exception AND MIT`.
 
 See also for details:
 https://spdx.org/sites/cpstandard/files/pages/files/spdxversion2.1.pdf#page=95&zoom=auto
 
 license: apache-2.0
 
-Python: 2.7 and 3.5+
+Python: 3.6+
 
 Build and tests status
 ======================
@@ -135,6 +135,7 @@ Development
 ===========
 
 * Checkout a clone from https://github.com/nexB/license-expression.git
-* Then run ``./configure`` (or ``configure.bat``) and then ``source bin/activate``. This will
-  install all vendored dependencies in a local virtualenv, including development deps.
+* Then run ``./configure`` (or ``configure.bat``) and then ``source bin/activate``.
+  This will install all vendored dependencies in a local virtualenv, including
+  development deps.
 * To run the tests, run ``py.test -vvs``

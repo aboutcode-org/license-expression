@@ -1,27 +1,18 @@
-# license-expression is a free software tool from nexB Inc. and others.
-# Visit https://github.com/nexB/license-expression for support and download.
 #
-# Copyright (c) 2017 nexB Inc. and others. All rights reserved.
-# http://nexb.com  and http://aboutcode.org
+# Copyright (c) nexB Inc. and others. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+# See http://www.apache.org/licenses/LICENSE-2.0 for the license text.
+# See https://github.com/nexB/license-expression for support or download.
+# See https://aboutcode.org for more information about nexB OSS projects.
 #
-# This software is licensed under the Apache License version 2.0.
-#
-# You may not use this software except in compliance with the License.
-# You may obtain a copy of the License at: http://apache.org/licenses/LICENSE-2.0
-# Unless required by applicable law or agreed to in writing, software distributed
-# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
-# CONDITIONS OF ANY KIND, either express or implied. See the License for the
-# specific language governing permissions and limitations under the License.
-
-from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import unicode_literals
-
-from collections import namedtuple
-from collections import OrderedDict
-from unittest import TestCase
-from unittest.case import expectedFailure
+import json
+import pathlib
 import sys
+from collections import namedtuple
+from unittest import TestCase
+from os.path import abspath
+from os.path import join
+from os.path import dirname
 
 from boolean.boolean import PARSE_UNBALANCED_CLOSING_PARENS
 from boolean.boolean import PARSE_INVALID_SYMBOL_SEQUENCE
@@ -51,6 +42,10 @@ from license_expression import TOKEN_OR
 from license_expression import TOKEN_RPAR
 from license_expression import TOKEN_SYMBOL
 from license_expression import TOKEN_WITH
+from license_expression import build_licensing
+from license_expression import build_spdx_licensing
+from license_expression import get_license_index
+from license_expression import load_licensing_from_license_index
 
 
 def _parse_error_as_dict(pe):
@@ -645,6 +640,76 @@ class LicensingParseTest(TestCase):
         expr3 = l.parse('mit and LGPL2.1')
         assert expr3 in expr2
 
+    def test_dedup_expressions_can_be_simplified_1(self):
+        l = Licensing()
+        exp = 'mit OR mit AND apache-2.0 AND bsd-new OR mit'
+        result = l.dedup(exp)
+        expected = l.parse('mit OR (mit AND apache-2.0 AND bsd-new)')
+        assert result == expected
+
+    def test_dedup_expressions_can_be_simplified_2(self):
+        l = Licensing()
+        exp = 'mit AND (mit OR bsd-new) AND mit OR mit'
+        result = l.dedup(exp)
+        expected = l.parse('(mit AND (mit OR bsd-new)) OR mit')
+        assert result == expected
+
+    def test_dedup_expressions_multiple_occurrences(self):
+        l = Licensing()
+        exp = ' GPL-2.0 or (mit and LGPL-2.1) or bsd Or GPL-2.0  or (mit and LGPL-2.1)'
+        result = l.dedup(exp)
+        expected = l.parse('GPL-2.0 OR (mit AND LGPL-2.1) OR bsd')
+        assert result == expected
+
+    def test_dedup_expressions_cannot_be_simplified(self):
+        l = Licensing()
+        exp = l.parse('mit AND (mit OR bsd-new)')
+        result = l.dedup(exp)
+        expected = l.parse('mit AND (mit OR bsd-new)')
+        assert result == expected
+
+    def test_dedup_expressions_single_license(self):
+        l = Licensing()
+        exp = l.parse('mit')
+        result = l.dedup(exp)
+        expected = l.parse('mit')
+        assert result == expected
+
+    def test_dedup_expressions_WITH(self):
+        l = Licensing()
+        exp = l.parse('gpl-2.0 with autoconf-exception-2.0')
+        result = l.dedup(exp)
+        expected = l.parse('gpl-2.0 with autoconf-exception-2.0')
+        assert result == expected
+
+    def test_dedup_expressions_WITH_OR(self):
+        l = Licensing()
+        exp = l.parse('gpl-2.0 with autoconf-exception-2.0 OR gpl-2.0')
+        result = l.dedup(exp)
+        expected = l.parse('gpl-2.0 with autoconf-exception-2.0 OR gpl-2.0')
+        assert result == expected
+
+    def test_dedup_expressions_WITH_AND(self):
+        l = Licensing()
+        exp = l.parse('gpl-2.0 AND gpl-2.0 with autoconf-exception-2.0 AND gpl-2.0')
+        result = l.dedup(exp)
+        expected = l.parse('gpl-2.0 AND gpl-2.0 with autoconf-exception-2.0')
+        assert result == expected
+
+    def test_dedup_licensexpressions_can_be_simplified_3(self):
+        l = Licensing()
+        exp = l.parse('mit AND mit')
+        result = l.dedup(exp)
+        expected = l.parse('mit')
+        assert result == expected
+
+    def test_dedup_licensexpressions_works_with_subexpressions(self):
+        l = Licensing()
+        exp = l.parse('(mit OR gpl-2.0) AND mit AND bsd-new AND (mit OR gpl-2.0)')
+        result = l.dedup(exp)
+        expected = l.parse('(mit OR gpl-2.0) AND mit AND bsd-new')
+        assert result == expected
+
     def test_simplify_and_equivalent_and_contains(self):
         l = Licensing()
         expr2 = l.parse(' GPL-2.0 or (mit and LGPL-2.1) or bsd Or GPL-2.0  or (mit and LGPL-2.1)')
@@ -889,21 +954,17 @@ class LicensingParseTest(TestCase):
             }
             assert expected == _parse_error_as_dict(pe)
 
-    @expectedFailure
-    def test_parse_invalid_expression_with_single_trailing_or_raise_exception(self):
+    def test_parse_invalid_expression_drops_single_trailing_or(self):
         licensing = Licensing()
         expression = 'mit or mit or'
-        try:
-            licensing.parse(expression, simple=False)
-            self.fail('Exception not raised')
-        except ParseError as pe:
-            expected = {
-                'error_code': PARSE_INVALID_OPERATOR_SEQUENCE,
-                'position': 14,
-                'token_string': 'or',
-                'token_type': TOKEN_OR
-            }
-            assert expected == _parse_error_as_dict(pe)
+        e = licensing.parse(expression, simple=False)
+        assert str(e) == 'mit OR mit'
+
+    def test_parse_invalid_expression_drops_single_trailing_or2(self):
+        licensing = Licensing()
+        expression = 'mit or mit or'
+        e = licensing.parse(expression, simple=True)
+        assert str(e) == 'mit OR mit'
 
     def test_parse_invalid_expression_with_single_trailing_and_raise_exception(self):
         licensing = Licensing()
@@ -1220,7 +1281,7 @@ class LicensingSymbolsReplacement(TestCase):
         source3 = gpl2
         target3 = gpl2plus
 
-        subs = OrderedDict([
+        subs = dict([
             (source1, target1),
             (source2, target2),
             (source3, target3),
@@ -1244,7 +1305,7 @@ class LicensingSymbolsReplacement(TestCase):
         source3 = gpl2
         target3 = gpl2plus
 
-        subs = OrderedDict([
+        subs = dict([
             (source1, target1),
             (source2, target2),
             (source3, target3),
@@ -2165,3 +2226,139 @@ class MockLicensesTest(TestCase):
         ]
 
         assert expected == results
+
+class LicensingValidateTest(TestCase):
+    licensing = Licensing(
+        [
+            LicenseSymbol(key='GPL-2.0-or-later', is_exception=False),
+            LicenseSymbol(key='MIT', is_exception=False),
+            LicenseSymbol(key='Apache-2.0', is_exception=False),
+            LicenseSymbol(key='WxWindows-exception-3.1', is_exception=True),
+        ]
+    )
+
+    def test_validate_simple(self):
+        result = self.licensing.validate('GPL-2.0-or-later AND MIT')
+        assert result.original_expression == 'GPL-2.0-or-later AND MIT'
+        assert result.normalized_expression == 'GPL-2.0-or-later AND MIT'
+        assert result.errors == []
+        assert result.invalid_symbols == []
+
+    def test_validation_invalid_license_key(self):
+        result = self.licensing.validate('cool-license')
+        assert result.original_expression == 'cool-license'
+        assert not result.normalized_expression
+        assert result.errors == ['Unknown license key(s): cool-license']
+        assert result.invalid_symbols == ['cool-license']
+
+    def test_validate_exception(self):
+        result = self.licensing.validate('GPL-2.0-or-later WITH WxWindows-exception-3.1')
+        assert result.original_expression == 'GPL-2.0-or-later WITH WxWindows-exception-3.1'
+        assert result.normalized_expression == 'GPL-2.0-or-later WITH WxWindows-exception-3.1'
+        assert result.errors == []
+        assert result.invalid_symbols == []
+
+    def test_validation_exception_with_choice(self):
+        result = self.licensing.validate('GPL-2.0-or-later WITH WxWindows-exception-3.1 OR MIT')
+        assert result.original_expression == 'GPL-2.0-or-later WITH WxWindows-exception-3.1 OR MIT'
+        assert result.normalized_expression == 'GPL-2.0-or-later WITH WxWindows-exception-3.1 OR MIT'
+        assert result.errors == []
+        assert result.invalid_symbols == []
+
+    def test_validation_exception_as_regular_key(self):
+        result = self.licensing.validate('GPL-2.0-or-later AND WxWindows-exception-3.1')
+        assert result.original_expression == 'GPL-2.0-or-later AND WxWindows-exception-3.1'
+        assert not result.normalized_expression
+        assert result.errors == ['A license exception symbol can only be used as an exception in a "WITH exception" statement. for token: "WxWindows-exception-3.1" at position: 21']
+        assert result.invalid_symbols == ['WxWindows-exception-3.1']
+
+    def test_validation_bad_syntax(self):
+        result = self.licensing.validate('Apache-2.0 + MIT')
+        assert result.original_expression == 'Apache-2.0 + MIT'
+        assert not result.normalized_expression
+        assert result.errors == ['Invalid symbols sequence such as (A B) for token: "+" at position: 11']
+        assert result.invalid_symbols == ['+']
+
+    def test_validation_invalid_license_exception(self):
+        result = self.licensing.validate('Apache-2.0 WITH MIT')
+        assert result.original_expression == 'Apache-2.0 WITH MIT'
+        assert not result.normalized_expression
+        assert result.errors == ["A plain license symbol cannot be used as an exception in a \"WITH symbol\" statement. for token: \"MIT\" at position: 16"]
+        assert result.invalid_symbols == ['MIT']
+
+    def test_validation_invalid_license_exception_strict_false(self):
+        result = self.licensing.validate('Apache-2.0 WITH MIT', strict=False)
+        assert result.original_expression == 'Apache-2.0 WITH MIT'
+        assert result.normalized_expression == 'Apache-2.0 WITH MIT'
+        assert result.errors == []
+        assert result.invalid_symbols == []
+
+
+class UtilTest(TestCase):
+    test_data_dir = join(dirname(__file__), 'data')
+
+    def test_build_licensing(self):
+        test_license_index_location = join(self.test_data_dir, 'test_license_key_index.json')
+        with open(test_license_index_location) as f:
+            license_info = json.load(f)
+        lics = [
+            {
+                'key': l.get('license_key', ''),
+                'is_exception': l.get('is_exception', ''),
+            } for l in license_info if l.get('spdx_license_key')
+        ]
+        syms = [LicenseSymbol(**l) for l in lics]
+        expected = Licensing(syms)
+
+        test_license_index = get_license_index(license_index_location=test_license_index_location)
+        result = build_licensing(test_license_index)
+
+        assert result.known_symbols == expected.known_symbols
+        assert result.known_symbols_lowercase == expected.known_symbols_lowercase
+        # Ensure deprecated licenses are not loaded
+        assert 'aladdin-md5' not in result.known_symbols
+        assert 'aladdin-md5' not in result.known_symbols_lowercase
+
+    def test_build_spdx_licensing(self):
+        test_license_index_location = join(self.test_data_dir, 'test_license_key_index.json')
+        with open(test_license_index_location) as f:
+            license_info = json.load(f)
+        lics = [
+            {
+                'key': l.get('spdx_license_key', ''),
+                'aliases': l.get('other_spdx_license_keys', ''),
+                'is_exception': l.get('is_exception', ''),
+            } for l in license_info if l.get('spdx_license_key')
+        ]
+        syms = [LicenseSymbol(**l) for l in lics]
+        expected = Licensing(syms)
+
+        test_license_index = get_license_index(license_index_location=test_license_index_location)
+        result = build_spdx_licensing(test_license_index)
+
+        assert result.known_symbols == expected.known_symbols
+        assert result.known_symbols_lowercase == expected.known_symbols_lowercase
+        # Ensure deprecated licenses are not loaded
+        assert 'aladdin-md5' not in result.known_symbols
+        assert 'aladdin-md5' not in result.known_symbols_lowercase
+
+    def test_get_license_key_info(self):
+        test_license_index_location = join(self.test_data_dir, 'test_license_key_index.json')
+        with open(test_license_index_location) as f:
+            expected = json.load(f)
+        result = get_license_index(test_license_index_location)
+        assert expected == result
+
+    def test_get_license_key_info_vendored(self):
+        curr_dir = dirname(abspath(__file__))
+        parent_dir = pathlib.Path(curr_dir).parent
+        vendored_license_key_index_location = parent_dir.joinpath(
+            'src',
+            'license_expression',
+            'data',
+            'scancode-licensedb-index.json'
+        )
+        with open(vendored_license_key_index_location) as f:
+            expected = json.load(f)
+        result = get_license_index()
+        assert expected == result
