@@ -2,51 +2,101 @@
 license-expression
 ==================
 
-license-expression is a comprehensive utility library to parse, compare,
+``license-expression`` is a comprehensive utility library to parse, compare,
 simplify and normalize license expressions (such as SPDX license expressions)
+using boolean logic.
+
+- License: Apache-2.0
+- Python: 3.6+
+- Homepage: https://github.com/nexB/license-expression/
+- Install: `pip install license-expression` also available in most Linux distro.
+
+Software project licenses are often a combination of several free and open
+source software licenses. License expressions -- as specified by SPDX -- provide
+a concise and human readable way to express these licenses without having to
+read long license texts, while still being machine-readable.
+
+License expressions are used by key FOSS projects such as Linux; several
+packages ecosystem use them to document package licensing metadata such as
+npm and Rubygems; they are important when exchanging software data (such as with
+SPDX and SBOM in general) as a way to express licensing precisely.
+
+``license-expression`` is a comprehensive utility library to parse, compare,
+simplify and normalize these license expressions (such as SPDX license expressions)
 using boolean logic like in: `GPL-2.0 or later WITH Classpath Exception AND MIT`.
 
+It includes the license keys from SPDX https://spdx.org/licenses/ (version 3.13)
+and ScanCode license DB (version 21.6.7) https://scancode-licensedb.aboutcode.org/
+to get started quickly.
+
+``license-expression`` is both powerful and simple to use and is a used as the
+license expression engine in several projects and products such as:
+
+- AboutCode-toolkit https://github.com/nexB/aboutcode-toolkit
+- AlekSIS (School Information System) https://github.com/AlekSIS-org/AlekSIS-Core
+- Barista https://github.com/Optum/barista
+- Conda forge tools https://github.com/conda-forge/conda-smithy
+- DejaCode https://dejacode.com
+- DeltaCode https://github.com/nexB/deltacode
+- FenixscanX https://github.com/SmartsYoung/FenixscanX
+- FetchCode https://github.com/nexB/fetchcode
+- Flict https://github.com/vinland-technology/flict and https://github.com/vinland-technology
+- license.sh https://github.com/webscopeio/license.sh
+- liferay_inbound_checker https://github.com/carmenbianca/liferay_inbound_checker
+- REUSE https://reuse.software/ and https://github.com/fsfe/reuse-tool
+- ScanCode-io https://github.com/nexB/scancode.io 
+- ScanCode-toolkit https://github.com/nexB/scancode-toolkit
+
 See also for details:
-https://spdx.org/sites/cpstandard/files/pages/files/spdxversion2.1.pdf#page=95&zoom=auto
+- https://spdx.github.io/spdx-spec/appendix-IV-SPDX-license-expressions/
 
-license: apache-2.0
+``license-expression`` is also packaged for most Linux distributions. See below.
 
-Python: 3.6+
+Alternative:
+
+There is no known alternative library for Python, but there are several similar
+libraries in other languages (but not as powerful of course!):
+
+- JavaScript https://github.com/jslicense/spdx-expression-parse.js
+- Rust https://github.com/ehuss/license-exprs
+- Haskell https://github.com/phadej/spdx
+- Go https://github.com/kyoh86/go-spdx
+- Ada https://github.com/Fabien-Chouteau/spdx_ada
+- Java https://github.com/spdx/tools and https://github.com/aschet/spdx-license-expression-tools
 
 Build and tests status
 ======================
 
-.. |travis-master-icon| image:: https://api.travis-ci.org/nexB/license-expression.png?branch=master
-                        :target: https://travis-ci.org/nexB/license-expression
-                        :alt: MacOSX Master branch tests status
-                        :align: middle
-
-.. |appveyor-master-icon| image:: https://ci.appveyor.com/api/projects/status/github/nexB/license-expression?svg=true
-                          :target: https://ci.appveyor.com/project/nexB/license-expression
-                          :alt: Windows Master branch tests status
-                          :align: middle
-
-+-------+-----------------------+----------------------+------------------------+
-|Branch |**Linux (Travis)**     |**MacOSX (Travis)**   |**Windows (AppVeyor)**  |
-+=======+=======================+======================+========================+
-|       |                       |                      |                        |
-|Master | |travis-master-icon|  | |travis-master-icon| | |appveyor-master-icon| |
-|       |                       |                      |                        |
-+-------+-----------------------+----------------------+------------------------+
++--------------------------+------------------------+----------------------------------+
+|**Linux & macOS (Travis)**| **Windows (AppVeyor)** |**Linux, Windows & macOS (Azure)**|
++==========================+========================+==================================+
+|                          |                        |                                  |
+| |travis-badge-icon|      | |appveyor-badge-icon|  |   |azure-badge-icon|             |
+|                          |                        |                                  |
++--------------------------+------------------------+----------------------------------+
 
 Source code and download
 ========================
 
-* https://github.com/nexB/license-expression.git
-* https://pypi.python.org/pypi/license-expression
-* https://aur.archlinux.org/packages/python-license-expression/ (Arch Linux through AUR)
+- GitHub https://github.com/nexB/license-expression.git
+- PyPI https://pypi.python.org/pypi/license-expression
+
+Also available in several Linux distros:
+
+- Arch Linux https://aur.archlinux.org/packages/python-license-expression/
+- Debian https://packages.debian.org/unstable/source/license-expression
+- DragonFly BSD https://github.com/DragonFlyBSD/DPorts/tree/master/textproc/py-license-expression
+- Fedora https://src.fedoraproject.org/rpms/python-license-expression/
+- FreeBSD https://www.freshports.org/textproc/py-license-expression
+- NixOS https://github.com/NixOS/nixpkgs/blob/release-21.05/pkgs/development/python-modules/license-expression/default.nix
+- openSUSE https://build.opensuse.org/package/show/openSUSE:Factory/python-license-expression
+
 
 Support
 =======
 
-Submit bugs and questions at:
-
-* https://github.com/nexB/license-expression/issues
+- Submit bugs and questions at: https://github.com/nexB/license-expression/issues
+- Join the chat at: https://gitter.im/aboutcode-org/discuss
 
 Description
 ===========
@@ -55,53 +105,104 @@ This module defines a mini language to parse, validate, simplify, normalize and
 compare license expressions using a boolean logic engine.
 
 This supports SPDX license expressions and also accepts other license naming
-conventions and license identifiers aliases to resolve and normalize licenses.
+conventions and license identifiers aliases to resolve and normalize any license
+expressions.
 
 Using boolean logic, license expressions can be tested for equality, containment,
 equivalence and can be normalized or simplified.
 
-The main entry point is the Licensing object.
+It also bundles the SPDX License list (3.13 as of now) and the ScanCode license
+DB (based on ScanCode 21.6.7) to easily parse and validate expressions using
+the license symbols.
+
 
 Usage examples
 ==============
 
-For example:
+The main entry point is the ``Licensing`` object that you can use to parse,
+validate, compare, simplify and normalize license expressions.
 
-.. code-block:: python
+Create an SPDX Licensing and parse expressions::
+
+	>>> from license_expression import get_spdx_licensing
+	>>> licensing = get_spdx_licensing()
+	>>> expression = ' GPL-2.0 or LGPL-2.1 and mit '
+	>>> parsed = licensing.parse(expression)
+	>>> print(parsed.pretty())
+	OR(
+	  LicenseSymbol('GPL-2.0-only'),
+	  AND(
+	    LicenseSymbol('LGPL-2.1-only'),
+	    LicenseSymbol('MIT')
+	  )
+	)
+	
+	>>> str(parsed)
+	'GPL-2.0-only OR (LGPL-2.1-only AND MIT)'
+	
+	>>> licensing.parse('unknwon with foo', validate=True, strict=True)
+	license_expression.ExpressionParseError: A plain license symbol cannot be used
+	as an exception in a "WITH symbol" statement. for token: "foo" at position: 13
+	
+	>>> licensing.parse('unknwon with foo', validate=True)
+	license_expression.ExpressionError: Unknown license key(s): unknwon, foo
+	
+	>>> licensing.validate('foo and MIT and GPL-2.0+')
+	ExpressionInfo(
+	    original_expression='foo and MIT and GPL-2.0+',
+	    normalized_expression=None,
+	    errors=['Unknown license key(s): foo'],
+	    invalid_symbols=['foo']
+	)
+
+
+Create a simple Licensing and parse expressions::
 
     >>> from license_expression import Licensing, LicenseSymbol
     >>> licensing = Licensing()
     >>> expression = ' GPL-2.0 or LGPL-2.1 and mit '
     >>> parsed = licensing.parse(expression)
-    >>> expected = 'GPL-2.0 OR (LGPL-2.1 AND mit)'
-    >>> assert expected == parsed.render('{symbol.key}')
+    >>> expression = ' GPL-2.0 or LGPL-2.1 and mit '
+    >>> expected = 'GPL-2.0-only OR (LGPL-2.1-only AND mit)'
+    >>> assert str(parsed) == expected
+    >>> assert parsed.render('{symbol.key}') == expected
+
+
+Create a Licensing with your own license symbols::
 
     >>> expected = [
     ...   LicenseSymbol('GPL-2.0'),
     ...   LicenseSymbol('LGPL-2.1'),
     ...   LicenseSymbol('mit')
     ... ]
-    >>> assert expected == licensing.license_symbols(expression)
-    >>> assert expected == licensing.license_symbols(parsed)
+    >>> assert licensing.license_symbols(expression) == expected
+    >>> assert licensing.license_symbols(parsed) == expected
 
     >>> symbols = ['GPL-2.0+', 'Classpath', 'BSD']
     >>> licensing = Licensing(symbols)
     >>> expression = 'GPL-2.0+ with Classpath or (bsd)'
     >>> parsed = licensing.parse(expression)
     >>> expected = 'GPL-2.0+ WITH Classpath OR BSD'
-    >>> assert expected == parsed.render('{symbol.key}')
+    >>> assertparsed.render('{symbol.key}') == expected
 
     >>> expected = [
     ...   LicenseSymbol('GPL-2.0+'),
     ...   LicenseSymbol('Classpath'),
     ...   LicenseSymbol('BSD')
     ... ]
-    >>> assert expected == licensing.license_symbols(parsed)
-    >>> assert expected == licensing.license_symbols(expression)
+    >>> assert licensing.license_symbols(parsed) == expected
+    >>> assert licensing.license_symbols(expression) == expected
 
-And expression can be simplified:
+And expression can be deduplicated, to remove duplicate license subexpressions
+without changing the order and without consider license choices as simplifiable::
 
-.. code-block:: python
+    >>> expression2 = ' GPL-2.0 or (mit and LGPL 2.1) or bsd Or GPL-2.0  or (mit and LGPL 2.1)'
+    >>> parsed2 = licensing.parse(expression2)
+    >>> str(parsed2)
+    'GPL-2.0 OR (mit AND LGPL 2.1) OR BSD OR GPL-2.0 OR (mit AND LGPL 2.1)'
+    >>> assert str(parsed2.simplify()) == 'BSD OR GPL-2.0 OR (LGPL 2.1 AND mit)'
+
+Expression can be simplified, treating them as boolean expressions::
 
     >>> expression2 = ' GPL-2.0 or (mit and LGPL 2.1) or bsd Or GPL-2.0  or (mit and LGPL 2.1)'
     >>> parsed2 = licensing.parse(expression2)
@@ -110,8 +211,6 @@ And expression can be simplified:
     >>> assert str(parsed2.simplify()) == 'BSD OR GPL-2.0 OR (LGPL 2.1 AND mit)'
 
 Two expressions can be compared for equivalence and containment:
-
-.. code-block:: python
 
     >>> expr1 = licensing.parse(' GPL-2.0 or (LGPL 2.1 and mit) ')
     >>> expr2 = licensing.parse(' (mit and LGPL 2.1)  or GPL-2.0 ')
@@ -134,8 +233,29 @@ Two expressions can be compared for equivalence and containment:
 Development
 ===========
 
-* Checkout a clone from https://github.com/nexB/license-expression.git
-* Then run ``./configure`` (or ``configure.bat``) and then ``source bin/activate``.
-  This will install all vendored dependencies in a local virtualenv, including
+- Checkout a clone from https://github.com/nexB/license-expression.git
+
+- Then run ``./configure --dev`` and then ``source tmp/bin/activate``.
+  This will install all dependencies in a local virtualenv, including
   development deps.
-* To run the tests, run ``py.test -vvs``
+
+- On Windows run  ``configure.bat --dev`` and then ``Scripts\bin\activate``.
+
+- To run the tests, run ``pytest -vvs``
+
+
+.. |travis-badge-icon| image:: https://api.travis-ci.org/nexB/license-expression.png?branch=master
+    :target: https://travis-ci.org/nexB/license-expression
+    :alt: Travis tests status
+    :align: middle
+
+.. |appveyor-badge-icon| image:: https://ci.appveyor.com/api/projects/status/github/nexB/license-expression?svg=true
+    :target: https://ci.appveyor.com/project/nexB/license-expression
+    :alt: Appveyor tests status
+    :align: middle
+
+.. |azure-badge-icon| image:: https://dev.azure.com/nexB/license-expression/_apis/build/status/nexB.license-expression?branchName=master
+    :target: https://dev.azure.com/nexB/license-expression/_build/latest?definitionId=2&branchName=master
+    :alt: Azure pipelines tests status
+    :align: middle
+

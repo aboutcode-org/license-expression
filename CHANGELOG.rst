@@ -1,55 +1,68 @@
 Changelog
 =========
 
-[Unreleased]
+next
 ------------
 
 
 
-[2.0] - 2021-06-04
-------------------
+v21.6.10
+---------
 
 Added
 ~~~~~
--  Add ability to simplify license expressions without over simplifying by not
-   using using boolean logic.
+
+- Switch to calver for package versioning to better convey the currency of the
+  bundled data.
+
+- Include https://scancode-licensedb.aboutcode.org/ licenses list with
+  ScanCode (v21.6.7) and SPDX licenses (v3.13) keys. Add new functions to
+  create Licensing using these licenses as LicenseSymbol.
+
+- Add new License.dedup() method to deduplicate and simplify license expressions
+  without over simplifying.
+
+- Add new License.validate() method to return a new ExpressionInfo object with
+  details on a license expression validation.
+
 
 Changed
 ~~~~~~~
--  Drop support for python27
--  Adopt the skeleton from https://github.com/nexB/skeleton
+- Drop support for Python 2.
+- Adopt the project skeleton from https://github.com/nexB/skeleton
+  and its new configure script
 
 
-[1.2] - 2019-11-14
+v1.2 - 2019-11-14
 ------------------
 Added
 ~~~~~
--  Add ability to render WITH expression wrapped in parenthesis
+- Add ability to render WITH expression wrapped in parenthesis
 
 Fixes
 ~~~~~
--  Fix anomalous backslashes in strings
+- Fix anomalous backslashes in strings
 
 Changed
 ~~~~~~~
--  Update the thirdparty directory structure.
+- Update the thirdparty directory structure.
 
 
-[1.0] - 2019-10-16
+v1.0 - 2019-10-16
 ------------------
 Added
 ~~~~~
--  New version of boolean.py library
--  Add ability to leave license expressions unsorted when simplifying
+- New version of boolean.py library
+- Add ability to leave license expressions unsorted when simplifying
 
 Changed
 ~~~~~~~
--  updated travis CI settings
+- updated travis CI settings
 
 
-[0.999] - 2019-04-29
+v0.999 - 2019-04-29
 --------------------
--  Initial release
--  license-expression is small utility library to parse, compare and
-   simplify and normalize license expressions.
+- Initial release
+- license-expression is small utility library to parse, compare and
+  simplify and normalize license expressions.
 
