@@ -44,7 +44,7 @@ license expression engine in several projects and products such as:
 - license.sh https://github.com/webscopeio/license.sh
 - liferay_inbound_checker https://github.com/carmenbianca/liferay_inbound_checker
 - REUSE https://reuse.software/ and https://github.com/fsfe/reuse-tool
-- ScanCode-io https://github.com/nexB/scancode.io 
+- ScanCode-io https://github.com/nexB/scancode.io
 - ScanCode-toolkit https://github.com/nexB/scancode-toolkit
 
 See also for details:
@@ -136,17 +136,17 @@ Create an SPDX Licensing and parse expressions::
 	    LicenseSymbol('MIT')
 	  )
 	)
-	
+
 	>>> str(parsed)
 	'GPL-2.0-only OR (LGPL-2.1-only AND MIT)'
-	
+
 	>>> licensing.parse('unknwon with foo', validate=True, strict=True)
 	license_expression.ExpressionParseError: A plain license symbol cannot be used
 	as an exception in a "WITH symbol" statement. for token: "foo" at position: 13
-	
+
 	>>> licensing.parse('unknwon with foo', validate=True)
 	license_expression.ExpressionError: Unknown license key(s): unknwon, foo
-	
+
 	>>> licensing.validate('foo and MIT and GPL-2.0+')
 	ExpressionInfo(
 	    original_expression='foo and MIT and GPL-2.0+',
@@ -183,7 +183,7 @@ Create a Licensing with your own license symbols::
     >>> expression = 'GPL-2.0+ with Classpath or (bsd)'
     >>> parsed = licensing.parse(expression)
     >>> expected = 'GPL-2.0+ WITH Classpath OR BSD'
-    >>> assertparsed.render('{symbol.key}') == expected
+    >>> assert parsed.render('{symbol.key}') == expected
 
     >>> expected = [
     ...   LicenseSymbol('GPL-2.0+'),
