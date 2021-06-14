@@ -1,11 +1,15 @@
 The following organizations or individuals have contributed to this code:
 
-- nexB Inc. @nexB
-- Philippe Ombredanne @pombredanne
-- Thomas Druez @tdruez
+- Ayan Sinha Mahapatra @AyanSinhaMahapatra
 - Carmen Bianca Bakker @carmenbianca
 - Chin-Yeung Li @chinyeungli
-- Steven Esser @majurg
-- Sebastian Schuberth @sschuberth
+- Dennis Clark @DennisClark
+- John Horan @johnmhoran
+- Jono Yang @JonoYang
 - Max Mehl @mxmehl
+- nexB Inc. @nexB
 - Peter Kolbus @pkolbus
+- Philippe Ombredanne @pombredanne
+- Sebastian Schuberth @sschuberth
+- Steven Esser @majurg
+- Thomas Druez @tdruez
