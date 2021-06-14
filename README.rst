@@ -135,7 +135,8 @@ Development
 ===========
 
 * Checkout a clone from https://github.com/nexB/license-expression.git
-* Then run ``./configure`` (or ``configure.bat``) and then ``source bin/activate``.
+* Then run ``./configure --dev`` (or ``configure --dev`` if on winwdows)
+  and then ``source tmp/bin/activate`` (or ``tmp\bin\activate`` if on windows)
   This will install all vendored dependencies in a local virtualenv, including
   development deps.
 * To run the tests, run ``py.test -vvs``

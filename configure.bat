@@ -142,6 +142,8 @@ if %ERRORLEVEL% neq 0 (
     %PIP_EXTRA_ARGS% ^
     %CFG_REQUIREMENTS%
 
+mklink /J %CFG_ROOT_DIR%\%VIRTUALENV_DIR%\bin %CFG_ROOT_DIR%\%VIRTUALENV_DIR%\Scripts
+
 if %ERRORLEVEL% neq 0 (
     exit /b %ERRORLEVEL%
 )
