@@ -235,11 +235,11 @@ Development
 
 - Checkout a clone from https://github.com/nexB/license-expression.git
 
-- Then run ``./configure --dev`` and then ``source tmp/bin/activate``.
+- Then run ``./configure --dev`` and then ``source tmp/bin/activate`` on Linux and POSIX.
   This will install all dependencies in a local virtualenv, including
   development deps.
 
-- On Windows run  ``configure.bat --dev`` and then ``Scripts\bin\activate``.
+- On Windows run  ``configure.bat --dev`` and then ``Scripts\bin\activate`` instead.
 
 - To run the tests, run ``pytest -vvs``
 
