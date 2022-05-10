@@ -2380,11 +2380,11 @@ class CombineExpressionTest(TestCase):
         assert combine_expressions([]) == None
 
     def test_combine_expressions_with_regular(self):
-        assert combine_expressions(['mit', 'apache-2.0']) == 'mit AND apache-2.0'
+        assert str(combine_expressions(['mit', 'apache-2.0'])) == 'mit AND apache-2.0'
 
     def test_combine_expressions_with_duplicated_elements(self):
-        assert combine_expressions(['mit', 'apache-2.0', 'mit']) == 'mit AND apache-2.0'
+        assert str(combine_expressions(['mit', 'apache-2.0', 'mit'])) == 'mit AND apache-2.0'
 
     def test_combine_expressions_with_or_relationship(self):
-        assert combine_expressions(['mit', 'apache-2.0'], 'OR') == 'mit OR apache-2.0'
+        assert str(combine_expressions(['mit', 'apache-2.0'], 'OR')) == 'mit OR apache-2.0'
 

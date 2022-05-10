@@ -1,6 +1,19 @@
 Changelog
 =========
 
+
+
+30.0.0 - 2022-05-10
+----------------------
+
+This is a minor release with API changes
+
+- Use latest skeleton (and updated configure script)
+- Drop using calver
+- Improve error checking when combining licenses
+
+
+
 v21.6.14 - 2021-06-14
 ----------------------
 
