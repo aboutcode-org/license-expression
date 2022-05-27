@@ -1,12 +1,12 @@
-Welcome to nexb-skeleton's documentation!
-=========================================
+Welcome to license-expressions's documentation!
+===============================================
 
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
 
-   skeleton-usage
-   contribute/contrib_doc
+   readme_link
+   API<api/modules>
 
 Indices and tables
 ==================
