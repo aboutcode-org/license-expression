@@ -141,23 +141,24 @@ class ExpressionInfo:
     Licensing.validate().
 
     The ExpressionInfo class has the following fields:
+
     - original_expression: str.
-      - This is the license expression that was originally passed into
-        Licensing.validate()
+        - This is the license expression that was originally passed into
+          Licensing.validate()
 
     - normalized_expression: str.
-      - If a valid license expression has been passed into `validate()`,
-        then the license expression string will be set in this field.
+        - If a valid license expression has been passed into `validate()`,
+          then the license expression string will be set in this field.
 
     - errors: list
-      - If there were errors validating a license expression,
-        the error messages will be appended here.
+        - If there were errors validating a license expression,
+          the error messages will be appended here.
 
     - invalid_symbols: list
-      - If the license expression that has been passed into `validate()` has
-        license keys that are invalid (either that they are unknown or not used
-        in the right context), or the syntax is incorrect because an invalid
-        symbol was used, then those symbols will be appended here.
+        - If the license expression that has been passed into `validate()` has
+          license keys that are invalid (either that they are unknown or not used
+          in the right context), or the syntax is incorrect because an invalid
+          symbol was used, then those symbols will be appended here.
     """
 
     def __init__(
@@ -1652,6 +1653,7 @@ def validate_symbols(symbols, validate_keys=False):
       there were no warnings).
     - `errors` is a list of validation error messages (possibly empty if there
       were no errors).
+
     Keys and aliases are cleaned and validated for uniqueness.
 
     If ``validate_keys`` also validate that license keys are known keys.
