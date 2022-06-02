@@ -7,13 +7,13 @@
 # -- Path setup --------------------------------------------------------------
 
 # If extensions (or modules to document with autodoc) are in another directory,
-# add these directories to sys.path here. If the directory is relative to the
-# documentation root, use os.path.abspath to make it absolute, like shown here.
-#
-# import os
-# import sys
-# sys.path.insert(0, os.path.abspath('.'))
+# add these directories to sys.path here.
 
+import pathlib
+import sys
+
+srcdir = pathlib.Path(__file__).resolve().parents[2].joinpath('src')
+sys.path.insert(0, srcdir.as_posix())
 
 # -- Project information -----------------------------------------------------
 
@@ -28,18 +28,24 @@ author = "AboutCode.org authors and contributors"
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
+    "sphinx.ext.autodoc",
     "sphinx.ext.intersphinx",
+    "sphinxcontrib.apidoc",
 ]
 
-# This points to aboutcode.readthedocs.io
-# In case of "undefined label" ERRORS check docs on intersphinx to troubleshoot
-# Link was created at commit - https://github.com/nexB/aboutcode/commit/faea9fcf3248f8f198844fe34d43833224ac4a83
-
-intersphinx_mapping = {
-    "aboutcode": ("https://aboutcode.readthedocs.io/en/latest/", None),
-    "scancode-workbench": ("https://scancode-workbench.readthedocs.io/en/develop/", None),
+# FIXME: including AND, NOT and OR will result in endless recursion
+autodoc_default_options = {
+    'exclude-members': 'AND, NOT, OR',
 }
 
+# Setting for sphinxcontrib.apidoc to automatically create API documentation.
+apidoc_module_dir = srcdir.joinpath('license_expression').as_posix()
+
+# Reference to other Sphinx documentations
+intersphinx_mapping = {
+    "python": ("https://docs.python.org/3", None),
+    "boolean.py": ("https://booleanpy.readthedocs.io/en/latest/", None),
+}
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]

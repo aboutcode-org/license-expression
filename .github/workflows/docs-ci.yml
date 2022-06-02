@@ -28,7 +28,7 @@ jobs:
 
       - name: Check Sphinx Documentation build minimally
         working-directory: ./docs
-        run: sphinx-build -E -W source build
+        run: python3 -m sphinx -E -W source build
 
       - name: Check for documentation style errors
         working-directory: ./docs
