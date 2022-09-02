@@ -33,7 +33,7 @@ to get started quickly.
 license expression engine in several projects and products such as:
 
 - AboutCode-toolkit https://github.com/nexB/aboutcode-toolkit
-- AlekSIS (School Information System) https://github.com/AlekSIS-org/AlekSIS-Core
+- AlekSIS (School Information System) https://edugit.org/AlekSIS/official/AlekSIS-Core
 - Barista https://github.com/Optum/barista
 - Conda forge tools https://github.com/conda-forge/conda-smithy
 - DejaCode https://dejacode.com
