@@ -2,8 +2,19 @@ Changelog
 =========
 
 
+v30.1.0 - 2023-01-16
+----------------------
 
-30.0.0 - 2022-05-10
+This is a minor release without API changes
+
+- Use latest skeleton (and updated configure script)
+- Update license list to latest ScanCode and SPDX 3.19
+- Use correct syntax for python_require
+- Drop using Travis and Appveyor
+- Drop support for Python 3.7 and add Python 3.11
+
+
+v30.0.0 - 2022-05-10
 ----------------------
 
 This is a minor release with API changes

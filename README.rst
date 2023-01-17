@@ -7,7 +7,7 @@ simplify and normalize license expressions (such as SPDX license expressions)
 using boolean logic.
 
 - License: Apache-2.0
-- Python: 3.6+
+- Python: 3.7+
 - Homepage: https://github.com/nexB/license-expression/
 - Install: `pip install license-expression` also available in most Linux distro.
 
@@ -112,7 +112,7 @@ Using boolean logic, license expressions can be tested for equality, containment
 equivalence and can be normalized or simplified.
 
 It also bundles the SPDX License list (3.19 as of now) and the ScanCode license
-DB (based on ScanCode 32.0.0b1) to easily parse and validate expressions using
+DB (based on latest ScanCode) to easily parse and validate expressions using
 the license symbols.
 
 
