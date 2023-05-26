@@ -1,6 +1,14 @@
 Changelog
 =========
 
+v30.1.1 - 2023-01-16
+----------------------
+
+This is a minor dot release without API changes
+
+- Use latest skeleton
+- Update license list to latest ScanCode and SPDX 3.20
+
 
 v30.1.0 - 2023-01-16
 ----------------------
