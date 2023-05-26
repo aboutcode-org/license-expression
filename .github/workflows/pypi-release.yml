@@ -44,6 +44,9 @@ jobs:
 
 
   create-gh-release:
+  # Sets permissions of the GITHUB_TOKEN to allow release upload
+    permissions:
+      contents: write
     name: Create GH release
     needs:
       - build-pypi-distribs
