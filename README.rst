@@ -83,7 +83,7 @@ Source code and download
 
 Also available in several Linux distros:
 
-- Arch Linux https://archlinux.org/packages/community/any/python-license-expression/
+- Arch Linux https://archlinux.org/packages/extra/any/python-license-expression/
 - Debian https://packages.debian.org/unstable/source/license-expression
 - DragonFly BSD https://github.com/DragonFlyBSD/DPorts/tree/master/textproc/py-license-expression
 - Fedora https://src.fedoraproject.org/rpms/python-license-expression/
