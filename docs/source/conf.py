@@ -31,11 +31,30 @@ extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.intersphinx",
     "sphinxcontrib.apidoc",
+    "sphinx_reredirects",
+    'sphinx_rtd_theme',
+    "sphinx_rtd_dark_mode",
+    "sphinx.ext.extlinks",
+    "sphinx_copybutton",
 ]
 
 # FIXME: including AND, NOT and OR will result in endless recursion
 autodoc_default_options = {
     'exclude-members': 'AND, NOT, OR',
+}
+
+
+# Redirects for olds pages
+# See https://documatt.gitlab.io/sphinx-reredirects/usage.html
+redirects = {}
+
+# This points to aboutcode.readthedocs.io
+# In case of "undefined label" ERRORS check docs on intersphinx to troubleshoot
+# Link was created at commit - https://github.com/nexB/aboutcode/commit/faea9fcf3248f8f198844fe34d43833224ac4a83
+
+intersphinx_mapping = {
+    "aboutcode": ("https://aboutcode.readthedocs.io/en/latest/", None),
+    "scancode-workbench": ("https://scancode-workbench.readthedocs.io/en/develop/", None),
 }
 
 # Setting for sphinxcontrib.apidoc to automatically create API documentation.
@@ -101,3 +120,9 @@ rst_prolog = """
 .. role:: img-title-para
 
 """
+
+# -- Options for LaTeX output -------------------------------------------------
+
+latex_elements = {
+    'classoptions': ',openany,oneside'
+}
