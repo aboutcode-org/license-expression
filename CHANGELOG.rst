@@ -1,14 +1,15 @@
 Changelog
 =========
 
-v30.1.1 - 2023-01-16
-----------------------
+v30.2.0 - 2023-11-29
+--------------------
 
 This is a minor release without API changes:
 
 - Use latest skeleton
 - Update license list to latest ScanCode and SPDX 3.22
 - Add Python 3.12 support in CI
+
 
 v30.1.1 - 2023-01-16
 ----------------------
