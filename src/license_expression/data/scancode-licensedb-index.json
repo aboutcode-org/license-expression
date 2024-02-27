@@ -14600,7 +14600,7 @@
     "other_spdx_license_keys": [
       "LicenseRef-scancode-llgpl"
     ],
-    "is_exception": false,
+    "is_exception": true,
     "is_deprecated": false,
     "json": "llgpl.json",
     "yaml": "llgpl.yml",
