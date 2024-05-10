@@ -19,6 +19,7 @@ containment, equivalence and can be normalized, deduplicated or simplified.
 The main entry point is the Licensing object.
 """
 
+import gzip
 import itertools
 import json
 import re
@@ -60,7 +61,7 @@ curr_dir = dirname(abspath(__file__))
 data_dir = join(curr_dir, 'data')
 vendored_scancode_licensedb_index_location = join(
     data_dir,
-    'scancode-licensedb-index.json',
+    'scancode-licensedb-index.json.gz',
 )
 
 # append new error codes to PARSE_ERRORS by monkey patching
@@ -830,7 +831,7 @@ def get_license_index(
     The default value of `license_index_location` points to a vendored copy
     of the license index from https://scancode-licensedb.aboutcode.org/
     """
-    with open(license_index_location) as f:
+    with gzip.open(license_index_location, "rt") as f:
         return json.load(f)
 
 

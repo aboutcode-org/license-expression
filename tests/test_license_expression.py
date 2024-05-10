@@ -5,6 +5,7 @@
 # See https://github.com/nexB/license-expression for support or download.
 # See https://aboutcode.org for more information about nexB OSS projects.
 #
+import gzip
 import json
 import pathlib
 import sys
@@ -2307,8 +2308,8 @@ class UtilTest(TestCase):
     test_data_dir = join(dirname(__file__), 'data')
 
     def test_build_licensing(self):
-        test_license_index_location = join(self.test_data_dir, 'test_license_key_index.json')
-        with open(test_license_index_location) as f:
+        test_license_index_location = join(self.test_data_dir, 'test_license_key_index.json.gz')
+        with gzip.open(test_license_index_location, "rt") as f:
             license_info = json.load(f)
         lics = [
             {
@@ -2329,8 +2330,8 @@ class UtilTest(TestCase):
         assert 'aladdin-md5' not in result.known_symbols_lowercase
 
     def test_build_spdx_licensing(self):
-        test_license_index_location = join(self.test_data_dir, 'test_license_key_index.json')
-        with open(test_license_index_location) as f:
+        test_license_index_location = join(self.test_data_dir, 'test_license_key_index.json.gz')
+        with gzip.open(test_license_index_location, "rt") as f:
             license_info = json.load(f)
         lics = [
             {
@@ -2352,8 +2353,8 @@ class UtilTest(TestCase):
         assert 'aladdin-md5' not in result.known_symbols_lowercase
 
     def test_get_license_key_info(self):
-        test_license_index_location = join(self.test_data_dir, 'test_license_key_index.json')
-        with open(test_license_index_location) as f:
+        test_license_index_location = join(self.test_data_dir, 'test_license_key_index.json.gz')
+        with gzip.open(test_license_index_location, "rt") as f:
             expected = json.load(f)
         result = get_license_index(test_license_index_location)
         assert result == expected
@@ -2365,9 +2366,9 @@ class UtilTest(TestCase):
             'src',
             'license_expression',
             'data',
-            'scancode-licensedb-index.json'
+            'scancode-licensedb-index.json.gz'
         )
-        with open(vendored_license_key_index_location) as f:
+        with gzip.open(vendored_license_key_index_location, "rt") as f:
             expected = json.load(f)
         result = get_license_index()
         assert result == expected
