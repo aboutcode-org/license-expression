@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # SPDX-License-Identifier: LicenseRef-scancode-public-domain
-# See https://github.com/nexB/license-expression for support or download.
+# See https://github.com/aboutcode-org/license-expression for support or download.
 # See https://aboutcode.org for more information about nexB OSS projects.
 
 """
@@ -158,7 +158,8 @@ class TestTrie(unittest.TestCase):
         #              0123456789012345678901234567890123456
 
         t = get_test_automaton()
-        result = list(t.iter(test_string, include_unmatched=True, include_space=True))
+        result = list(
+            t.iter(test_string, include_unmatched=True, include_space=True))
         expected = [
             Token(0, 1, u'  ', None),
             Token(2, 3, u'he', u'he'),
@@ -190,7 +191,8 @@ class TestTrie(unittest.TestCase):
         test_string = '((l-a + AND l-b) OR (l -c+))'
 
         t = get_test_automaton()
-        result = list(t.iter(test_string, include_unmatched=True, include_space=True))
+        result = list(
+            t.iter(test_string, include_unmatched=True, include_space=True))
         expected = [
             Token(0, 0, u'(', u'('),
             Token(1, 1, u'(', u'('),
@@ -215,7 +217,8 @@ class TestTrie(unittest.TestCase):
 
         assert expected == result
 
-        result = list(t.tokenize(test_string, include_unmatched=True, include_space=True))
+        result = list(t.tokenize(
+            test_string, include_unmatched=True, include_space=True))
         assert expected == result
 
     def test_tokenize_with_unmatched_and_space(self):
@@ -232,7 +235,8 @@ class TestTrie(unittest.TestCase):
         #                        111111111122222222223
         #              0123456789012345678901234567890
         t = get_test_automaton()
-        result = list(t.tokenize(test_string, include_unmatched=True, include_space=True))
+        result = list(t.tokenize(
+            test_string, include_unmatched=True, include_space=True))
         expected = [
             Token(0, 0, u'(', u'('),
             Token(1, 1, u'(', u'('),

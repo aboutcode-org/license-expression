@@ -1,6 +1,13 @@
 Changelog
 =========
 
+v30.3.1 - 2024-08-13
+--------------------
+
+This is a minor release without API changes:
+
+- Update link references of ownership from nexB to aboutcode-org
+
 v30.3.0 - 2024-03-18
 --------------------
 

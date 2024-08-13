@@ -8,7 +8,7 @@ using boolean logic.
 
 - License: Apache-2.0
 - Python: 3.8+
-- Homepage: https://github.com/nexB/license-expression/
+- Homepage: https://github.com/aboutcode-org/license-expression/
 - Install: `pip install license-expression` also available in most Linux distro.
 
 Software project licenses are often a combination of several free and open
@@ -32,20 +32,20 @@ See https://scancode-licensedb.aboutcode.org/ to get started quickly.
 ``license-expression`` is both powerful and simple to use and is a used as the
 license expression engine in several projects and products such as:
 
-- AboutCode-toolkit https://github.com/nexB/aboutcode-toolkit
+- AboutCode-toolkit https://github.com/aboutcode-org/aboutcode-toolkit
 - AlekSIS (School Information System) https://edugit.org/AlekSIS/official/AlekSIS-Core
 - Barista https://github.com/Optum/barista
 - Conda forge tools https://github.com/conda-forge/conda-smithy
 - DejaCode https://dejacode.com
 - DeltaCode https://github.com/nexB/deltacode
 - FenixscanX https://github.com/SmartsYoung/FenixscanX
-- FetchCode https://github.com/nexB/fetchcode
+- FetchCode https://github.com/aboutcode-org/fetchcode
 - Flict https://github.com/vinland-technology/flict and https://github.com/vinland-technology
 - license.sh https://github.com/webscopeio/license.sh
 - liferay_inbound_checker https://github.com/carmenbianca/liferay_inbound_checker
 - REUSE https://reuse.software/ and https://github.com/fsfe/reuse-tool
-- ScanCode-io https://github.com/nexB/scancode.io
-- ScanCode-toolkit https://github.com/nexB/scancode-toolkit
+- ScanCode-io https://github.com/aboutcode-org/scancode.io
+- ScanCode-toolkit https://github.com/aboutcode-org/scancode-toolkit
 
 See also for details:
 - https://spdx.github.io/spdx-spec/appendix-IV-SPDX-license-expressions/
@@ -78,7 +78,7 @@ Build and tests status
 Source code and download
 ========================
 
-- GitHub https://github.com/nexB/license-expression.git
+- GitHub https://github.com/aboutcode-org/license-expression.git
 - PyPI https://pypi.python.org/pypi/license-expression
 
 Also available in several Linux distros:
@@ -95,7 +95,7 @@ Also available in several Linux distros:
 Support
 =======
 
-- Submit bugs and questions at: https://github.com/nexB/license-expression/issues
+- Submit bugs and questions at: https://github.com/aboutcode-org/license-expression/issues
 - Join the chat at: https://gitter.im/aboutcode-org/discuss
 
 Description
@@ -233,7 +233,7 @@ Two expressions can be compared for equivalence and containment:
 Development
 ===========
 
-- Checkout a clone from https://github.com/nexB/license-expression.git
+- Checkout a clone from https://github.com/aboutcode-org/license-expression.git
 
 - Then run ``./configure --dev`` and then ``source tmp/bin/activate`` on Linux and POSIX.
   This will install all dependencies in a local virtualenv, including

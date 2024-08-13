@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # SPDX-License-Identifier: LicenseRef-scancode-public-domain
-# See https://github.com/nexB/license-expression for support or download.
+# See https://github.com/aboutcode-org/license-expression for support or download.
 # See https://aboutcode.org for more information about nexB OSS projects.
 #
 """
@@ -343,10 +343,12 @@ class Trie(object):
                 if match.output is not nil:
                     matched_string, output_value = match.output
                     if TRACE:
-                        logger_debug(' type output', repr(output_value), type(matched_string))
+                        logger_debug(' type output', repr(
+                            output_value), type(matched_string))
                     n = len(matched_string)
                     start_pos = end_pos - n + 1
-                    if TRACE: logger_debug('   start_pos', start_pos)
+                    if TRACE:
+                        logger_debug('   start_pos', start_pos)
                     yield Token(start_pos, end_pos, tokens_string[start_pos: end_pos + 1], output_value)
                     yielded = True
                 match = match.fail
@@ -355,7 +357,8 @@ class Trie(object):
                     logger_debug('  unmatched but known token')
                 n = len(token_string)
                 start_pos = end_pos - n + 1
-                tok = Token(start_pos, end_pos, tokens_string[start_pos: end_pos + 1], None)
+                tok = Token(start_pos, end_pos,
+                            tokens_string[start_pos: end_pos + 1], None)
                 if TRACE:
                     logger_debug('  unmatched tok 2:', tok)
                 yield tok
@@ -406,7 +409,7 @@ class Trie(object):
         True
         """
         tokens = self.iter(string,
-            include_unmatched=include_unmatched, include_space=include_space)
+                           include_unmatched=include_unmatched, include_space=include_space)
         tokens = list(tokens)
         if TRACE:
             logger_debug('tokenize.tokens:', tokens)
@@ -544,7 +547,7 @@ class Token(object):
         >>> expected == Token.sort(tokens)
         True
         """
-        key = lambda s: (s.start, -len(s),)
+        def key(s): return (s.start, -len(s),)
         return sorted(tokens, key=key)
 
     def is_after(self, other):
@@ -613,8 +616,8 @@ _tokenizer = re.compile(r'''
      |
     (?P<parens>[\(\)])
     ''',
-    re.VERBOSE | re.MULTILINE | re.UNICODE
-)
+                        re.VERBOSE | re.MULTILINE | re.UNICODE
+                        )
 
 
 def get_tokens(tokens_string):
