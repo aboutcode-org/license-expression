@@ -1,6 +1,15 @@
 Changelog
 =========
 
+v30.4.0 - 2024-10-21
+--------------------
+
+This is a minor release without API changes:
+
+- Use latest skeleton
+- Update license list to latest ScanCode and SPDX 3.25
+- Drop support for Python 3.8
+
 v30.3.1 - 2024-08-13
 --------------------
 
