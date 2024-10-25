@@ -7,7 +7,7 @@ simplify and normalize license expressions (such as SPDX license expressions)
 using boolean logic.
 
 - License: Apache-2.0
-- Python: 3.8+
+- Python: 3.9+
 - Homepage: https://github.com/aboutcode-org/license-expression/
 - Install: `pip install license-expression` also available in most Linux distro.
 
@@ -25,8 +25,8 @@ SPDX and SBOM in general) as a way to express licensing precisely.
 simplify and normalize these license expressions (such as SPDX license expressions)
 using boolean logic like in: `GPL-2.0-or-later WITH Classpath-exception-2.0 AND MIT`.
 
-It includes the license keys from SPDX https://spdx.org/licenses/ (version 3.23)
-and ScanCode license DB (version 32.0.8, last published on 2023-02-27).
+It includes the license keys from SPDX https://spdx.org/licenses/ (version 3.25)
+and ScanCode license DB (version 32.3.0, last published on 2024-10-24).
 See https://scancode-licensedb.aboutcode.org/ to get started quickly.
 
 ``license-expression`` is both powerful and simple to use and is a used as the
