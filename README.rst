@@ -46,6 +46,7 @@ license expression engine in several projects and products such as:
 - REUSE https://reuse.software/ and https://github.com/fsfe/reuse-tool
 - ScanCode-io https://github.com/aboutcode-org/scancode.io
 - ScanCode-toolkit https://github.com/aboutcode-org/scancode-toolkit
+- SecObserve https://github.com/MaibornWolff/SecObserve
 
 See also for details:
 - https://spdx.github.io/spdx-spec/appendix-IV-SPDX-license-expressions/
