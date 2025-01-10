@@ -1,6 +1,6 @@
 about_resource: scancode-licensedb-index.json
 download_url: https://raw.githubusercontent.com/aboutcode-org/scancode-licensedb/1e9ff1927b89bae4ca1356de77aa29cc18916025/docs/index.json
-spdx_license_list_version: 3.25
+spdx_license_list_version: 3.26
 name: scancode-licensedb-index.json
 license_expression: cc-by-4.0
 copyright: Copyright (c) nexB Inc. and others.
