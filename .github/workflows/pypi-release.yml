@@ -54,7 +54,7 @@ jobs:
 
     steps:
       - name: Download built archives
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4.1.7
         with:
           name: pypi_archives
           path: dist
@@ -74,7 +74,7 @@ jobs:
 
     steps:
       - name: Download built archives
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4.1.7
         with:
           name: pypi_archives
           path: dist
