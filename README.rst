@@ -25,8 +25,8 @@ SPDX and SBOM in general) as a way to express licensing precisely.
 simplify and normalize these license expressions (such as SPDX license expressions)
 using boolean logic like in: `GPL-2.0-or-later WITH Classpath-exception-2.0 AND MIT`.
 
-It includes the license keys from SPDX https://spdx.org/licenses/ (version 3.25)
-and ScanCode license DB (version 32.3.0, last published on 2024-10-24).
+It includes the license keys from SPDX https://spdx.org/licenses/ (version 3.26)
+and ScanCode LicenseDB (from scancode-toolkit version 32.3.1, last published on 2025-01-10).
 See https://scancode-licensedb.aboutcode.org/ to get started quickly.
 
 ``license-expression`` is both powerful and simple to use and is a used as the
