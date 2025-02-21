@@ -112,7 +112,7 @@ expressions.
 Using boolean logic, license expressions can be tested for equality, containment,
 equivalence and can be normalized or simplified.
 
-It also bundles the SPDX License list (3.20 as of now) and the ScanCode license
+It also bundles the SPDX License list (3.26 as of now) and the ScanCode license
 DB (based on latest ScanCode) to easily parse and validate expressions using
 the license symbols.
 
