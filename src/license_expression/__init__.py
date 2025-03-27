@@ -257,6 +257,19 @@ class Licensing(boolean.BooleanAlgebra):
 
         # FIXME: this should be instead a super class of all symbols
         self.LicenseSymbol = self.Symbol
+        # LicenseWithExceptionSymbol does not get its internal Expressions mapped durring BooleanAlgebra init
+        # have to set it after the fact
+        tf_nao = {
+            "TRUE": self.TRUE,
+            "FALSE": self.FALSE,
+            "NOT": self.NOT,
+            "AND": self.AND,
+            "OR": self.OR,
+            "Symbol": self.Symbol,
+        }
+
+        for name, value in tf_nao.items():
+            setattr(LicenseWithExceptionSymbol, name, value)
 
         symbols = symbols or tuple()
 
