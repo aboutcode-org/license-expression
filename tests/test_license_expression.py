@@ -96,6 +96,42 @@ class LicenseSymbolTest(TestCase):
         # symbol euqality is based ONLY on the key
         assert sym5 == sym6
 
+    def test_python_operators_simple(self):
+        licensing = Licensing()
+        
+        sym1 = LicenseSymbol('MIT')
+        sym2 = LicenseSymbol('BSD-2')
+        
+        assert sym1 & sym2 == licensing.AND(sym1, sym2)
+        assert sym1 | sym2 == licensing.OR(sym1, sym2)
+        
+        sym3 = LicenseWithExceptionSymbol(LicenseSymbol("GPL-3.0-or-later"), LicenseSymbol("GCC-exception-3.1"))
+        
+        # Make sure LicenseWithExceptionSymbol operation work on left and right side
+        assert sym3 & sym1 == licensing.AND(sym3, sym1)
+        assert sym1 & sym3 == licensing.AND(sym1, sym3)
+        assert sym3 | sym1 == licensing.OR(sym3, sym1)
+        assert sym1 | sym3 == licensing.OR(sym3, sym1)
+    
+    def test_boolean_expression_operators(self):
+        
+        # Make sure LicenseWithExceptionSymbol boolean expression are set
+        assert LicenseWithExceptionSymbol.Symbol is not None
+        assert LicenseWithExceptionSymbol.TRUE is not None
+        assert LicenseWithExceptionSymbol.FALSE is not None
+        assert LicenseWithExceptionSymbol.AND is not None
+        assert LicenseWithExceptionSymbol.OR is not None
+        assert LicenseWithExceptionSymbol.NOT is not None
+        
+        # Make sure LicenseWithExceptionSymbol matches LicenseSymbol
+        assert LicenseWithExceptionSymbol.Symbol == LicenseSymbol
+        assert LicenseWithExceptionSymbol.TRUE == LicenseSymbol.TRUE
+        assert LicenseWithExceptionSymbol.FALSE == LicenseSymbol.FALSE
+        assert LicenseWithExceptionSymbol.AND == LicenseSymbol.AND
+        assert LicenseWithExceptionSymbol.OR == LicenseSymbol.OR
+        assert LicenseWithExceptionSymbol.NOT == LicenseSymbol.NOT
+        
+
 
 class LicensingTest(TestCase):
 
