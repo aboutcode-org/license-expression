@@ -18,7 +18,7 @@ sys.path.insert(0, srcdir.as_posix())
 # -- Project information -----------------------------------------------------
 
 project = "nexb-skeleton"
-copyright = "nexB Inc. and others."
+copyright = "nexB Inc., AboutCode and others."
 author = "AboutCode.org authors and contributors"
 
 
@@ -109,7 +109,8 @@ html_css_files = [
 html_show_sphinx = True
 
 # Define CSS and HTML abbreviations used in .rst files.  These are examples.
-# .. role:: is used to refer to styles defined in _static/theme_overrides.css and is used like this: :red:`text`
+# .. role:: is used to refer to styles defined in _static/theme_overrides.css
+# and is used like this: :red:`text`
 rst_prolog = """
 .. |psf| replace:: Python Software Foundation
 
