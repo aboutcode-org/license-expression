@@ -98,23 +98,23 @@ class LicenseSymbolTest(TestCase):
 
     def test_python_operators_simple(self):
         licensing = Licensing()
-        
+
         sym1 = LicenseSymbol('MIT')
         sym2 = LicenseSymbol('BSD-2')
-        
+
         assert sym1 & sym2 == licensing.AND(sym1, sym2)
         assert sym1 | sym2 == licensing.OR(sym1, sym2)
-        
+
         sym3 = LicenseWithExceptionSymbol(LicenseSymbol("GPL-3.0-or-later"), LicenseSymbol("GCC-exception-3.1"))
-        
+
         # Make sure LicenseWithExceptionSymbol operation work on left and right side
         assert sym3 & sym1 == licensing.AND(sym3, sym1)
         assert sym1 & sym3 == licensing.AND(sym1, sym3)
         assert sym3 | sym1 == licensing.OR(sym3, sym1)
         assert sym1 | sym3 == licensing.OR(sym3, sym1)
-    
+
     def test_boolean_expression_operators(self):
-        
+
         # Make sure LicenseWithExceptionSymbol boolean expression are set
         assert LicenseWithExceptionSymbol.Symbol is not None
         assert LicenseWithExceptionSymbol.TRUE is not None
@@ -122,7 +122,7 @@ class LicenseSymbolTest(TestCase):
         assert LicenseWithExceptionSymbol.AND is not None
         assert LicenseWithExceptionSymbol.OR is not None
         assert LicenseWithExceptionSymbol.NOT is not None
-        
+
         # Make sure LicenseWithExceptionSymbol matches LicenseSymbol
         assert LicenseWithExceptionSymbol.Symbol == LicenseSymbol
         assert LicenseWithExceptionSymbol.TRUE == LicenseSymbol.TRUE
@@ -130,7 +130,7 @@ class LicenseSymbolTest(TestCase):
         assert LicenseWithExceptionSymbol.AND == LicenseSymbol.AND
         assert LicenseWithExceptionSymbol.OR == LicenseSymbol.OR
         assert LicenseWithExceptionSymbol.NOT == LicenseSymbol.NOT
-        
+
 
 
 class LicensingTest(TestCase):
@@ -2433,53 +2433,32 @@ class UtilTest(TestCase):
     test_data_dir = join(dirname(__file__), 'data')
 
     def test_build_licensing(self):
-        test_license_index_location = join(
-            self.test_data_dir, 'test_license_key_index.json')
-        with open(test_license_index_location) as f:
-            license_info = json.load(f)
-        lics = [
-            {
-                'key': l.get('license_key', ''),
-                'is_exception': l.get('is_exception', ''),
-            } for l in license_info if l.get('spdx_license_key')
-        ]
-        syms = [LicenseSymbol(**l) for l in lics]
-        expected = Licensing(syms)
-
-        test_license_index = get_license_index(
-            license_index_location=test_license_index_location)
+        test_license_index_location = join(self.test_data_dir, "test_license_key_index.json")
+        test_license_index = get_license_index(license_index_location=test_license_index_location)
         result = build_licensing(test_license_index)
 
-        assert result.known_symbols == expected.known_symbols
-        assert result.known_symbols_lowercase == expected.known_symbols_lowercase
-        # Ensure deprecated licenses are not loaded
-        assert 'aladdin-md5' not in result.known_symbols
-        assert 'aladdin-md5' not in result.known_symbols_lowercase
+        known_symbols = set(result.known_symbols.keys())
+        known_symbols_lowercase = set(result.known_symbols_lowercase.keys())
+        expected_symbols = {"389-exception", "3com-microcode", "3dslicer-1.0", "aladdin-md5"}
+
+        assert known_symbols == expected_symbols
+        assert known_symbols_lowercase == {sym.lower() for sym in expected_symbols}
 
     def test_build_spdx_licensing(self):
-        test_license_index_location = join(
-            self.test_data_dir, 'test_license_key_index.json')
-        with open(test_license_index_location) as f:
-            license_info = json.load(f)
-        lics = [
-            {
-                'key': l.get('spdx_license_key', ''),
-                'aliases': l.get('other_spdx_license_keys', ''),
-                'is_exception': l.get('is_exception', ''),
-            } for l in license_info if l.get('spdx_license_key')
-        ]
-        syms = [LicenseSymbol(**l) for l in lics]
-        expected = Licensing(syms)
-
-        test_license_index = get_license_index(
-            license_index_location=test_license_index_location)
+        test_license_index_location = join(self.test_data_dir, "test_license_key_index.json")
+        test_license_index = get_license_index(license_index_location=test_license_index_location)
         result = build_spdx_licensing(test_license_index)
 
-        assert result.known_symbols == expected.known_symbols
-        assert result.known_symbols_lowercase == expected.known_symbols_lowercase
-        # Ensure deprecated licenses are not loaded
-        assert 'aladdin-md5' not in result.known_symbols
-        assert 'aladdin-md5' not in result.known_symbols_lowercase
+        known_symbols = set(result.known_symbols.keys())
+        known_symbols_lowercase = set(result.known_symbols_lowercase.keys())
+        expected_symbols = {
+            "389-exception",
+            "LicenseRef-scancode-3com-microcode",
+            "LicenseRef-scancode-3dslicer-1.0",
+        }
+
+        assert known_symbols == expected_symbols
+        assert known_symbols_lowercase == {sym.lower() for sym in expected_symbols}
 
     def test_get_license_key_info(self):
         test_license_index_location = join(

@@ -864,8 +864,9 @@ def build_licensing(license_index):
     lics = [
         {
             'key': l.get('license_key', ''),
-            'is_exception': l.get('is_exception', ''),
-        } for l in license_index if not l.get('is_deprecated', False)
+            'is_deprecated': l.get('is_deprecated', False),
+            'is_exception': l.get('is_exception', False),
+        } for l in license_index
     ]
     return load_licensing_from_license_index(lics)
 
@@ -880,10 +881,9 @@ def build_spdx_licensing(license_index):
         {
             'key': l.get('spdx_license_key', ''),
             'aliases': l.get('other_spdx_license_keys', []),
-            'is_exception': l.get('is_exception', ''),
-        } for l in license_index
-        if l.get('spdx_license_key')
-        and not l.get('is_deprecated', False)
+            'is_deprecated': l.get('is_deprecated', False),
+            'is_exception': l.get('is_exception', False),
+        } for l in license_index if l.get('spdx_license_key')
     ]
     return load_licensing_from_license_index(lics)
 
@@ -1202,7 +1202,7 @@ class LicenseSymbol(BaseSymbol):
     expression.
     """
 
-    def __init__(self, key, aliases=tuple(), is_exception=False, *args, **kwargs):
+    def __init__(self, key, aliases=tuple(), is_deprecated=False, is_exception=False, *args, **kwargs):
         if not key:
             raise ExpressionError(f'A license key cannot be empty: {key!r}')
 
@@ -1246,6 +1246,7 @@ class LicenseSymbol(BaseSymbol):
                 f'and not: {type(aliases)}.'
             )
         self.aliases = aliases and tuple(aliases) or tuple()
+        self.is_deprecated = is_deprecated
         self.is_exception = is_exception
 
         # super only know about a single "obj" object.
