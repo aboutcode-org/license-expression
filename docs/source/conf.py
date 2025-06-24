@@ -12,7 +12,7 @@
 import pathlib
 import sys
 
-srcdir = pathlib.Path(__file__).resolve().parents[2].joinpath('src')
+srcdir = pathlib.Path(__file__).resolve().parents[2].joinpath("src")
 sys.path.insert(0, srcdir.as_posix())
 
 # -- Project information -----------------------------------------------------
@@ -40,7 +40,7 @@ extensions = [
 
 # FIXME: including AND, NOT and OR will result in endless recursion
 autodoc_default_options = {
-    'exclude-members': 'AND, NOT, OR',
+    "exclude-members": "AND, NOT, OR",
 }
 
 
@@ -61,7 +61,7 @@ intersphinx_mapping = {
 }
 
 # Setting for sphinxcontrib.apidoc to automatically create API documentation.
-apidoc_module_dir = srcdir.joinpath('license_expression').as_posix()
+apidoc_module_dir = srcdir.joinpath("license_expression").as_posix()
 
 # Reference to other Sphinx documentations
 intersphinx_mapping = {

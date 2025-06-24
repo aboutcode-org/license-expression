@@ -7,6 +7,7 @@ Welcome to license-expressions's documentation!
 
    readme_link
    API<api/modules>
+   contribute/contrib_doc
 
 Indices and tables
 ==================

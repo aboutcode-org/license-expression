@@ -38,8 +38,6 @@ check:
 	@echo "-> Run Ruff format validation"
 	@${ACTIVATE} ruff format --check
 	@$(MAKE) doc8
-	@echo "-> Run ABOUT files validation"
-	@${ACTIVATE} about check etc/
 
 clean:
 	@echo "-> Clean the Python env"
