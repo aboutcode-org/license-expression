@@ -34,9 +34,8 @@ license expression engine in several projects and products such as:
 
 - AboutCode-toolkit https://github.com/aboutcode-org/aboutcode-toolkit
 - AlekSIS (School Information System) https://edugit.org/AlekSIS/official/AlekSIS-Core
-- Barista https://github.com/Optum/barista
 - Conda forge tools https://github.com/conda-forge/conda-smithy
-- DejaCode https://dejacode.com
+- DejaCode https://enterprise.dejacode.com
 - DeltaCode https://github.com/nexB/deltacode
 - FenixscanX https://github.com/SmartsYoung/FenixscanX
 - FetchCode https://github.com/aboutcode-org/fetchcode
@@ -49,7 +48,7 @@ license expression engine in several projects and products such as:
 - SecObserve https://github.com/MaibornWolff/SecObserve
 
 See also for details:
-- https://spdx.github.io/spdx-spec/appendix-IV-SPDX-license-expressions/
+- https://spdx.github.io/spdx-spec/v2.3/SPDX-license-expressions
 
 ``license-expression`` is also packaged for most Linux distributions. See below.
 
@@ -64,17 +63,6 @@ libraries in other languages (but not as powerful of course!):
 - Go https://github.com/kyoh86/go-spdx
 - Ada https://github.com/Fabien-Chouteau/spdx_ada
 - Java https://github.com/spdx/tools and https://github.com/aschet/spdx-license-expression-tools
-
-Build and tests status
-======================
-
-+--------------------------+------------------------+----------------------------------+
-|**Linux & macOS (Travis)**| **Windows (AppVeyor)** |**Linux, Windows & macOS (Azure)**|
-+==========================+========================+==================================+
-|                          |                        |                                  |
-| |travis-badge-icon|      | |appveyor-badge-icon|  |   |azure-badge-icon|             |
-|                          |                        |                                  |
-+--------------------------+------------------------+----------------------------------+
 
 Source code and download
 ========================
@@ -125,36 +113,36 @@ validate, compare, simplify and normalize license expressions.
 
 Create an SPDX Licensing and parse expressions::
 
-	>>> from license_expression import get_spdx_licensing
-	>>> licensing = get_spdx_licensing()
-	>>> expression = ' GPL-2.0 or LGPL-2.1 and mit '
-	>>> parsed = licensing.parse(expression)
-	>>> print(parsed.pretty())
-	OR(
-	  LicenseSymbol('GPL-2.0-only'),
-	  AND(
-	    LicenseSymbol('LGPL-2.1-only'),
-	    LicenseSymbol('MIT')
-	  )
-	)
+    >>> from license_expression import get_spdx_licensing
+    >>> licensing = get_spdx_licensing()
+    >>> expression = ' GPL-2.0 or LGPL-2.1 and mit '
+    >>> parsed = licensing.parse(expression)
+    >>> print(parsed.pretty())
+    OR(
+      LicenseSymbol('GPL-2.0-only'),
+      AND(
+        LicenseSymbol('LGPL-2.1-only'),
+        LicenseSymbol('MIT')
+      )
+    )
 
-	>>> str(parsed)
-	'GPL-2.0-only OR (LGPL-2.1-only AND MIT)'
+    >>> str(parsed)
+    'GPL-2.0-only OR (LGPL-2.1-only AND MIT)'
 
-	>>> licensing.parse('unknwon with foo', validate=True, strict=True)
-	license_expression.ExpressionParseError: A plain license symbol cannot be used
-	as an exception in a "WITH symbol" statement. for token: "foo" at position: 13
+    >>> licensing.parse('unknwon with foo', validate=True, strict=True)
+    license_expression.ExpressionParseError: A plain license symbol cannot be used
+    as an exception in a "WITH symbol" statement. for token: "foo" at position: 13
 
-	>>> licensing.parse('unknwon with foo', validate=True)
-	license_expression.ExpressionError: Unknown license key(s): unknwon, foo
+    >>> licensing.parse('unknwon with foo', validate=True)
+    license_expression.ExpressionError: Unknown license key(s): unknwon, foo
 
-	>>> licensing.validate('foo and MIT and GPL-2.0+')
-	ExpressionInfo(
-	    original_expression='foo and MIT and GPL-2.0+',
-	    normalized_expression=None,
-	    errors=['Unknown license key(s): foo'],
-	    invalid_symbols=['foo']
-	)
+    >>> licensing.validate('foo and MIT and GPL-2.0+')
+    ExpressionInfo(
+        original_expression='foo and MIT and GPL-2.0+',
+        normalized_expression=None,
+        errors=['Unknown license key(s): foo'],
+        invalid_symbols=['foo']
+    )
 
 
 Create a simple Licensing and parse expressions::
@@ -243,20 +231,3 @@ Development
 - On Windows run  ``configure.bat --dev`` and then ``Scripts\bin\activate`` instead.
 
 - To run the tests, run ``pytest -vvs``
-
-
-.. |travis-badge-icon| image:: https://api.travis-ci.org/nexB/license-expression.png?branch=master
-    :target: https://travis-ci.org/nexB/license-expression
-    :alt: Travis tests status
-    :align: middle
-
-.. |appveyor-badge-icon| image:: https://ci.appveyor.com/api/projects/status/github/nexB/license-expression?svg=true
-    :target: https://ci.appveyor.com/project/nexB/license-expression
-    :alt: Appveyor tests status
-    :align: middle
-
-.. |azure-badge-icon| image:: https://dev.azure.com/nexB/license-expression/_apis/build/status/nexB.license-expression?branchName=master
-    :target: https://dev.azure.com/nexB/license-expression/_build/latest?definitionId=2&branchName=master
-    :alt: Azure pipelines tests status
-    :align: middle
-

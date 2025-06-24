@@ -1,6 +1,15 @@
 Changelog
 =========
 
+v30.4.2 - 2025-06-25
+--------------------
+
+This is a minor release without API changes:
+
+- Use latest skeleton
+- Update license list to latest ScanCode
+
+
 v30.4.1 - 2025-01-10
 --------------------
 

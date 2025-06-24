@@ -19,6 +19,7 @@ use in the license_expression library for advanced tokenization:
  - improve returned results with the actual start,end and matched string.
  - support returning non-matched parts of a string
 """
+
 from collections import deque
 from collections import OrderedDict
 import logging
@@ -36,9 +37,10 @@ def logger_debug(*args):
 if TRACE:
 
     def logger_debug(*args):
-        return logger.debug(' '.join(isinstance(a, str) and a or repr(a) for a in args))
+        return logger.debug(" ".join(isinstance(a, str) and a or repr(a) for a in args))
 
     import sys
+
     logging.basicConfig(stream=sys.stdout)
     logger.setLevel(logging.DEBUG)
 
@@ -50,7 +52,8 @@ class TrieNode(object):
     """
     Node of the Trie/Aho-Corasick automaton.
     """
-    __slots__ = ['token', 'output', 'fail', 'children']
+
+    __slots__ = ["token", "output", "fail", "children"]
 
     def __init__(self, token, output=nil):
         # token of a tokens string added to the Trie as a string
@@ -70,9 +73,9 @@ class TrieNode(object):
 
     def __repr__(self):
         if self.output is not nil:
-            return 'TrieNode(%r, %r)' % (self.token, self.output)
+            return "TrieNode(%r, %r)" % (self.token, self.output)
         else:
-            return 'TrieNode(%r)' % self.token
+            return "TrieNode(%r)" % self.token
 
 
 class Trie(object):
@@ -85,7 +88,7 @@ class Trie(object):
         """
         Initialize a new Trie.
         """
-        self.root = TrieNode('')
+        self.root = TrieNode("")
 
         # set of any unique tokens in the trie, updated on each addition we keep
         # track of the set of tokens added to the trie to build the automaton
@@ -106,8 +109,9 @@ class Trie(object):
         to the Trie.
         """
         if self._converted:
-            raise Exception('This Trie has been converted to an Aho-Corasick '
-                            'automaton and cannot be modified.')
+            raise Exception(
+                "This Trie has been converted to an Aho-Corasick automaton and cannot be modified."
+            )
 
         if not tokens_string or not isinstance(tokens_string, str):
             return
@@ -193,7 +197,12 @@ class Trie(object):
             """
             tokens = [t for t in tokens + [node.token] if t]
             if node.output is not nil:
-                items.append((node.output[0], node.output[1],))
+                items.append(
+                    (
+                        node.output[0],
+                        node.output[1],
+                    )
+                )
 
             for child in node.children.values():
                 if child is not node:
@@ -296,37 +305,37 @@ class Trie(object):
         state = self.root
 
         if TRACE:
-            logger_debug('Trie.iter() with:', repr(tokens_string))
-            logger_debug(' tokens:', tokens)
+            logger_debug("Trie.iter() with:", repr(tokens_string))
+            logger_debug(" tokens:", tokens)
 
         end_pos = -1
         for token_string in tokens:
             end_pos += len(token_string)
             if TRACE:
                 logger_debug()
-                logger_debug('token_string', repr(token_string))
-                logger_debug(' end_pos', end_pos)
+                logger_debug("token_string", repr(token_string))
+                logger_debug(" end_pos", end_pos)
 
             if not include_space and not token_string.strip():
                 if TRACE:
-                    logger_debug('  include_space skipped')
+                    logger_debug("  include_space skipped")
                 continue
 
             if token_string not in self._known_tokens:
                 state = self.root
                 if TRACE:
-                    logger_debug('  unmatched')
+                    logger_debug("  unmatched")
                 if include_unmatched:
                     n = len(token_string)
                     start_pos = end_pos - n + 1
                     tok = Token(
                         start=start_pos,
                         end=end_pos,
-                        string=tokens_string[start_pos: end_pos + 1],
-                        value=None
+                        string=tokens_string[start_pos : end_pos + 1],
+                        value=None,
                     )
                     if TRACE:
-                        logger_debug('  unmatched tok:', tok)
+                        logger_debug("  unmatched tok:", tok)
                     yield tok
                 continue
 
@@ -343,31 +352,31 @@ class Trie(object):
                 if match.output is not nil:
                     matched_string, output_value = match.output
                     if TRACE:
-                        logger_debug(' type output', repr(
-                            output_value), type(matched_string))
+                        logger_debug(" type output", repr(output_value), type(matched_string))
                     n = len(matched_string)
                     start_pos = end_pos - n + 1
                     if TRACE:
-                        logger_debug('   start_pos', start_pos)
-                    yield Token(start_pos, end_pos, tokens_string[start_pos: end_pos + 1], output_value)
+                        logger_debug("   start_pos", start_pos)
+                    yield Token(
+                        start_pos, end_pos, tokens_string[start_pos : end_pos + 1], output_value
+                    )
                     yielded = True
                 match = match.fail
             if not yielded and include_unmatched:
                 if TRACE:
-                    logger_debug('  unmatched but known token')
+                    logger_debug("  unmatched but known token")
                 n = len(token_string)
                 start_pos = end_pos - n + 1
-                tok = Token(start_pos, end_pos,
-                            tokens_string[start_pos: end_pos + 1], None)
+                tok = Token(start_pos, end_pos, tokens_string[start_pos : end_pos + 1], None)
                 if TRACE:
-                    logger_debug('  unmatched tok 2:', tok)
+                    logger_debug("  unmatched tok 2:", tok)
                 yield tok
 
         logger_debug()
 
     def tokenize(self, string, include_unmatched=True, include_space=False):
         """
-        tokenize a string for matched and unmatched sub-sequences and yield non-
+        Tokenize a string for matched and unmatched sub-sequences and yield non-
         overlapping Token objects performing a modified Aho-Corasick search
         procedure:
 
@@ -408,11 +417,10 @@ class Trie(object):
         >>> tokens == expected
         True
         """
-        tokens = self.iter(string,
-                           include_unmatched=include_unmatched, include_space=include_space)
+        tokens = self.iter(string, include_unmatched=include_unmatched, include_space=include_space)
         tokens = list(tokens)
         if TRACE:
-            logger_debug('tokenize.tokens:', tokens)
+            logger_debug("tokenize.tokens:", tokens)
         if not include_space:
             tokens = [t for t in tokens if t.string.strip()]
         tokens = filter_overlapping(tokens)
@@ -462,15 +470,15 @@ def filter_overlapping(tokens):
             curr_tok = tokens[i]
             next_tok = tokens[j]
 
-            logger_debug('curr_tok, i, next_tok, j:', curr_tok, i, next_tok, j)
+            logger_debug("curr_tok, i, next_tok, j:", curr_tok, i, next_tok, j)
             # disjoint tokens: break, there is nothing to do
             if next_tok.is_after(curr_tok):
-                logger_debug('  break to next', curr_tok)
+                logger_debug("  break to next", curr_tok)
                 break
 
             # contained token: discard the contained token
             if next_tok in curr_tok:
-                logger_debug('  del next_tok contained:', next_tok)
+                logger_debug("  del next_tok contained:", next_tok)
                 del tokens[j]
                 continue
 
@@ -478,11 +486,11 @@ def filter_overlapping(tokens):
             # tokens. In case of length tie: keep the left most
             if curr_tok.overlap(next_tok):
                 if len(curr_tok) >= len(next_tok):
-                    logger_debug('  del next_tok smaller overlap:', next_tok)
+                    logger_debug("  del next_tok smaller overlap:", next_tok)
                     del tokens[j]
                     continue
                 else:
-                    logger_debug('  del curr_tok smaller overlap:', curr_tok)
+                    logger_debug("  del curr_tok smaller overlap:", curr_tok)
                     del tokens[i]
                     break
             j += 1
@@ -504,16 +512,23 @@ class Token(object):
       - None if this is a space.
     """
 
-    __slots__ = 'start', 'end', 'string', 'value',
+    __slots__ = (
+        "start",
+        "end",
+        "string",
+        "value",
+    )
 
-    def __init__(self, start, end, string='', value=None):
+    def __init__(self, start, end, string="", value=None):
         self.start = start
         self.end = end
         self.string = string
         self.value = value
 
     def __repr__(self):
-        return self.__class__.__name__ + '(%(start)r, %(end)r, %(string)r, %(value)r)' % self.as_dict()
+        return (
+            self.__class__.__name__ + "(%(start)r, %(end)r, %(string)r, %(value)r)" % self.as_dict()
+        )
 
     def as_dict(self):
         return OrderedDict([(s, getattr(self, s)) for s in self.__slots__])
@@ -523,10 +538,10 @@ class Token(object):
 
     def __eq__(self, other):
         return isinstance(other, Token) and (
-            self.start == other.start and
-            self.end == other.end and
-            self.string == other.string and
-            self.value == other.value
+            self.start == other.start
+            and self.end == other.end
+            and self.string == other.string
+            and self.value == other.value
         )
 
     def __hash__(self):
@@ -547,7 +562,13 @@ class Token(object):
         >>> expected == Token.sort(tokens)
         True
         """
-        def key(s): return (s.start, -len(s),)
+
+        def key(s):
+            return (
+                s.start,
+                -len(s),
+            )
+
         return sorted(tokens, key=key)
 
     def is_after(self, other):
@@ -609,15 +630,16 @@ class Token(object):
 
 
 # tokenize to separate text from parens
-_tokenizer = re.compile(r'''
+_tokenizer = re.compile(
+    r"""
     (?P<text>[^\s\(\)]+)
      |
     (?P<space>\s+)
      |
     (?P<parens>[\(\)])
-    ''',
-                        re.VERBOSE | re.MULTILINE | re.UNICODE
-                        )
+    """,
+    re.VERBOSE | re.MULTILINE | re.UNICODE,
+)
 
 
 def get_tokens(tokens_string):
