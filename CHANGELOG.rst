@@ -1,6 +1,13 @@
 Changelog
 =========
 
+v30.4.3 - 2025-06-25
+--------------------
+
+This is a minor bugfix release:
+
+- Release license-expression wheels properly
+
 v30.4.2 - 2025-06-25
 --------------------
 
