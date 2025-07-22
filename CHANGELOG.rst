@@ -1,6 +1,13 @@
 Changelog
 =========
 
+v30.4.4 - 2025-01-10
+--------------------
+
+This is a minor release with license udpates:
+
+- Update license list to latest ScanCode and SPDX 3.27
+
 v30.4.3 - 2025-06-25
 --------------------
 
