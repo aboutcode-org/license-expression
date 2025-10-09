@@ -17852,7 +17852,7 @@
     "category": "Copyleft Limited",
     "spdx_license_key": "MPL-2.0-no-copyleft-exception",
     "other_spdx_license_keys": [],
-    "is_exception": true,
+    "is_exception": false,
     "is_deprecated": false,
     "json": "mpl-2.0-no-copyleft-exception.json",
     "yaml": "mpl-2.0-no-copyleft-exception.yml",
