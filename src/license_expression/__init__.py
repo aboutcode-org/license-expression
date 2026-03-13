@@ -87,7 +87,9 @@ if PARSE_INVALID_SYMBOL not in PARSE_ERRORS:
 
 
 class ExpressionError(Exception):
-    pass
+    def __init__(self, message, token_string=None):
+        super().__init__(message)
+        self.token_string = token_string
 
 
 class ExpressionParseError(ParseError, ExpressionError):
@@ -1210,7 +1212,8 @@ class LicenseSymbol(BaseSymbol):
             raise ExpressionError(
                 "Invalid license key: the valid characters are: letters and "
                 "numbers, underscore, dot, colon or hyphen signs and "
-                f"spaces: {key!r}"
+                f"spaces: {key!r}",
+                token_string=f"{key!r}",
             )
 
         # normalize spaces
@@ -1219,7 +1222,8 @@ class LicenseSymbol(BaseSymbol):
         if key.lower() in KEYWORDS_STRINGS:
             raise ExpressionError(
                 'Invalid license key: a key cannot be a reserved keyword: "or",'
-                f' "and" or "with": {key!r}'
+                f' "and" or "with": {key!r}',
+                token_string=f"{key!r}",
             )
 
         self.key = key
