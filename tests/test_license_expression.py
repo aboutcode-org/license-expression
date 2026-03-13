@@ -2429,7 +2429,7 @@ class LicensingValidateTest(TestCase):
         assert result.errors == [
             "Invalid license key: the valid characters are: letters and numbers, underscore, dot, colon or hyphen signs and spaces: 'cool,license'"
         ]
-        assert result.invalid_symbols == ["'cool,license'"]
+        assert result.invalid_symbols == ["cool,license"]
 
     def test_validate_exception(self):
         result = self.licensing.validate("GPL-2.0-or-later WITH WxWindows-exception-3.1")
