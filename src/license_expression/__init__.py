@@ -750,12 +750,33 @@ class Licensing(boolean.BooleanAlgebra):
             ),
         ):
             relation = exp.__class__.__name__
-            deduped = combine_expressions(
-                expressions,
-                relation=relation,
-                unique=True,
-                licensing=self,
-            )
+            # Flatten nested 'AND' expressions only (not OR) to maintain precedence
+            # Example: (A AND B) AND (C OR D) will become A AND B AND (C OR D)
+            # The OR will not be flattened to avoid changing the expression logic
+            if relation == "AND":
+                flattened = []
+                for e in expressions:
+                    if isinstance(e, self.AND):
+                        # Flatten nested ANDs by extending with their args
+                        flattened.extend(e.args)
+                    else:
+                        flattened.append(e)
+                expressions = flattened
+
+            unique_expressions = []
+            for e in expressions:
+                if e not in unique_expressions:
+                    unique_expressions.append(e)
+
+            if len(unique_expressions) == 1:
+                deduped = unique_expressions[0]
+            else:
+                deduped = combine_expressions(
+                    expressions,
+                    relation=relation,
+                    unique=True,
+                    licensing=self,
+                )
         else:
             raise ExpressionError(f"Unknown expression type: {expression!r}")
         return deduped

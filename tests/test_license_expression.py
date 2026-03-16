@@ -693,6 +693,20 @@ class LicensingParseTest(TestCase):
         expected = l.parse("(mit AND (mit OR bsd-new)) OR mit")
         assert result == expected
 
+    def test_dedup_expressions_can_be_simplified_3(self):
+        l = Licensing()
+        exp = "(gpl AND mit) AND mit AND (gpl OR mit)"
+        result = l.dedup(exp)
+        expected = l.parse("gpl AND mit AND (gpl OR mit)")
+        assert result == expected
+
+    def test_dedup_expressions_can_be_simplified_4(self):
+        l = Licensing()
+        exp = "(gpl AND mit) AND (mit AND gpl) AND (gpl OR mit)"
+        result = l.dedup(exp)
+        expected = l.parse("gpl AND mit AND (gpl OR mit)")
+        assert result == expected
+
     def test_dedup_expressions_multiple_occurrences(self):
         l = Licensing()
         exp = " GPL-2.0 or (mit and LGPL-2.1) or bsd Or GPL-2.0  or (mit and LGPL-2.1)"
