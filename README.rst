@@ -7,7 +7,7 @@ simplify and normalize license expressions (such as SPDX license expressions)
 using boolean logic.
 
 - License: Apache-2.0
-- Python: 3.9+
+- Python: 3.10+
 - Homepage: https://github.com/aboutcode-org/license-expression/
 - Install: `pip install license-expression` also available in most Linux distro.
 
