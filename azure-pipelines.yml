@@ -47,16 +47,16 @@ jobs:
 
   - template: etc/ci/azure-win.yml
     parameters:
-      job_name: win2025_cpython
-      image_name: windows-2025
+      job_name: win2022_cpython
+      image_name: windows-2022
       python_versions: ["3.10", "3.11", "3.12", "3.13", "3.14"]
       test_suites:
         all: venv\Scripts\pytest -n 2 -vvs
 
   - template: etc/ci/azure-win.yml
     parameters:
-      job_name: win2022_cpython
-      image_name: windows-2022
+      job_name: win2025_cpython
+      image_name: windows-2025
       python_versions: ["3.10", "3.11", "3.12", "3.13", "3.14"]
       test_suites:
         all: venv\Scripts\pytest -n 2 -vvs
