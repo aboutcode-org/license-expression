@@ -716,8 +716,12 @@ class Licensing(boolean.BooleanAlgebra):
 
         The deduplication:
 
+        - Performs the deduplication recusively for all sub-expressions.
+
         - Does not sort the licenses of sub-expression in an expression. They
-          stay in the same order as in the original expression.
+          stay in the same order as in the original expression. In case of two
+          similar expressions joined by AND, sorted differently, the sort order
+          of the first expression is retained.
 
         - Choices (as in "MIT or GPL") are kept as-is and not treated as
           simplifiable. This avoids droping important choice options in complex
@@ -751,8 +755,6 @@ class Licensing(boolean.BooleanAlgebra):
         ):
             relation = exp.__class__.__name__
             # Flatten nested 'AND' expressions only (not OR) to maintain precedence
-            # Example: (A AND B) AND (C OR D) will become A AND B AND (C OR D)
-            # The OR will not be flattened to avoid changing the expression logic
             if relation == "AND":
                 flattened = []
                 for e in expressions:

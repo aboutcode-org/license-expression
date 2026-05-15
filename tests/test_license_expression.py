@@ -735,6 +735,20 @@ class LicensingParseTest(TestCase):
         expected = l.parse("gpl AND mit")
         assert result == expected
 
+    def test_dedup_expressions_logically_equivalent_5(self):
+        l = Licensing()
+        exp = "(gpl OR mit) AND (mit OR gpl) AND ((gpl OR mit) AND (mit OR gpl))"
+        result = l.dedup(exp)
+        expected = l.parse("gpl OR mit")
+        assert result == expected
+
+    def test_dedup_expressions_logically_equivalent_6(self):
+        l = Licensing()
+        exp = "(gpl OR mit) AND (mit OR gpl) AND ((gpl OR mit) OR (mit OR gpl))"
+        result = l.dedup(exp)
+        expected = l.parse("gpl OR mit")
+        assert result == expected
+
     def test_dedup_expressions_multiple_occurrences(self):
         l = Licensing()
         exp = " GPL-2.0 or (mit and LGPL-2.1) or bsd Or GPL-2.0  or (mit and LGPL-2.1)"
