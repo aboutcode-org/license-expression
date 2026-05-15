@@ -693,6 +693,62 @@ class LicensingParseTest(TestCase):
         expected = l.parse("(mit AND (mit OR bsd-new)) OR mit")
         assert result == expected
 
+    def test_dedup_expressions_can_be_simplified_3(self):
+        l = Licensing()
+        exp = "(gpl AND mit) AND mit AND (gpl OR mit)"
+        result = l.dedup(exp)
+        expected = l.parse("gpl AND mit AND (gpl OR mit)")
+        assert result == expected
+
+    def test_dedup_expressions_can_be_simplified_4(self):
+        l = Licensing()
+        exp = "(gpl AND mit) AND (mit AND gpl) AND (gpl OR mit)"
+        result = l.dedup(exp)
+        expected = l.parse("gpl AND mit AND (gpl OR mit)")
+        assert result == expected
+
+    def test_dedup_expressions_logically_equivalent_1(self):
+        l = Licensing()
+        exp = "(gpl OR mit) AND (mit OR gpl)"
+        result = l.dedup(exp)
+        expected = l.parse("gpl OR mit")
+        assert result == expected
+
+    def test_dedup_expressions_logically_equivalent_2(self):
+        l = Licensing()
+        exp = "(gpl AND mit) AND (mit AND gpl)"
+        result = l.dedup(exp)
+        expected = l.parse("gpl AND mit")
+        assert result == expected
+
+    def test_dedup_expressions_logically_equivalent_3(self):
+        l = Licensing()
+        exp = "(gpl OR mit) OR (mit OR gpl)"
+        result = l.dedup(exp)
+        expected = l.parse("gpl OR mit")
+        assert result == expected
+
+    def test_dedup_expressions_logically_equivalent_4(self):
+        l = Licensing()
+        exp = "(gpl AND mit) OR (mit AND gpl)"
+        result = l.dedup(exp)
+        expected = l.parse("gpl AND mit")
+        assert result == expected
+
+    def test_dedup_expressions_logically_equivalent_5(self):
+        l = Licensing()
+        exp = "(gpl OR mit) AND (mit OR gpl) AND ((gpl OR mit) AND (mit OR gpl))"
+        result = l.dedup(exp)
+        expected = l.parse("gpl OR mit")
+        assert result == expected
+
+    def test_dedup_expressions_logically_equivalent_6(self):
+        l = Licensing()
+        exp = "(gpl OR mit) AND (mit OR gpl) AND ((gpl OR mit) OR (mit OR gpl))"
+        result = l.dedup(exp)
+        expected = l.parse("gpl OR mit")
+        assert result == expected
+
     def test_dedup_expressions_multiple_occurrences(self):
         l = Licensing()
         exp = " GPL-2.0 or (mit and LGPL-2.1) or bsd Or GPL-2.0  or (mit and LGPL-2.1)"
@@ -2421,6 +2477,15 @@ class LicensingValidateTest(TestCase):
         assert not result.normalized_expression
         assert result.errors == ["Unknown license key(s): cool-license"]
         assert result.invalid_symbols == ["cool-license"]
+
+    def test_validation_invalid_license_key_chara(self):
+        result = self.licensing.validate("cool,license")
+        assert result.original_expression == "cool,license"
+        assert not result.normalized_expression
+        assert result.errors == [
+            "Invalid license key: the valid characters are: letters and numbers, underscore, dot, colon or hyphen signs and spaces: 'cool,license'"
+        ]
+        assert result.invalid_symbols == ["cool,license"]
 
     def test_validate_exception(self):
         result = self.licensing.validate("GPL-2.0-or-later WITH WxWindows-exception-3.1")

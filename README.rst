@@ -7,7 +7,7 @@ simplify and normalize license expressions (such as SPDX license expressions)
 using boolean logic.
 
 - License: Apache-2.0
-- Python: 3.9+
+- Python: 3.10+
 - Homepage: https://github.com/aboutcode-org/license-expression/
 - Install: `pip install license-expression` also available in most Linux distro.
 
@@ -45,7 +45,7 @@ license expression engine in several projects and products such as:
 - REUSE https://reuse.software/ and https://github.com/fsfe/reuse-tool
 - ScanCode-io https://github.com/aboutcode-org/scancode.io
 - ScanCode-toolkit https://github.com/aboutcode-org/scancode-toolkit
-- SecObserve https://github.com/MaibornWolff/SecObserve
+- SecObserve https://github.com/SecObserve/SecObserve
 
 See also for details:
 - https://spdx.github.io/spdx-spec/v2.3/SPDX-license-expressions
