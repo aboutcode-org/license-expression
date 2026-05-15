@@ -2478,6 +2478,15 @@ class LicensingValidateTest(TestCase):
         assert result.errors == ["Unknown license key(s): cool-license"]
         assert result.invalid_symbols == ["cool-license"]
 
+    def test_validation_invalid_license_key_chara(self):
+        result = self.licensing.validate("cool,license")
+        assert result.original_expression == "cool,license"
+        assert not result.normalized_expression
+        assert result.errors == [
+            "Invalid license key: the valid characters are: letters and numbers, underscore, dot, colon or hyphen signs and spaces: 'cool,license'"
+        ]
+        assert result.invalid_symbols == ["cool,license"]
+
     def test_validate_exception(self):
         result = self.licensing.validate("GPL-2.0-or-later WITH WxWindows-exception-3.1")
         assert result.original_expression == "GPL-2.0-or-later WITH WxWindows-exception-3.1"
