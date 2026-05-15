@@ -1,6 +1,14 @@
 Changelog
 =========
 
+v30.4.5 - 2026-03-03
+--------------------
+
+This is a minor bugfix release:
+
+- Fix validate() to properly report errors for invalid expressions with
+  trailing operators (e.g. "GPL-3.0-or-later AND").
+
 v30.4.4 - 2025-01-10
 --------------------
 

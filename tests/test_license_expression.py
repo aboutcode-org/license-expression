@@ -2537,6 +2537,45 @@ class LicensingValidateTest(TestCase):
         assert result.errors == []
         assert result.invalid_symbols == []
 
+    def test_validate_trailing_and_operator(self):
+        result = self.licensing.validate("GPL-2.0-or-later AND")
+        assert result.original_expression == "GPL-2.0-or-later AND"
+        assert not result.normalized_expression
+        assert len(result.errors) == 1
+        assert "AND" in result.errors[0]
+
+    def test_validate_trailing_or_operator(self):
+        result = self.licensing.validate("GPL-2.0-or-later OR")
+        assert result.original_expression == "GPL-2.0-or-later OR"
+        assert not result.normalized_expression
+        assert len(result.errors) == 1
+        assert "OR" in result.errors[0]
+
+    def test_validate_trailing_with_operator(self):
+        result = self.licensing.validate("GPL-2.0-or-later WITH")
+        assert result.original_expression == "GPL-2.0-or-later WITH"
+        assert not result.normalized_expression
+        assert len(result.errors) == 1
+
+    def test_validate_multiple_trailing_operators(self):
+        result = self.licensing.validate("GPL-2.0-or-later AND MIT OR")
+        assert result.original_expression == "GPL-2.0-or-later AND MIT OR"
+        assert not result.normalized_expression
+        assert len(result.errors) == 1
+        assert "OR" in result.errors[0]
+
+    def test_validate_leading_operator(self):
+        result = self.licensing.validate("AND MIT")
+        assert result.original_expression == "AND MIT"
+        assert not result.normalized_expression
+        assert len(result.errors) == 1
+
+    def test_validate_only_operators(self):
+        result = self.licensing.validate("AND OR")
+        assert result.original_expression == "AND OR"
+        assert not result.normalized_expression
+        assert len(result.errors) == 1
+
 
 class UtilTest(TestCase):
     test_data_dir = join(dirname(__file__), "data")
