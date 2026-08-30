@@ -2640,3 +2640,140 @@ class CombineExpressionTest(TestCase):
 
     def test_combine_expressions_with_or_relationship(self):
         assert str(combine_expressions(["mit", "apache-2.0"], "OR")) == "mit OR apache-2.0"
+
+
+class LicensingRemoveTest(TestCase):
+    def setUp(self):
+        self.licensing = Licensing()
+
+    def test_remove_from_and_expression(self):
+        result = self.licensing.remove("MIT AND Apache-2.0", "Apache-2.0")
+        assert result.render() == "MIT"
+
+    def test_remove_from_or_expression(self):
+        result = self.licensing.remove("MIT OR Apache-2.0", "Apache-2.0")
+        assert result.render() == "MIT"
+
+    def test_remove_first_term_from_and(self):
+        result = self.licensing.remove("MIT AND Apache-2.0", "MIT")
+        assert result.render() == "Apache-2.0"
+
+    def test_remove_first_term_from_or(self):
+        result = self.licensing.remove("MIT OR Apache-2.0", "MIT")
+        assert result.render() == "Apache-2.0"
+
+    def test_remove_nested_and_or_expressions(self):
+        expr = "(MIT AND Apache-2.0) OR GPL-2.0"
+        result = self.licensing.remove(expr, "Apache-2.0")
+        assert result.render() == "MIT OR GPL-2.0"
+
+        result = self.licensing.remove(expr, "GPL-2.0")
+        assert result.render() == "MIT AND Apache-2.0"
+
+    def test_remove_complete_subexpression_string(self):
+        expr = "(MIT AND Apache-2.0) OR GPL-2.0"
+        result = self.licensing.remove(expr, "MIT AND Apache-2.0")
+        assert result.render() == "GPL-2.0"
+
+    def test_remove_complete_subexpression_object(self):
+        expr = self.licensing.parse("(MIT AND Apache-2.0) OR GPL-2.0")
+        subexpr = self.licensing.parse("MIT AND Apache-2.0")
+        result = self.licensing.remove(expr, subexpr)
+        assert result.render() == "GPL-2.0"
+
+    def test_remove_nonexistent_license(self):
+        expr = "MIT AND Apache-2.0"
+        result = self.licensing.remove(expr, "GPL-2.0")
+        assert result.render() == "MIT AND Apache-2.0"
+
+    def test_remove_all_terms_single_license(self):
+        result = self.licensing.remove("MIT", "MIT")
+        assert result is None
+
+    def test_remove_all_terms_from_and(self):
+        result = self.licensing.remove("MIT AND Apache-2.0", ["MIT", "Apache-2.0"])
+        assert result is None
+
+    def test_remove_all_terms_from_or(self):
+        result = self.licensing.remove("MIT OR Apache-2.0", ["MIT", "Apache-2.0"])
+        assert result is None
+
+    def test_remove_all_terms_from_nested(self):
+        expr = "(MIT AND Apache-2.0) OR GPL-2.0"
+        result = self.licensing.remove(expr, ["MIT", "Apache-2.0", "GPL-2.0"])
+        assert result is None
+
+    def test_remove_with_duplicate_terms(self):
+        expr = "MIT AND MIT AND Apache-2.0"
+        result = self.licensing.remove(expr, "Apache-2.0")
+        assert result.render() == "MIT"
+
+    def test_remove_with_parenthesized_complex_expressions(self):
+        expr = "(MIT OR BSD) AND (Apache-2.0 OR GPL-2.0)"
+        result = self.licensing.remove(expr, "BSD")
+        assert result.render() == "MIT AND (Apache-2.0 OR GPL-2.0)"
+
+        result = self.licensing.remove(expr, ["BSD", "GPL-2.0"])
+        assert result.render() == "MIT AND Apache-2.0"
+
+    def test_remove_with_expression_exact_composite_string(self):
+        expr = "GPL-2.0 WITH Classpath-exception OR MIT"
+        result = self.licensing.remove(expr, "GPL-2.0 WITH Classpath-exception")
+        assert result.render() == "MIT"
+
+    def test_remove_with_expression_exact_composite_object(self):
+        lic_sym = LicenseSymbol("GPL-2.0")
+        exc_sym = LicenseSymbol("Classpath-exception")
+        with_sym = LicenseWithExceptionSymbol(lic_sym, exc_sym)
+        expr = "GPL-2.0 WITH Classpath-exception OR MIT"
+        result = self.licensing.remove(expr, with_sym)
+        assert result.render() == "MIT"
+
+    def test_remove_with_expression_exact_composite_object_with_known_symbols(self):
+        gpl = LicenseSymbol("GPL-2.0")
+        exc = LicenseSymbol("Classpath-exception", is_exception=True)
+        mit = LicenseSymbol("MIT")
+        licensing = Licensing([gpl, exc, mit])
+        with_sym = LicenseWithExceptionSymbol(gpl, exc)
+        expr = "GPL-2.0 WITH Classpath-exception OR MIT"
+        result = licensing.remove(expr, with_sym)
+        assert result.render() == "MIT"
+
+    def test_remove_with_expression_all_removed(self):
+        expr = "GPL-2.0 WITH Classpath-exception"
+        result = self.licensing.remove(expr, "GPL-2.0 WITH Classpath-exception")
+        assert result is None
+
+    def test_remove_base_license_does_not_affect_composite_with_expression(self):
+        expr = "GPL-2.0 WITH Classpath-exception OR GPL-2.0"
+        result = self.licensing.remove(expr, "GPL-2.0")
+        assert result.render() == "GPL-2.0 WITH Classpath-exception"
+
+    def test_remove_with_symbol_object_target(self):
+        expr = "MIT AND Apache-2.0"
+        result = self.licensing.remove(expr, LicenseSymbol("Apache-2.0"))
+        assert result.render() == "MIT"
+
+    def test_remove_with_parsed_expression_input(self):
+        expr = self.licensing.parse("MIT AND Apache-2.0")
+        result = self.licensing.remove(expr, "Apache-2.0")
+        assert result.render() == "MIT"
+
+    def test_remove_empty_or_none_expression(self):
+        assert self.licensing.remove(None, "MIT") is None
+        assert self.licensing.remove("", "MIT") is None
+        assert self.licensing.remove("   ", "MIT") is None
+
+    def test_remove_empty_or_none_targets(self):
+        expr = "MIT AND Apache-2.0"
+        assert self.licensing.remove(expr, None).render() == "MIT AND Apache-2.0"
+        assert self.licensing.remove(expr, []).render() == "MIT AND Apache-2.0"
+        assert self.licensing.remove(expr, "").render() == "MIT AND Apache-2.0"
+
+    def test_remove_with_known_symbols_and_aliases(self):
+        gpl2 = LicenseSymbol("GPL-2.0", aliases=["gpl v2", "gpl2"])
+        mit = LicenseSymbol("MIT", aliases=["mit license"])
+        licensing = Licensing([gpl2, mit])
+        expr = "gpl v2 OR mit license"
+        result = licensing.remove(expr, "gpl2")
+        assert result.render() == "MIT"

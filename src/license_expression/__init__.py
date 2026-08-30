@@ -783,6 +783,100 @@ class Licensing(boolean.BooleanAlgebra):
             raise ExpressionError(f"Unknown expression type: {expression!r}")
         return deduped
 
+    def remove(self, expression, licenses_to_remove, **kwargs):
+        """
+        Return a new LicenseExpression with the specified ``licenses_to_remove``
+        removed from ``expression``, or None if all licenses are removed.
+
+        ``expression`` is a license expression string or LicenseExpression object.
+
+        ``licenses_to_remove`` is a license key string, LicenseSymbol,
+        LicenseExpression object, or an iterable of these.
+
+        Composite "WITH" expressions (LicenseWithExceptionSymbol) are treated as
+        atomic and are removed when matching the exact composite symbol or
+        expression.
+
+        Nested AND/OR expressions are pruned recursively and collapsed when only
+        a single child remains.
+
+        Extra ``kwargs`` are passed down to the parse() function.
+        """
+        if expression is None:
+            return None
+
+        exp = self.parse(expression, **kwargs)
+        if exp is None:
+            return None
+
+        if licenses_to_remove is None:
+            return exp
+
+        if isinstance(licenses_to_remove, (str, bytes, LicenseExpression, BaseSymbol)):
+            licenses_to_remove = [licenses_to_remove]
+        elif isinstance(licenses_to_remove, (list, tuple, set)):
+            if len(licenses_to_remove) == 0:
+                return exp
+        else:
+            try:
+                licenses_to_remove = list(licenses_to_remove)
+            except TypeError:
+                licenses_to_remove = [licenses_to_remove]
+
+        targets = []
+        for target in licenses_to_remove:
+            if target is None:
+                continue
+            if isinstance(target, (LicenseExpression, BaseSymbol)):
+                targets.append(target)
+            else:
+                parsed_target = self.parse(target, **kwargs)
+                if parsed_target is not None:
+                    targets.append(parsed_target)
+
+        if not targets:
+            return exp
+
+        def _remove(node):
+            if node is None:
+                return None
+
+            for t in targets:
+                if node == t:
+                    return None
+
+            if isinstance(node, BaseSymbol):
+                return node
+
+            if isinstance(node, (self.AND, self.OR)):
+                relation = node.__class__.__name__
+                filtered_args = []
+                for arg in node.args:
+                    res = _remove(arg)
+                    if res is not None:
+                        filtered_args.append(res)
+
+                if relation == "AND":
+                    flattened = []
+                    for e in filtered_args:
+                        if isinstance(e, self.AND):
+                            flattened.extend(e.args)
+                        else:
+                            flattened.append(e)
+                    filtered_args = flattened
+
+                unique_args = ordered_unique(filtered_args)
+
+                if not unique_args:
+                    return None
+                if len(unique_args) == 1:
+                    return unique_args[0]
+                return node.__class__(*unique_args)
+
+            raise ExpressionError(f"Unknown expression type: {node!r}")
+
+        return _remove(exp)
+
     def validate(self, expression, strict=True, **kwargs):
         """
         Return a ExpressionInfo object that contains information about
