@@ -2664,5 +2664,5 @@ def test_validate_symbols_keeps_conflicting_aliases_as_errors():
     )
     assert warnings == []
     assert errors == [
-        "Invalid duplicated alias pointing to multiple keys: " "shared point to keys: 'apache-2.0'."
+        "Invalid duplicated alias pointing to multiple keys: shared point to keys: 'apache-2.0'."
     ]
