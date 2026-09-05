@@ -2640,3 +2640,29 @@ class CombineExpressionTest(TestCase):
 
     def test_combine_expressions_with_or_relationship(self):
         assert str(combine_expressions(["mit", "apache-2.0"], "OR")) == "mit OR apache-2.0"
+
+
+def test_validate_symbols_reports_duplicate_and_empty_alias_warnings():
+    symbols = [
+        LicenseSymbol("mit", aliases=["MIT license", "mit license"]),
+        LicenseSymbol("apache-2.0", aliases=[""]),
+    ]
+    warnings, errors = validate_symbols(symbols)
+    assert errors == []
+    assert warnings == [
+        "Duplicated or empty aliases ignored for license key: 'apache-2.0'.",
+        "Duplicated or empty aliases ignored for license key: 'mit'.",
+    ]
+
+
+def test_validate_symbols_keeps_conflicting_aliases_as_errors():
+    warnings, errors = validate_symbols(
+        [
+            LicenseSymbol("mit", aliases=["shared"]),
+            LicenseSymbol("apache-2.0", aliases=["shared"]),
+        ]
+    )
+    assert warnings == []
+    assert errors == [
+        "Invalid duplicated alias pointing to multiple keys: shared point to keys: 'apache-2.0'."
+    ]

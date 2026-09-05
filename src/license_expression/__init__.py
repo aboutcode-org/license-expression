@@ -1764,8 +1764,8 @@ def validate_symbols(symbols, validate_keys=False):
         errors.append(f"Invalid key: a key cannot be an expression keyword: {ikw}.")
 
     warnings = []
-    for dupe_alias in sorted(dupe_aliases):
-        errors.append(f"Duplicated or empty aliases ignored for license key: {dupe_alias!r}.")
+    for key in sorted(warning_dupe_aliases):
+        warnings.append(f"Duplicated or empty aliases ignored for license key: {key!r}.")
 
     return warnings, errors
 
