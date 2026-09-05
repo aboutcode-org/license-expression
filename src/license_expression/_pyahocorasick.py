@@ -492,6 +492,7 @@ def filter_overlapping(tokens):
                 else:
                     logger_debug("  del curr_tok smaller overlap:", curr_tok)
                     del tokens[i]
+                    i -= 1
                     break
             j += 1
         i += 1

@@ -17,6 +17,7 @@ import unittest
 
 from license_expression._pyahocorasick import Trie
 from license_expression._pyahocorasick import Token
+from license_expression._pyahocorasick import filter_overlapping
 
 
 class TestTrie(unittest.TestCase):
@@ -315,3 +316,13 @@ class TestTrie(unittest.TestCase):
         ]
 
         assert expected == result
+
+
+def test_filter_overlapping_rechecks_replacement_token():
+    tokens = [Token(0, 1), Token(1, 4), Token(4, 8), Token(10, 11)]
+    assert filter_overlapping(tokens) == [Token(4, 8), Token(10, 11)]
+
+
+def test_filter_overlapping_removes_contained_token_after_replacement():
+    tokens = [Token(0, 1), Token(1, 5), Token(2, 3), Token(8, 9)]
+    assert filter_overlapping(tokens) == [Token(1, 5), Token(8, 9)]
