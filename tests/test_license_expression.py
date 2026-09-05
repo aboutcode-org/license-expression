@@ -2640,3 +2640,9 @@ class CombineExpressionTest(TestCase):
 
     def test_combine_expressions_with_or_relationship(self):
         assert str(combine_expressions(["mit", "apache-2.0"], "OR")) == "mit OR apache-2.0"
+
+
+def test_combine_expressions_accepts_case_insensitive_relations():
+    for relation in ("and", "And", "AND", "or", "Or", "OR"):
+        result = combine_expressions(["mit", "apache-2.0"], relation=relation)
+        assert str(result) == f"mit {relation.upper()} apache-2.0"

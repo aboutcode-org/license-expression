@@ -1825,5 +1825,5 @@ def combine_expressions(
     if len(expressions) == 1:
         return expressions[0]
 
-    relation = {"AND": licensing.AND, "OR": licensing.OR}[relation]
+    relation = {"AND": licensing.AND, "OR": licensing.OR}[relation.upper()]
     return relation(*expressions)
