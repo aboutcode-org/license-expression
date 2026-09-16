@@ -1,6 +1,83 @@
 [build-system]
-requires = ["setuptools >= 50", "wheel"]
+requires = [
+    "setuptools >= 77",
+]
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "license-expression"
+authors = [
+    {name = "nexB. Inc. and others", email = "info@aboutcode.org"},
+]
+description = "comprehensive utility library to parse, compare, simplify and normalize license expressions (such as SPDX license expressions) using boolean logic"
+readme = "README.rst"
+keywords = [
+    "open source",
+    "license expression",
+    "license",
+    "spdx",
+    "boolean",
+    "parse expression",
+    "normalize expression",
+    "compare expression",
+    "licence",
+]
+license = "Apache-2.0"
+license-files = [
+    "apache-2.0.LICENSE",
+    "NOTICE",
+    "AUTHORS.rst",
+    "CHANGELOG.rst",
+    "CODE_OF_CONDUCT.rst",
+    "README.rst",
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Topic :: Software Development",
+    "Topic :: Utilities",
+]
+requires-python = ">=3.10"
+dependencies = [
+    "boolean.py >= 4.0",
+]
+version = "30.4.4"
+
+[project.urls]
+Homepage = "https://github.com/aboutcode-org/license-expression"
+
+[dependency-groups]
+tests = [
+    "pytest >= 7.0.1",
+    "pytest-xdist >= 2",
+]
+lint = [
+    "twine",
+    "ruff",
+]
+docs = [
+    # do not use this as this triggers a bug
+    # in setuptools_scm:aboutcode-toolkit >= 6.0.0
+    "doc8>=0.11.2",
+    "Sphinx>=5.0.2",
+    "sphinx-rtd-theme>=1.0.0",
+    "sphinxcontrib-apidoc >= 0.4.0",
+    "sphinx-reredirects >= 0.1.2",
+    "sphinx-autobuild",
+    "sphinx-rtd-dark-mode>=1.3.0",
+    "sphinx-copybutton",
+]
+
+dev = [
+    {include-group = "tests"},
+    {include-group = "lint"},
+    {include-group = "docs"},
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
 
 [tool.setuptools_scm]
 # this is used populated when creating a git archive

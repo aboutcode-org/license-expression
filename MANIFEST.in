@@ -9,7 +9,6 @@ include *.toml
 include *.yml
 include *.rst
 include *.png
-include setup.*
 include configure*
 include requirements*
 include .dockerignore

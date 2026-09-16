@@ -75,3 +75,6 @@ tcl
 /.tox/
 /.ruff_cache/
 .env
+
+# Lock files from uv, pixi, pipenv, etc.
+*.lock
