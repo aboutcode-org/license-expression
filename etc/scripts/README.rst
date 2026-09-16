@@ -72,8 +72,7 @@ gen_requirements_dev.py** --help for details.
 Note: this does NOT hash requirements for now.
 
 Note: Be aware that if you are using "conditional" requirements (e.g. only for
-OS or Python versions) in setup.py/setp.cfg/requirements.txt as these are NOT
-yet supported.
+OS or Python versions) in pyproject.toml as these are NOT yet supported.
 
 
 Populate a thirdparty directory with wheels, sources, .ABOUT and license files
