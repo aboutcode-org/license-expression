@@ -632,11 +632,11 @@ class Token(object):
 # tokenize to separate text from parens
 _tokenizer = re.compile(
     r"""
-    (?P<text>[^\s\(\)]+)
+    (?:[^\s\(\)]+)  # text
      |
-    (?P<space>\s+)
+    (?:\s+)         # space
      |
-    (?P<parens>[\(\)])
+    (?:[\(\)])      # parens
     """,
     re.VERBOSE | re.MULTILINE | re.UNICODE,
 )
@@ -646,4 +646,4 @@ def get_tokens(tokens_string):
     """
     Return an iterable of strings splitting on spaces and parens.
     """
-    return [match for match in _tokenizer.split(tokens_string.lower()) if match]
+    return _tokenizer.findall(tokens_string.lower())
