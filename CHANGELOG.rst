@@ -1,6 +1,13 @@
 Changelog
 =========
 
+v30.4.6 - unreleased
+--------------------
+
+- Bump setuptools build requirement to >= 70.1.0 and drop the unused
+  wheel build dependency.
+
+
 v30.4.5 - 2026-03-03
 --------------------
 
