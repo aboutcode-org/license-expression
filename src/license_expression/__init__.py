@@ -550,6 +550,9 @@ class Licensing(boolean.BooleanAlgebra):
                 error_code=e.error_code,
             ) from e
 
+        except IndexError as e:
+            raise ExpressionError(f"Invalid expression: {expression!r}") from e
+
         if not isinstance(expression, LicenseExpression):
             raise ExpressionError("expression must be a LicenseExpression once parsed.")
 

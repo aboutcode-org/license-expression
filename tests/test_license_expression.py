@@ -2576,6 +2576,12 @@ class LicensingValidateTest(TestCase):
         assert not result.normalized_expression
         assert len(result.errors) == 1
 
+    def test_validate_empty_parentheses(self):
+        result = self.licensing.validate("(Apache-2.0) AND ()")
+        assert result.original_expression == "(Apache-2.0) AND ()"
+        assert not result.normalized_expression
+        assert len(result.errors) == 1
+
 
 class UtilTest(TestCase):
     test_data_dir = join(dirname(__file__), "data")
