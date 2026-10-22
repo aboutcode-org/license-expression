@@ -2582,6 +2582,7 @@ class LicensingValidateTest(TestCase):
         assert not result.normalized_expression
         assert len(result.errors) == 1
 
+
 class UtilTest(TestCase):
     test_data_dir = join(dirname(__file__), "data")
 
