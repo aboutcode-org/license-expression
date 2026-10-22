@@ -75,3 +75,5 @@ tcl
 /.tox/
 /.ruff_cache/
 .env
+
+.venv/
